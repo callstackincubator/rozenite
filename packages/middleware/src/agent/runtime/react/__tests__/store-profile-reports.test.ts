@@ -174,6 +174,24 @@ describe('React getComponentRenders', () => {
     expect(result.summary.roots).toEqual([1, 2]);
   });
 
+  it('pages across roots whose fiber IDs collide without repeating a row', async () => {
+    const store = createStore();
+    const seen: string[] = [];
+    let cursor: string | undefined;
+
+    for (let guard = 0; guard < 10; guard += 1) {
+      const page = await store.getComponentRenders(DEVICE_ID, { limit: 1, cursor });
+      seen.push(...page.items.map((item) => `${item.rootId}:${item.fiberId}`));
+      cursor = page.page.nextCursor;
+      if (!cursor) {
+        break;
+      }
+    }
+
+    expect(seen).toHaveLength(3);
+    expect(new Set(seen).size).toBe(3);
+  });
+
   it('falls back to a fiber ID for a component that unmounted before the read', async () => {
     const store = createStore(
       new Map([
@@ -360,7 +378,7 @@ describe('React getProfileTimeline', () => {
         limit: 2,
         cursor: firstPage.page.nextCursor,
       }),
-    ).rejects.toThrow('Cursor does not match this request context');
+    ).rejects.toThrow('Cursor does not match this listing');
   });
 });
 

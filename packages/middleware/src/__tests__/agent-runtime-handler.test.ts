@@ -31,6 +31,7 @@ describe('agent runtime handler console domain', () => {
       kind: 'cursor',
       fields: ['seq', 'timestamp', 'level', 'source', 'text', 'context', 'cursor'],
       defaultFields: ['seq', 'timestamp', 'level', 'text'],
+      meta: ['meta'],
     });
   });
 

@@ -1,4 +1,6 @@
 import {
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
   MEMORY_TOOL_NAMES,
   NETWORK_TOOL_NAMES,
   PERFORMANCE_TOOL_NAMES,
@@ -6,8 +8,7 @@ import {
   type AgentTool,
   type AgentToolPagination,
   type JSONSchema7,
-  DEFAULT_PAGE_LIMIT,
-  MAX_PAGE_LIMIT,
+  paginateArray,
 } from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
 import { CdpEventTimeoutError } from './cdp-errors.js';
@@ -30,10 +31,16 @@ import type {
 const cursorPagination = <TRow>(config: {
   fields: readonly Extract<keyof TRow, string>[];
   defaultFields?: readonly Extract<keyof TRow, string>[];
+  /**
+   * Result keys besides `items` and `page` worth printing with every page.
+   * The SDK result keeps every key; this only steers what a frontend shows.
+   */
+  meta: readonly string[];
 }): AgentToolPagination => ({
   kind: 'cursor',
   fields: config.fields,
   ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
+  meta: config.meta,
 });
 
 type CDPCommandSender = (
@@ -264,14 +271,6 @@ const getOptionalBoolean = (value: unknown): boolean | undefined => {
   return typeof value === 'boolean' ? value : undefined;
 };
 
-const getOptionalPositiveInteger = (value: unknown): number | undefined => {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
-    return undefined;
-  }
-
-  return value;
-};
-
 const getOptionalRecord = (value: unknown): Record<string, unknown> | undefined => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     return value as Record<string, unknown>;
@@ -409,104 +408,6 @@ const omitNullish = <T extends Record<string, unknown>>(value: T): Partial<T> =>
 
 const getInitiatorType = (initiator: unknown): string | undefined => {
   return getString(getOptionalRecord(initiator)?.type);
-};
-
-/**
- * Generic offset-cursor pagination for local domain listings.
- *
- * `generation` is an optional stamp a caller can bump whenever the
- * underlying buffer is invalidated out from under any outstanding cursors
- * (e.g. the network domain's capture buffer is wiped on disconnect). When a
- * presented cursor's generation doesn't match the current one, the rows it
- * indexes into no longer correspond to what the caller had in mind, so this
- * returns `page.reset: true` with an empty page instead of silently
- * resuming into the new buffer at the same numeric offset — which could
- * return unrelated rows, or an empty page indistinguishable from "no more
- * results". This is intentionally narrow (a single caller-supplied
- * generation counter), not the general shared cursor engine tracked by
- * issue #320 — that issue's scope is a cross-domain cursor abstraction,
- * which this function does not attempt to be.
- */
-const paginateRows = <T>(
-  rows: T[],
-  options: {
-    scope: string;
-    limit: number;
-    cursor?: string;
-    generation?: number;
-  },
-): {
-  items: T[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-    reset?: boolean;
-  };
-} => {
-  let startIndex = 0;
-  if (options.cursor) {
-    let decoded: {
-      v: 1;
-      scope: string;
-      index: number;
-      generation?: number;
-    };
-    try {
-      decoded = JSON.parse(
-        Buffer.from(options.cursor, 'base64url').toString('utf8'),
-      ) as typeof decoded;
-      if (
-        decoded.v !== 1 ||
-        decoded.scope !== options.scope ||
-        !Number.isInteger(decoded.index) ||
-        decoded.index < 0
-      ) {
-        throw new Error('Invalid cursor payload');
-      }
-    } catch {
-      throw new Error(
-        'Invalid "cursor". Run the command again without cursor to restart pagination.',
-      );
-    }
-
-    if (options.generation !== undefined && decoded.generation !== options.generation) {
-      return {
-        items: [],
-        page: {
-          limit: options.limit,
-          hasMore: false,
-          reset: true,
-        },
-      };
-    }
-
-    startIndex = decoded.index;
-  }
-
-  const endIndex = Math.min(startIndex + options.limit, rows.length);
-  const items = rows.slice(startIndex, endIndex);
-  const hasMore = endIndex < rows.length;
-  const nextCursor = hasMore
-    ? Buffer.from(
-        JSON.stringify({
-          v: 1,
-          scope: options.scope,
-          index: endIndex,
-          ...(options.generation !== undefined ? { generation: options.generation } : {}),
-        }),
-        'utf8',
-      ).toString('base64url')
-    : undefined;
-
-  return {
-    items,
-    page: {
-      limit: options.limit,
-      hasMore,
-      ...(nextCursor ? { nextCursor } : {}),
-    },
-  };
 };
 
 const createArtifactMetadata = (
@@ -931,6 +832,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactTreeNode>({
+        meta: ['roots', 'totalCount'],
         fields: [
           'nodeId',
           'label',
@@ -1023,6 +925,7 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactNodeSummary>({
+        meta: [],
         fields: [
           'nodeId',
           'label',
@@ -1059,6 +962,7 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactInspectableEntry>({
+        meta: [],
         // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
       }),
@@ -1084,6 +988,7 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactInspectableEntry>({
+        meta: [],
         // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
       }),
@@ -1116,6 +1021,7 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactInspectableEntry>({
+        meta: [],
         // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
       }),
@@ -1146,6 +1052,7 @@ export const createReactDomainService = (deps: {
         required: ['query'],
       },
       pagination: cursorPagination<ReactNodeSummary>({
+        meta: [],
         fields: [
           'nodeId',
           'label',
@@ -1179,6 +1086,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactNodeSummary>({
+        meta: ['totalCount', 'summary'],
         fields: [
           'nodeId',
           'label',
@@ -1270,6 +1178,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactComponentRenderItem>({
+        meta: ['totalCount', 'summary'],
         fields: [
           'rootId',
           'fiberId',
@@ -1323,6 +1232,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactProfileTimelineItem>({
+        meta: ['totalCount', 'summary'],
         fields: [
           'rootId',
           'commitIndex',
@@ -1371,6 +1281,7 @@ export const createReactDomainService = (deps: {
         required: ['rootId', 'commitIndex'],
       },
       pagination: cursorPagination<ReactRenderDataItem>({
+        meta: ['commit', 'summary'],
         fields: [
           'fiberId',
           'displayName',
@@ -1729,6 +1640,9 @@ export const createNetworkDomainService = (deps: {
         },
       },
       pagination: cursorPagination<NetworkRequestSummary>({
+        // The `recording` block stays in the result for SDK callers, but it is
+        // the same on every page and one getRecordingStatus call away.
+        meta: [],
         fields: [
           'requestId',
           'method',
@@ -2096,20 +2010,17 @@ export const createNetworkDomainService = (deps: {
 
   const listRequests = async (args: unknown) => {
     const input = getRecord(args);
-    const limit = Math.min(
-      getOptionalPositiveInteger(input.limit) ?? DEFAULT_PAGE_LIMIT,
-      MAX_PAGE_LIMIT,
-    );
-    const cursor = getString(input.cursor);
     const rows = state.requestOrder
       .map((requestId) => state.requests.get(requestId))
       .filter((record): record is NetworkRequestRecord => Boolean(record))
       .reverse()
       .map(createNetworkSummary);
-    const page = paginateRows(rows, {
-      scope: 'network:requests',
-      limit,
-      cursor,
+    // The capture buffer is wiped on disconnect and on a new recording, which
+    // bumps the generation, so a cursor from before then answers `reset`.
+    const page = paginateArray(rows, {
+      keyOf: (row) => row.requestId,
+      limit: input.limit,
+      cursor: input.cursor,
       generation: state.generation,
     });
 

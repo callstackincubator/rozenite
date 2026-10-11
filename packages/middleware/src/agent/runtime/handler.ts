@@ -27,10 +27,16 @@ import type { ConsoleMessageInput, ConsoleLogRow } from './console/types.js';
 const cursorPagination = <TRow>(config: {
   fields: readonly Extract<keyof TRow, string>[];
   defaultFields?: readonly Extract<keyof TRow, string>[];
+  /**
+   * Result keys besides `items` and `page` worth printing with every page.
+   * The SDK result keeps every key; this only steers what a frontend shows.
+   */
+  meta: readonly string[];
 }): AgentToolPagination => ({
   kind: 'cursor',
   fields: config.fields,
   ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
+  meta: config.meta,
 });
 
 const CONSOLE_TOOLS: AgentTool[] = [
@@ -97,6 +103,8 @@ const CONSOLE_TOOLS: AgentTool[] = [
       },
     },
     pagination: cursorPagination<ConsoleLogRow>({
+      // The buffer counters (droppedCount, lastSeq, bufferSize) live under `meta`.
+      meta: ['meta'],
       fields: ['seq', 'timestamp', 'level', 'source', 'text', 'context', 'cursor'],
       // `context` is the heaviest column, `source` is "console" on nearly every
       // row, and `cursor` repeats `seq`. All three stay reachable via --fields.

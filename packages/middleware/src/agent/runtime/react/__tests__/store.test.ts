@@ -207,6 +207,41 @@ describe('React tree store', () => {
     expect(secondPage.page.hasMore).toBe(false);
   });
 
+  it('resumes after the last row even when an earlier row disappears', () => {
+    const store = createStoreWithTree();
+    const firstPage = store.getTree(DEVICE_ID, { limit: 2 });
+    expect(firstPage.items.map((item) => item.nodeId)).toEqual([1, 2]);
+
+    // Sidebar unmounts. An offset cursor would now skip a row or repeat one;
+    // a cursor that names node 2 picks up right after it.
+    store.syncTree(DEVICE_ID, {
+      roots: [1],
+      nodes: [
+        { nodeId: 1, displayName: 'Root', elementType: 'root', childIds: [2] },
+        { nodeId: 2, displayName: 'App', elementType: 'function', parentId: 1, childIds: [4] },
+        { nodeId: 4, displayName: 'Button', elementType: 'host', parentId: 2, childIds: [] },
+      ],
+    });
+
+    const secondPage = store.getTree(DEVICE_ID, { limit: 2, cursor: firstPage.page.nextCursor });
+    expect(secondPage.items.map((item) => item.nodeId)).toEqual([4]);
+    expect(secondPage.page.reset).toBeUndefined();
+  });
+
+  it('answers reset when the row a cursor names is gone', () => {
+    const store = createStoreWithTree();
+    const firstPage = store.getTree(DEVICE_ID, { limit: 2 });
+
+    store.syncTree(DEVICE_ID, {
+      roots: [1],
+      nodes: [{ nodeId: 1, displayName: 'Root', elementType: 'root', childIds: [] }],
+    });
+
+    const secondPage = store.getTree(DEVICE_ID, { limit: 2, cursor: firstPage.page.nextCursor });
+    expect(secondPage.items).toEqual([]);
+    expect(secondPage.page.reset).toBe(true);
+  });
+
   it('rejects cursors from a different tree request', () => {
     const store = createStoreWithTree();
     const firstPage = store.getTree(DEVICE_ID, { limit: 1 });
@@ -216,7 +251,7 @@ describe('React tree store', () => {
         depth: 1,
         cursor: firstPage.page.nextCursor,
       }),
-    ).toThrow('Cursor does not match this request context');
+    ).toThrow('Cursor does not match this listing');
   });
 });
 

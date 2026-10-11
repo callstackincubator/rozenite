@@ -38,4 +38,17 @@ they returned before still one argument away.
 - React profiling results round every duration and timestamp to at most
   three decimals.
 
+- `network.listRequests` and the React list tools page with the shared
+  `paginateArray` from `@rozenite/agent-shared`: a cursor now resumes after
+  the last row it returned instead of at an index, so a row that appears or
+  disappears earlier in the list no longer makes a page skip or repeat one.
+  When the row a cursor names is gone, the page answers `reset: true`.
+  Cursors issued by earlier releases are rejected; restart the listing.
+- Every paginated built-in tool declares `pagination.meta`, the result keys
+  worth printing with a page (`getMessages`: `meta`; `getTree`: `roots`,
+  `totalCount`; `getErrors`, `getComponentRenders`, `getProfileTimeline`:
+  `totalCount`, `summary`; `getRenderData`: `commit`, `summary`; the rest,
+  including `listRequests`, nothing). Results themselves still carry every
+  key, including `listRequests`' `recording` block.
+
 Every dropped column is still listed in the tool's `fields`.
