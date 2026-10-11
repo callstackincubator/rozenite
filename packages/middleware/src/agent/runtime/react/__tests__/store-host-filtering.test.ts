@@ -134,7 +134,7 @@ describe('React tree host filtering', () => {
     const firstPage = store.getTree(DEVICE_ID, { limit: 2, noHost: true });
 
     expect(() => store.getTree(DEVICE_ID, { limit: 2, cursor: firstPage.page.nextCursor })).toThrow(
-      'Cursor does not match this request context',
+      'Cursor does not match this listing',
     );
   });
 });

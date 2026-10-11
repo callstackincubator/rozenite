@@ -1,4 +1,4 @@
-import { decodeCursor, encodeCursor } from './cursor.js';
+import { decodeCursor, encodeCursor, hasCursorValue } from './cursor.js';
 import { normalizePageLimit } from './limits.js';
 import type { PageOrder, PageResult, PaginatedSource } from './types.js';
 
@@ -23,7 +23,7 @@ export const paginateSource = <TItem, TFilters>(
   const order: PageOrder = input.request.order === 'asc' ? 'asc' : 'desc';
 
   let checkpoint: number | undefined = input.request.seedCheckpoint;
-  if (typeof input.request.cursor === 'string' && input.request.cursor.trim().length > 0) {
+  if (hasCursorValue(input.request.cursor)) {
     checkpoint = decodeCursor(input.request.cursor);
   }
 

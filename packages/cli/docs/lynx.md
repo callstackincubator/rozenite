@@ -14,7 +14,7 @@ tools, `tap` — behaves the same.
 Check first, do not assume:
 
 ```sh
-npx rozenite agent domains --session <sessionId>
+npx rozenite agent domains
 ```
 
 The `availability` column is authoritative for the connected target. The
@@ -46,7 +46,7 @@ table below is what it will say on Lynx today.
 - **`memory.startSampling` / `memory.stopSampling`** — unsupported. Lynx's
   JS engine implements heap snapshots but not allocation sampling, so
   `memory` is reported `degraded` and these two tools are absent from its
-  `list-tools` output.
+  tool listing (`npx rozenite agent memory`).
 
 ## How unsupported tools fail
 

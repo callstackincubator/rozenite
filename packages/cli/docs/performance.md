@@ -9,8 +9,12 @@ Start a performance trace on the session target, reproduce the issue while recor
 
 ## Tools
 
-- `startTrace` -> `{}` | `{"categories":["<category>",...]}` | `{"options":"<string>"}`
-- `stopTrace` -> `{}` | `{"nameHint":"startup-regression"}`
+```sh
+npx rozenite agent performance startTrace
+npx rozenite agent performance startTrace --categories <category>,<category>
+npx rozenite agent performance startTrace --options <string>
+npx rozenite agent performance stopTrace --nameHint startup-regression
+```
 
 ## Flow
 

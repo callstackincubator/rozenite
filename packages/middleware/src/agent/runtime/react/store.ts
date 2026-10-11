@@ -1,4 +1,5 @@
-import { paginateReactList } from './pagination.js';
+import { paginateArray } from '@rozenite/agent-shared';
+import { reactListScope } from './pagination.js';
 import type { ReactChangeDescription, ReactCommitData } from './profiling-store.js';
 import type {
   ReactComponentSection,
@@ -258,7 +259,14 @@ const compareComponentRenders = (
   }
 };
 
+/**
+ * Every duration and timestamp leaves this store at microsecond precision at
+ * most: React reports floats like 0.30000000000000004, and sums of them only
+ * get longer, which is noise per row at a precision nothing measured here has.
+ */
 const roundMs = (value: number): number => Math.round(value * 1000) / 1000;
+const roundOptionalMs = (value: number | null): number | null =>
+  value === null ? null : roundMs(value);
 
 const mergeStringSets = (current: string[] | undefined, incoming: string[]): string[] => {
   if (incoming.length === 0) {
@@ -511,18 +519,6 @@ const ensureNodeExists = (state: DeviceReactTreeState, nodeId: number): ReactNod
   }
 
   return node;
-};
-
-const getOptionalRootId = (value: unknown): number | undefined => {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (!Number.isInteger(value)) {
-    throw new Error('"root" must be an integer node ID');
-  }
-
-  return Number(value);
 };
 
 const getRequestedNodeId = (
@@ -1102,8 +1098,8 @@ export const createReactTreeStore = (options?: {
           slowCommits.push({
             rootId,
             commitIndex: index,
-            durationMs,
-            timestampMs: Number(commit.timestamp) || 0,
+            durationMs: roundMs(durationMs),
+            timestampMs: roundMs(Number(commit.timestamp) || 0),
           });
         }
       }
@@ -1121,7 +1117,7 @@ export const createReactTreeStore = (options?: {
       session: {
         roots,
         totalCommits,
-        totalRenderDurationMs,
+        totalRenderDurationMs: roundMs(totalRenderDurationMs),
       },
       renders: {
         count: totalCommits,
@@ -1238,13 +1234,11 @@ export const createReactTreeStore = (options?: {
       return false;
     });
 
-    const { items, page } = paginateReactList({
-      deviceId,
-      tool: SEARCH_TOOL_NAME,
-      filters: { query, rootId, match, noHost },
+    const { items, page } = paginateArray(matched, {
+      keyOf: (node) => node.nodeId,
       limit: request.limit,
       cursor: request.cursor,
-      items: matched,
+      scope: reactListScope(SEARCH_TOOL_NAME, deviceId, { query, rootId, match, noHost }),
     });
 
     return {
@@ -1256,7 +1250,8 @@ export const createReactTreeStore = (options?: {
   const getTree = (deviceId: string, rawRequest: unknown): ReactGetTreeResult => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
-    const rootId = getOptionalRootId(request.root);
+    const rootId =
+      request.root !== undefined ? resolveNodeId(state, request.root, 'root') : undefined;
     const depth = normalizeDepth(request.depth);
     const noHost = normalizeBoolean(request.noHost, 'noHost');
 
@@ -1318,14 +1313,13 @@ export const createReactTreeStore = (options?: {
       walk(traversalRoot, 0);
     }
 
-    const { items, totalCount, page } = paginateReactList({
-      deviceId,
-      tool: GET_TREE_TOOL_NAME,
-      filters: { rootId, depth, noHost },
+    const { items, page } = paginateArray(allItems, {
+      keyOf: (node) => node.nodeId,
       limit: request.limit,
       cursor: request.cursor,
-      items: allItems,
+      scope: reactListScope(GET_TREE_TOOL_NAME, deviceId, { rootId, depth, noHost }),
     });
+    const totalCount = allItems.length;
 
     return {
       roots: traversalRoots,
@@ -1354,13 +1348,11 @@ export const createReactTreeStore = (options?: {
       .map((childId) => state.nodesById.get(childId))
       .filter((child): child is ReactNodeRecord => Boolean(child));
 
-    const { items, page } = paginateReactList({
-      deviceId,
-      tool: GET_CHILDREN_TOOL_NAME,
-      filters: { nodeId, noHost },
+    const { items, page } = paginateArray(children, {
+      keyOf: (node) => node.nodeId,
       limit: request.limit,
       cursor: request.cursor,
-      items: children,
+      scope: reactListScope(GET_CHILDREN_TOOL_NAME, deviceId, { nodeId, noHost }),
     });
 
     return {
@@ -1389,14 +1381,13 @@ export const createReactTreeStore = (options?: {
           a.nodeId - b.nodeId,
       );
 
-    const { items, totalCount, page } = paginateReactList({
-      deviceId,
-      tool: GET_ERRORS_TOOL_NAME,
-      filters: { rootId },
+    const { items, page } = paginateArray(affected, {
+      keyOf: (node) => node.nodeId,
       limit: request.limit,
       cursor: request.cursor,
-      items: affected,
+      scope: reactListScope(GET_ERRORS_TOOL_NAME, deviceId, { rootId }),
     });
+    const totalCount = affected.length;
 
     return {
       items: items.map((node) => ensureNodeSummaryForState(state, node)),
@@ -1571,13 +1562,11 @@ export const createReactTreeStore = (options?: {
         ? toHookEntries(scopedValue, maxValueLength)
         : toInspectableEntries(scopedValue, maxValueLength);
 
-    const { items, page } = paginateReactList({
-      deviceId,
-      tool: toolName,
-      filters: { nodeId, kind, path, maxValueLength },
+    const { items, page } = paginateArray(entries, {
+      keyOf: (entry) => entry.name,
       limit: request.limit,
       cursor: request.cursor,
-      items: entries,
+      scope: reactListScope(toolName, deviceId, { nodeId, kind, path, maxValueLength }),
     });
 
     return { items, page };
@@ -1606,8 +1595,8 @@ export const createReactTreeStore = (options?: {
       allItems.push({
         fiberId,
         displayName,
-        actualDurationMs,
-        selfDurationMs: commitData.fiberSelfDurations.get(fiberId) ?? 0,
+        actualDurationMs: roundMs(actualDurationMs),
+        selfDurationMs: roundMs(commitData.fiberSelfDurations.get(fiberId) ?? 0),
         isSlow: actualDurationMs > slowRenderThresholdMs,
         ...(changeTypeHints.length > 0 ? { changeTypeHints } : {}),
         ...(changedKeys ? { changedKeys } : {}),
@@ -1621,23 +1610,26 @@ export const createReactTreeStore = (options?: {
       allItems.sort((a, b) => b.actualDurationMs - a.actualDurationMs || a.fiberId - b.fiberId);
     }
 
-    const { items, page } = paginateReactList({
-      deviceId,
-      tool: GET_RENDER_DATA_TOOL_NAME,
-      filters: { rootId, commitIndex, sort, slowRenderThresholdMs },
+    const { items, page } = paginateArray(allItems, {
+      keyOf: (item) => item.fiberId,
       limit: request.limit,
       cursor: request.cursor,
-      items: allItems,
+      scope: reactListScope(GET_RENDER_DATA_TOOL_NAME, deviceId, {
+        rootId,
+        commitIndex,
+        sort,
+        slowRenderThresholdMs,
+      }),
     });
 
     return {
       commit: {
         rootId,
         commitIndex,
-        durationMs: commitData.duration,
-        effectDurationMs: commitData.effectDuration,
-        passiveEffectDurationMs: commitData.passiveEffectDuration,
-        timestampMs: commitData.timestamp,
+        durationMs: roundMs(commitData.duration),
+        effectDurationMs: roundOptionalMs(commitData.effectDuration),
+        passiveEffectDurationMs: roundOptionalMs(commitData.passiveEffectDuration),
+        timestampMs: roundMs(commitData.timestamp),
         priorityLevel: commitData.priorityLevel,
       },
       summary: {
@@ -1729,12 +1721,12 @@ export const createReactTreeStore = (options?: {
       ({ rootId: commitRootId, commitIndex, commit }) => ({
         rootId: commitRootId,
         commitIndex,
-        durationMs: commit.duration,
-        timestampMs: commit.timestamp,
+        durationMs: roundMs(commit.duration),
+        timestampMs: roundMs(commit.timestamp),
         renderedFiberCount: commit.fiberActualDurations.size,
         isSlow: commit.duration > slowRenderThresholdMs,
-        effectDurationMs: commit.effectDuration,
-        passiveEffectDurationMs: commit.passiveEffectDuration,
+        effectDurationMs: roundOptionalMs(commit.effectDuration),
+        passiveEffectDurationMs: roundOptionalMs(commit.passiveEffectDuration),
         priorityLevel: commit.priorityLevel,
         updaterCount: commit.updaters?.length ?? 0,
         hasChangeDescriptions: commit.changeDescriptions !== null,
@@ -1748,14 +1740,17 @@ export const createReactTreeStore = (options?: {
       );
     }
 
-    const { items, totalCount, page } = paginateReactList({
-      deviceId,
-      tool: GET_PROFILE_TIMELINE_TOOL_NAME,
-      filters: { rootId, sort, slowRenderThresholdMs },
+    const { items, page } = paginateArray(allItems, {
+      keyOf: (item) => `${item.rootId}:${item.commitIndex}`,
       limit: request.limit,
       cursor: request.cursor,
-      items: allItems,
+      scope: reactListScope(GET_PROFILE_TIMELINE_TOOL_NAME, deviceId, {
+        rootId,
+        sort,
+        slowRenderThresholdMs,
+      }),
     });
+    const totalCount = allItems.length;
 
     return {
       items,
@@ -1763,7 +1758,9 @@ export const createReactTreeStore = (options?: {
       summary: {
         roots: session.roots,
         totalCommits: allItems.length,
-        totalRenderDurationMs: allItems.reduce((total, item) => total + item.durationMs, 0),
+        totalRenderDurationMs: roundMs(
+          session.commits.reduce((total, { commit }) => total + commit.duration, 0),
+        ),
         slowCommitCount: allItems.filter((item) => item.isSlow).length,
         slowRenderThresholdMs,
         ...(session.skippedRootIds.length > 0 ? { skippedRootIds: session.skippedRootIds } : {}),
@@ -1858,17 +1855,24 @@ export const createReactTreeStore = (options?: {
       // which is seventeen characters of noise per row at microsecond precision
       // nothing measured here has.
       aggregate.avgDurationMs = roundMs(aggregate.totalDurationMs / aggregate.renderCount);
+      aggregate.totalDurationMs = roundMs(aggregate.totalDurationMs);
+      aggregate.maxDurationMs = roundMs(aggregate.maxDurationMs);
+      aggregate.totalSelfDurationMs = roundMs(aggregate.totalSelfDurationMs);
     }
     allItems.sort(compareComponentRenders(sort));
 
-    const { items, totalCount, page } = paginateReactList({
-      deviceId,
-      tool: GET_COMPONENT_RENDERS_TOOL_NAME,
-      filters: { rootId, fiberId, sort, slowRenderThresholdMs },
+    const { items, page } = paginateArray(allItems, {
+      keyOf: (item) => `${item.rootId}:${item.fiberId}`,
       limit: request.limit,
       cursor: request.cursor,
-      items: allItems,
+      scope: reactListScope(GET_COMPONENT_RENDERS_TOOL_NAME, deviceId, {
+        rootId,
+        fiberId,
+        sort,
+        slowRenderThresholdMs,
+      }),
     });
+    const totalCount = allItems.length;
 
     return {
       items: items.map(({ sortName, ...item }) => {

@@ -98,6 +98,96 @@ describe('paginated local domain contracts', () => {
   });
 });
 
+describe('React default columns', () => {
+  it('identifies nodes by label and keeps every other column selectable', async () => {
+    const react = createReactDomainService({
+      sessionId: 'session-1',
+      sendReactDevToolsMessage() {},
+    });
+    const pagination = (name: string) =>
+      react.getTools().find((tool) => tool.name === name)?.pagination;
+
+    expect(pagination('getTree')?.defaultFields).toEqual([
+      'label',
+      'displayName',
+      'childCount',
+      'depth',
+    ]);
+    expect(pagination('getChildren')?.defaultFields).toEqual([
+      'label',
+      'displayName',
+      'childCount',
+    ]);
+    expect(pagination('searchNodes')?.defaultFields).toEqual([
+      'label',
+      'displayName',
+      'childCount',
+      'parentLabel',
+    ]);
+    for (const name of ['getTree', 'getChildren', 'searchNodes']) {
+      expect(pagination(name)?.fields).toEqual(
+        expect.arrayContaining([
+          'nodeId',
+          'elementType',
+          'key',
+          'parentId',
+          'errorCount',
+          'warningCount',
+        ]),
+      );
+    }
+    expect(pagination('getTree')?.fields).toContain('childIds');
+
+    expect(pagination('getComponentRenders')?.defaultFields).not.toContain('avgDurationMs');
+    expect(pagination('getComponentRenders')?.fields).toContain('avgDurationMs');
+
+    await react.dispose();
+  });
+});
+
+describe('declared page metadata', () => {
+  it('declares which result keys a page carries for every paginated built-in tool', async () => {
+    const react = createReactDomainService({
+      sessionId: 'session-1',
+      sendReactDevToolsMessage() {},
+    });
+    const network = createNetworkDomainService({
+      getSessionInfo: () => ({ sessionId: 'session-1', pageId: 'page-1', deviceId: 'device-1' }),
+      sendCommand: async () => ({}),
+      subscribeToCDPEvent: () => () => {},
+    });
+
+    const declared = Object.fromEntries(
+      [...react.getTools(), ...network.getTools()]
+        .filter((tool) => tool.pagination)
+        .map((tool) => [tool.name, tool.pagination?.meta]),
+    );
+
+    expect(declared).toEqual({
+      getTree: ['roots', 'totalCount'],
+      getChildren: [],
+      getProps: [],
+      getState: [],
+      getHooks: [],
+      searchNodes: [],
+      getErrors: ['totalCount', 'summary'],
+      getComponentRenders: ['totalCount', 'summary'],
+      getProfileTimeline: ['totalCount', 'summary'],
+      getRenderData: ['commit', 'summary'],
+      listRequests: [],
+    });
+
+    // The SDK result is untouched: what a page leaves out is still returned.
+    const tree = (await react.callTool('getTree', {})) as Record<string, unknown>;
+    expect(Object.keys(tree)).toEqual(expect.arrayContaining(['roots', 'totalCount']));
+    const requests = (await network.callTool('listRequests', {})) as Record<string, unknown>;
+    expect(requests).toHaveProperty('recording');
+
+    await react.dispose();
+    await network.dispose();
+  });
+});
+
 describe('memory domain service', () => {
   it('waits for pending heap snapshot chunk writes before finalizing', async () => {
     const listeners = new Map<

@@ -1,3 +1,5 @@
+import type { PageEnvelope } from '@rozenite/agent-shared';
+
 export interface ReactNodeSummary {
   nodeId: number;
   label: string;
@@ -56,11 +58,7 @@ export interface ReactDevToolsBridgeMessage {
 
 export interface ReactSearchNodesResult {
   items: ReactNodeSummary[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }
 
 export interface ReactTreeNode extends ReactNodeSummary {
@@ -72,20 +70,12 @@ export interface ReactGetTreeResult {
   roots: number[];
   items: ReactTreeNode[];
   totalCount: number;
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }
 
 export interface ReactGetChildrenResult {
   items: ReactNodeSummary[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }
 
 export type ReactComponentSection = 'props' | 'state' | 'hooks';
@@ -109,11 +99,7 @@ export interface ReactInspectableEntry {
 
 export interface ReactGetInspectableResult {
   items: ReactInspectableEntry[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }
 
 export interface ReactStartProfilingResult {
@@ -207,11 +193,7 @@ export interface ReactGetRenderDataResult {
     hasChangeDescriptions: boolean;
   };
   items: ReactRenderDataItem[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }
 
 export interface ReactGetErrorsResult {
@@ -223,11 +205,7 @@ export interface ReactGetErrorsResult {
     totalErrors: number;
     totalWarnings: number;
   };
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }
 
 export type ReactProfileTimelineSort = 'timeline' | 'duration-desc';
@@ -267,11 +245,7 @@ export interface ReactGetProfileTimelineResult {
     /** Roots left out because their data arrived from more than one renderer. */
     skippedRootIds?: number[];
   };
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }
 
 export type ReactComponentRendersSort =
@@ -312,9 +286,5 @@ export interface ReactGetComponentRendersResult {
     slowRenderThresholdMs: number;
     hasChangeDescriptions: boolean;
   };
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 }

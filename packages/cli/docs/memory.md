@@ -9,9 +9,13 @@ Capture one-off heap snapshots or run allocation sampling over a reproduction. M
 
 ## Tools
 
-- `takeHeapSnapshot` -> `{}` | `{"nameHint":"before-login"}`
-- `startSampling` -> `{}`
-- `stopSampling` -> `{}` | `{"nameHint":"home-screen"}`
+```sh
+npx rozenite agent memory takeHeapSnapshot
+npx rozenite agent memory takeHeapSnapshot --nameHint before-login
+npx rozenite agent memory startSampling
+npx rozenite agent memory startSampling --samplingInterval 16384
+npx rozenite agent memory stopSampling --nameHint home-screen
+```
 
 ## Flow
 
@@ -20,7 +24,8 @@ Capture one-off heap snapshots or run allocation sampling over a reproduction. M
 Sampling:
 `startSampling` -> reproduce issue -> `stopSampling`.
 
-Returned artifact metadata includes the Metro-managed absolute and relative paths.
+Calls return only artifact metadata, including the Metro-managed absolute and
+relative paths; the snapshot or profile itself stays on disk.
 
 ## Platform availability
 
@@ -28,4 +33,4 @@ Returned artifact metadata includes the Metro-managed absolute and relative path
 sampling (`startSampling`, `stopSampling`) is React Native only — Lynx's
 JS engine implements heap snapshots but not sampling — so on a Lynx
 session this domain is reported `degraded` and the two sampling tools are
-absent from `list-tools`.
+absent from its tool listing (`npx rozenite agent memory`).
