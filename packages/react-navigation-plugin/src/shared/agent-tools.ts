@@ -68,6 +68,11 @@ export type ReactNavigationActionDetails = NavigationActionHistoryEntry & {
 
 export type ReactNavigationGetActionDetailsArgs = {
   id: number;
+  /**
+   * Accepted for symmetry with `list-actions`: details always carry `state`
+   * and `origin`. An unknown value is an error.
+   */
+  include?: ReactNavigationListActionsInclude[];
 };
 
 export type ReactNavigationGetActionDetailsResult = ReactNavigationActionDetails;
@@ -202,7 +207,7 @@ export const reactNavigationToolDefinitions = {
           type: 'array',
           items: { type: 'string', enum: ['state', 'origin'] },
           description:
-            'Heavy fields to add to each row: "state" (navigation state after the action) and "origin" (captured dispatch stack).',
+            'Heavy fields to add to each row: "state" (navigation state after the action) and "origin" (captured dispatch stack). Unknown values are rejected.',
         },
       },
     },
@@ -226,6 +231,12 @@ export const reactNavigationToolDefinitions = {
         id: {
           type: 'number',
           description: 'Action id from list-actions.',
+        },
+        include: {
+          type: 'array',
+          items: { type: 'string', enum: ['state', 'origin'] },
+          description:
+            'Accepted for symmetry with list-actions; details always include "state" and "origin". Unknown values are rejected.',
         },
       },
       required: ['id'],
