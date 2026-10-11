@@ -1,6 +1,7 @@
 import type { FsEntry } from '../shared/protocol';
 import { joinPath, normalizeDirPath } from '../shared/path';
 import type { FileSystemAdapter, FileSystemRoot } from './fileSystemProvider';
+import { base64DecodedLength } from './byte-range';
 
 export type ExportedFileTransfer = {
   provider: FileSystemAdapter['provider'];
@@ -19,9 +20,18 @@ export type ImportedFileTransfer = {
   overwriteRequired?: boolean;
 };
 
+const assertWithinExportLimit = (path: string, size: number, maxBytes: number | undefined) => {
+  if (maxBytes !== undefined && size > maxBytes) {
+    throw new Error(
+      `File "${path}" is ${size} bytes, larger than maxBytes (${maxBytes}). Pass a larger maxBytes to export it.`,
+    );
+  }
+};
+
 export async function exportFileTransfer(
   provider: FileSystemAdapter,
   path: string,
+  { maxBytes }: { maxBytes?: number } = {},
 ): Promise<ExportedFileTransfer> {
   if (!provider.readFileBase64) {
     throw new Error('The active filesystem adapter does not support export.');
@@ -35,7 +45,12 @@ export async function exportFileTransfer(
     throw new Error(`Path "${entry.path}" is a directory, not a file.`);
   }
 
+  if (typeof entry.size === 'number') {
+    assertWithinExportLimit(entry.path, entry.size, maxBytes);
+  }
+
   const file = await provider.readFileBase64(entry.path);
+  assertWithinExportLimit(entry.path, file.size ?? base64DecodedLength(file.base64), maxBytes);
 
   return {
     provider: provider.provider,

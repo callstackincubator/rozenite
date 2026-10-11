@@ -11,6 +11,15 @@ export type FileSystemReadFileArgs = FileSystemPathArgs & {
   maxBytes?: number;
 };
 
+/** Largest `maxBytes` read-text-file accepts (10 MB). */
+export const FILE_SYSTEM_MAX_TEXT_BYTES = 10_000_000;
+/** Default `maxBytes` of read-text-file. */
+export const FILE_SYSTEM_DEFAULT_TEXT_BYTES = 16_384;
+/** Default `maxBytes` of read-image-file with `inline: true`. */
+export const FILE_SYSTEM_DEFAULT_INLINE_IMAGE_BYTES = 262_144;
+/** Default `maxBytes` of export-file. */
+export const FILE_SYSTEM_DEFAULT_EXPORT_BYTES = 1_048_576;
+
 export type FileSystemListRootsArgs = undefined;
 
 export type FileSystemListRootsResult = FsRoots;
@@ -37,24 +46,38 @@ export type FileSystemReadEntryResult = {
   entry: FsEntry;
 };
 
-export type FileSystemReadTextFileArgs = FileSystemReadFileArgs;
+export type FileSystemReadTextFileArgs = FileSystemReadFileArgs & {
+  /** Byte offset to start reading from. Defaults to 0. */
+  offset?: number;
+};
 
 export type FileSystemReadTextFileResult = {
   provider: FileSystemProvider;
   path: string;
   mimeTypeHint: string | null;
   size: number | null;
+  /** The text between `offset` and `offset + maxBytes`. */
   content: string;
+  /** Byte offset of the first byte of `content`. */
+  offset: number;
+  /** Size in bytes of the whole text the provider read. */
+  totalBytes: number;
+  /** Whether bytes after `content` were left out. */
+  truncated: boolean;
 };
 
-export type FileSystemReadImageFileArgs = FileSystemReadFileArgs;
+export type FileSystemReadImageFileArgs = FileSystemReadFileArgs & {
+  /** Return the image as a data URI. Without it only metadata is returned. */
+  inline?: boolean;
+};
 
 export type FileSystemReadImageFileResult = {
   provider: FileSystemProvider;
   path: string;
   mimeTypeHint: string | null;
   size: number | null;
-  dataUri: string;
+  /** Present only with `inline: true`. */
+  dataUri?: string;
 };
 
 export type FileSystemAgentTransferAttribution = {
@@ -63,7 +86,10 @@ export type FileSystemAgentTransferAttribution = {
   operation: 'export-file' | 'import-file';
 };
 
-export type FileSystemExportFileArgs = FileSystemPathArgs;
+export type FileSystemExportFileArgs = FileSystemPathArgs & {
+  /** Largest file, in bytes, the export returns. Defaults to 1048576. */
+  maxBytes?: number;
+};
 
 export type FileSystemExportFileResult = {
   provider: FileSystemProvider;
@@ -142,7 +168,7 @@ export const fileSystemToolDefinitions = {
   readTextFile: defineAgentToolContract<FileSystemReadTextFileArgs, FileSystemReadTextFileResult>({
     name: 'read-text-file',
     description:
-      'Read a text-style preview for a file path. Non-text files fall back to a hex-style binary preview.',
+      'Read a text-style preview for a file path, up to maxBytes (16384 by default) starting at offset. The result reports totalBytes and truncated. Non-text files fall back to a hex-style binary preview.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -150,9 +176,14 @@ export const fileSystemToolDefinitions = {
           type: 'string',
           description: 'Absolute or provider-root-qualified file path.',
         },
+        offset: {
+          type: 'integer',
+          description:
+            'Byte offset to start reading from. Defaults to 0. Pass the previous offset plus maxBytes to read the next range.',
+        },
         maxBytes: {
-          type: 'number',
-          description: 'Maximum preview size in bytes. Defaults to 10000000.',
+          type: 'integer',
+          description: 'Maximum number of bytes to return. Defaults to 16384, max 10000000.',
         },
       },
       required: ['path'],
@@ -163,7 +194,8 @@ export const fileSystemToolDefinitions = {
     FileSystemReadImageFileResult
   >({
     name: 'read-image-file',
-    description: 'Read an image preview for a file path and return it as a data URI.',
+    description:
+      'Read image metadata (path, mimeTypeHint, size) for a file path. Pass inline: true to also return the image as a data URI.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -171,9 +203,14 @@ export const fileSystemToolDefinitions = {
           type: 'string',
           description: 'Absolute or provider-root-qualified image file path.',
         },
+        inline: {
+          type: 'boolean',
+          description: 'Also return the image as a base64 data URI. Defaults to false.',
+        },
         maxBytes: {
-          type: 'number',
-          description: 'Maximum preview size in bytes. Defaults to 10000000.',
+          type: 'integer',
+          description:
+            'Largest image, in bytes, returned inline. Larger images fail. Defaults to 262144, max 10000000.',
         },
       },
       required: ['path'],
@@ -189,6 +226,10 @@ export const fileSystemToolDefinitions = {
         path: {
           type: 'string',
           description: 'Absolute or provider-root-qualified file path.',
+        },
+        maxBytes: {
+          type: 'integer',
+          description: 'Largest file, in bytes, to export. Larger files fail. Defaults to 1048576.',
         },
       },
       required: ['path'],

@@ -214,7 +214,31 @@ describe('createFileSystemAgentHandlers', () => {
       mimeTypeHint: null,
       size: 42,
       content: 'hello world',
+      offset: 0,
+      totalBytes: 11,
+      truncated: false,
     });
+  });
+
+  it('returns 16384 bytes of text by default and reads further ranges by offset', async () => {
+    const text = 'a'.repeat(20_000);
+    const provider = createProvider({ readTextFile: vi.fn(async () => text) }, [
+      createEntry({ path: '/tmp/big.txt', size: 20_000 }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider);
+
+    const first = await handlers.readTextFile({ path: '/tmp/big.txt' });
+    expect(first.content).toHaveLength(16_384);
+    expect(first).toMatchObject({ offset: 0, totalBytes: 20_000, truncated: true });
+    expect(provider.readTextFile).toHaveBeenCalledWith('/tmp/big.txt', 10_000_000);
+
+    const rest = await handlers.readTextFile({ path: '/tmp/big.txt', offset: 16_384 });
+    expect(rest.content).toHaveLength(20_000 - 16_384);
+    expect(rest.truncated).toBe(false);
+
+    await expect(
+      handlers.readTextFile({ path: '/tmp/big.txt', maxBytes: 10_000_001 }),
+    ).rejects.toThrow('"maxBytes" must be at most 10000000');
   });
 
   it('supports binary fallback text previews through the provider', async () => {
@@ -265,7 +289,30 @@ describe('createFileSystemAgentHandlers', () => {
     );
   });
 
-  it('reads image previews', async () => {
+  it('returns image metadata without reading the image unless inline is requested', async () => {
+    const provider = createProvider(undefined, [
+      createEntry({
+        path: '/tmp/photo.png',
+        name: 'photo.png',
+        mimeTypeHint: 'image/png',
+        size: 128,
+      }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider);
+
+    await expect(handlers.readImageFile({ path: '/tmp/photo.png' })).resolves.toEqual({
+      provider: 'expo',
+      path: '/tmp/photo.png',
+      mimeTypeHint: 'image/png',
+      size: 128,
+    });
+    expect(provider.readImageBase64).not.toHaveBeenCalled();
+
+    await handlers.readImageFile({ path: '/tmp/photo.png', inline: true });
+    expect(provider.readImageBase64).toHaveBeenCalledWith('/tmp/photo.png', 262_144);
+  });
+
+  it('reads image previews inline', async () => {
     const provider = createProvider(undefined, [
       createEntry({
         path: '/tmp/photo.png',
@@ -277,7 +324,7 @@ describe('createFileSystemAgentHandlers', () => {
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
     await expect(
-      handlers.readImageFile({ path: '/tmp/photo.png', maxBytes: 1024 }),
+      handlers.readImageFile({ path: '/tmp/photo.png', inline: true, maxBytes: 1024 }),
     ).resolves.toEqual({
       provider: 'expo',
       path: '/tmp/photo.png',
@@ -305,9 +352,9 @@ describe('createFileSystemAgentHandlers', () => {
     );
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(handlers.readImageFile({ path: '/tmp/photo.png', maxBytes: 100 })).rejects.toThrow(
-      'File is too large for preview',
-    );
+    await expect(
+      handlers.readImageFile({ path: '/tmp/photo.png', inline: true, maxBytes: 100 }),
+    ).rejects.toThrow('File is too large for preview');
   });
 
   it('rejects agent export when agent export is not enabled', async () => {
@@ -347,6 +394,36 @@ describe('createFileSystemAgentHandlers', () => {
         operation: 'export-file',
       },
     });
+  });
+
+  it('refuses to export files larger than maxBytes (1048576 by default)', async () => {
+    const provider = createProvider(undefined, [
+      createEntry({ path: 'file:///documents/big.bin', name: 'big.bin', size: 1_048_577 }),
+      createEntry({ path: 'file:///documents/unknown.bin', name: 'unknown.bin', size: null }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider, {
+      import: false,
+      export: true,
+    });
+
+    await expect(handlers.exportFile({ path: 'file:///documents/big.bin' })).rejects.toThrow(
+      'larger than maxBytes (1048576)',
+    );
+    expect(provider.readFileBase64).not.toHaveBeenCalled();
+    await expect(
+      handlers.exportFile({ path: 'file:///documents/big.bin', maxBytes: 2_000_000 }),
+    ).resolves.toMatchObject({ base64: 'AAECAw==' });
+
+    // Size unknown up front: checked against the bytes actually read.
+    vi.mocked(provider.readFileBase64!).mockResolvedValueOnce({
+      fileName: 'unknown.bin',
+      mime: 'application/octet-stream',
+      size: null,
+      base64: 'AAECAw==',
+    });
+    await expect(
+      handlers.exportFile({ path: 'file:///documents/unknown.bin', maxBytes: 3 }),
+    ).rejects.toThrow('is 4 bytes, larger than maxBytes (3)');
   });
 
   it('rejects agent export for directories and paths outside roots', async () => {
