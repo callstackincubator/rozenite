@@ -182,7 +182,7 @@ export const resolveMetroTarget = async (
 
   if (deviceIds.size > 1) {
     throw new Error(
-      'Multiple connected devices detected. Run `rozenite agent targets` and provide --deviceId <id>.',
+      'Multiple connected devices detected. Run `rozenite agent targets` and pass --device <id>.',
     );
   }
 
