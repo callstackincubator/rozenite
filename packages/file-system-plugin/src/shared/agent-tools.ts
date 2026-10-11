@@ -17,7 +17,10 @@ export type FileSystemReadFileArgs = FileSystemPathArgs & {
   maxBytes?: number;
 };
 
-/** Largest `maxBytes` read-text-file accepts (10 MB). */
+/**
+ * Largest file read-text-file loads for a range that ends within it (10 MB).
+ * A range reaching past it, or `maxBytes: 0`, reads the whole file.
+ */
 export const FILE_SYSTEM_MAX_TEXT_BYTES = 10_000_000;
 /** Default `maxBytes` of read-text-file. */
 export const FILE_SYSTEM_DEFAULT_TEXT_BYTES = 16_384;
@@ -220,7 +223,8 @@ export const fileSystemToolDefinitions = {
         },
         maxBytes: {
           type: 'integer',
-          description: 'Maximum number of bytes to return. Defaults to 16384, max 10000000.',
+          description:
+            'Maximum number of bytes to return. Defaults to 16384. Files over 10 MB are refused unless offset + maxBytes passes 10000000; then, as with maxBytes 0, the whole file is read on the device first.',
         },
       },
       required: ['path'],

@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
-import { paginateArray } from '@rozenite/agent-shared';
+import { paginateArray, sliceUtf8 } from '@rozenite/agent-shared';
 import type { FileSystemAdapter, UseFileSystemDevToolsOptions } from './fileSystemProvider';
 import {
   resolveAgentFileTransferCapabilities,
   resolveFileSystemAdapter,
 } from './fileSystemProvider';
 import { exportFileTransfer, importFileTransfer } from './fileTransfer';
-import { normalizeByteArg, sliceUtf8 } from './byte-range';
+import { normalizeByteArg } from './byte-range';
 import {
   FILE_SYSTEM_AGENT_PLUGIN_ID,
   FILE_SYSTEM_DEFAULT_EXPORT_BYTES,
@@ -154,8 +154,9 @@ export const createFileSystemAgentHandlers = (
     maxBytes: rawMaxBytes,
   }: FileSystemReadTextFileArgs): Promise<FileSystemReadTextFileResult> => {
     const offset = normalizeByteArg(rawOffset, 'offset', 0, { min: 0 });
+    // 0 kept its old meaning: the whole file.
     const maxBytes = normalizeByteArg(rawMaxBytes, 'maxBytes', FILE_SYSTEM_DEFAULT_TEXT_BYTES, {
-      max: FILE_SYSTEM_MAX_TEXT_BYTES,
+      min: 0,
     });
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
@@ -164,17 +165,27 @@ export const createFileSystemAgentHandlers = (
       throw new Error(`Path "${entry.path}" is a directory, not a file.`);
     }
 
-    // Providers refuse files above their limit rather than cutting them, so
-    // read up to the ceiling and take the requested range here.
-    const content = await provider.readTextFile(entry.path, FILE_SYSTEM_MAX_TEXT_BYTES);
-    const { text, ...range } = sliceUtf8(content, offset, maxBytes);
+    // Providers refuse a file above the limit they are given rather than cut
+    // it, so they read the whole file and the range is taken here. 10 MB is
+    // the ceiling for ranges inside it; a range reaching past it (or
+    // `maxBytes: 0`) lifts the ceiling, so every byte of a larger file stays
+    // reachable.
+    const providerLimit =
+      maxBytes === 0 || offset + maxBytes > FILE_SYSTEM_MAX_TEXT_BYTES
+        ? 0
+        : FILE_SYSTEM_MAX_TEXT_BYTES;
+    const content = await provider.readTextFile(entry.path, providerLimit);
+    const { slice, ...range } = sliceUtf8(content, {
+      offset,
+      maxBytes: maxBytes === 0 ? Number.MAX_SAFE_INTEGER : maxBytes,
+    });
 
     return {
       provider: provider.provider,
       path: entry.path,
       mimeTypeHint: entry.mimeTypeHint ?? null,
       size: entry.size ?? null,
-      content: text,
+      content: slice,
       ...range,
     };
   },
