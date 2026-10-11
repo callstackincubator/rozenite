@@ -3,6 +3,7 @@ import type {
   AgentTool,
   AgentToolTraits,
   AgentToolPagination,
+  AgentToolRows,
   AgentToolDescriptor,
   CallAgentSessionToolRequest,
   CallAgentSessionToolResponse,
@@ -62,6 +63,7 @@ export interface AgentToolSchema extends AgentToolTraits {
   shortName: string;
   inputSchema: JSONSchema7;
   pagination?: AgentToolPagination;
+  rows?: AgentToolRows;
 }
 
 export interface AgentClientOptions {

@@ -5,6 +5,8 @@ export type {
   AgentTool,
   AgentToolTraits,
   AgentToolPagination,
+  AgentToolRows,
+  PaginateArrayOptions,
   PageEnvelope,
   PageResult,
   DevToolsPluginMessage,
