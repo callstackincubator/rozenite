@@ -178,6 +178,17 @@ describe('React tree store', () => {
     expect(result.items.map((item) => item.depth)).toEqual([0, 1]);
   });
 
+  it('scopes a subtree by component label as well as by node ID', () => {
+    const store = createStoreWithTree();
+
+    const byLabel = store.getTree(DEVICE_ID, { root: '@c2' });
+
+    expect(byLabel.roots).toEqual([2]);
+    expect(byLabel.items.map((item) => item.nodeId)).toEqual(
+      store.getTree(DEVICE_ID, { root: 2 }).items.map((item) => item.nodeId),
+    );
+  });
+
   it('paginates tree results with stable cursors', () => {
     const store = createStoreWithTree();
 

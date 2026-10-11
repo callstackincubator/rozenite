@@ -917,8 +917,8 @@ export const createReactDomainService = (deps: {
         type: 'object',
         properties: {
           root: {
-            type: 'integer',
-            description: 'Optional root node ID to scope the tree to a subtree.',
+            ...nodeIdentifierSchema,
+            description: 'Optional node ID or component label to scope the tree to a subtree.',
           },
           depth: {
             type: 'integer',
@@ -945,16 +945,9 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-          'depth',
-          'errorCount',
-          'warningCount',
-        ],
+        // `label` identifies the node as well as `nodeId` does and every React
+        // tool accepts it; the rest stay reachable through --fields.
+        defaultFields: ['label', 'displayName', 'childCount', 'depth'],
       }),
     },
     {
@@ -1042,15 +1035,7 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-          'errorCount',
-          'warningCount',
-        ],
+        defaultFields: ['label', 'displayName', 'childCount'],
       }),
     },
     {
@@ -1173,16 +1158,7 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-          'parentLabel',
-          'errorCount',
-          'warningCount',
-        ],
+        defaultFields: ['label', 'displayName', 'childCount', 'parentLabel'],
       }),
     },
     {
@@ -1309,13 +1285,13 @@ export const createReactDomainService = (deps: {
           'changeTypeHints',
           'changedKeys',
         ],
+        // avgDurationMs is totalDurationMs / renderCount; request it with --fields.
         defaultFields: [
           'fiberId',
           'label',
           'displayName',
           'renderCount',
           'totalDurationMs',
-          'avgDurationMs',
           'maxDurationMs',
           'changeTypeHints',
         ],

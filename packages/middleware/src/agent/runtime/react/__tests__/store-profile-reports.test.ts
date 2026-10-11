@@ -415,3 +415,63 @@ describe('React profiling aggregates without data', () => {
     expect(result.items.find((item) => item.fiberId === 3)?.avgDurationMs).toBe(2.333);
   });
 });
+
+describe('React profiling durations', () => {
+  const floaty = (): Map<number, ReactRootProfilingData> =>
+    new Map([
+      [
+        1,
+        {
+          commitData: [
+            createCommit({
+              duration: 0.1 + 0.2,
+              timestamp: 100.123456789,
+              effectDuration: 0.30000000000000004,
+              passiveEffectDuration: null,
+              fiberActualDurations: new Map([[2, 0.1 + 0.2]]),
+              fiberSelfDurations: new Map([[2, 0.123456789]]),
+            }),
+            createCommit({
+              duration: 0.7,
+              timestamp: 200,
+              fiberActualDurations: new Map([[2, 0.1 + 0.7]]),
+              fiberSelfDurations: new Map([[2, 0.1]]),
+            }),
+          ],
+        },
+      ],
+    ]);
+
+  const hasAtMostThreeDecimals = (value: unknown): boolean =>
+    typeof value !== 'number' || Math.round(value * 1000) / 1000 === value;
+
+  const collectMs = (value: unknown, found: Array<[string, unknown]> = []) => {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => collectMs(entry, found));
+    } else if (value && typeof value === 'object') {
+      for (const [key, entry] of Object.entries(value)) {
+        if (key.endsWith('Ms')) {
+          found.push([key, entry]);
+        }
+        collectMs(entry, found);
+      }
+    }
+    return found;
+  };
+
+  it('emits no duration or timestamp with more than three decimals', async () => {
+    const store = createStore(floaty());
+
+    const results = [
+      await store.getComponentRenders(DEVICE_ID, {}),
+      await store.getProfileTimeline(DEVICE_ID, {}),
+      await store.getRenderData(DEVICE_ID, { rootId: 1, commitIndex: 0 }),
+    ];
+
+    const values = results.flatMap((result) => collectMs(result));
+    expect(values.length).toBeGreaterThan(0);
+    for (const [key, value] of values) {
+      expect(hasAtMostThreeDecimals(value), `${key}=${String(value)}`).toBe(true);
+    }
+  });
+});

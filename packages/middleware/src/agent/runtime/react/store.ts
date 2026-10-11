@@ -258,7 +258,14 @@ const compareComponentRenders = (
   }
 };
 
+/**
+ * Every duration and timestamp leaves this store at microsecond precision at
+ * most: React reports floats like 0.30000000000000004, and sums of them only
+ * get longer, which is noise per row at a precision nothing measured here has.
+ */
 const roundMs = (value: number): number => Math.round(value * 1000) / 1000;
+const roundOptionalMs = (value: number | null): number | null =>
+  value === null ? null : roundMs(value);
 
 const mergeStringSets = (current: string[] | undefined, incoming: string[]): string[] => {
   if (incoming.length === 0) {
@@ -511,18 +518,6 @@ const ensureNodeExists = (state: DeviceReactTreeState, nodeId: number): ReactNod
   }
 
   return node;
-};
-
-const getOptionalRootId = (value: unknown): number | undefined => {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (!Number.isInteger(value)) {
-    throw new Error('"root" must be an integer node ID');
-  }
-
-  return Number(value);
 };
 
 const getRequestedNodeId = (
@@ -1102,8 +1097,8 @@ export const createReactTreeStore = (options?: {
           slowCommits.push({
             rootId,
             commitIndex: index,
-            durationMs,
-            timestampMs: Number(commit.timestamp) || 0,
+            durationMs: roundMs(durationMs),
+            timestampMs: roundMs(Number(commit.timestamp) || 0),
           });
         }
       }
@@ -1121,7 +1116,7 @@ export const createReactTreeStore = (options?: {
       session: {
         roots,
         totalCommits,
-        totalRenderDurationMs,
+        totalRenderDurationMs: roundMs(totalRenderDurationMs),
       },
       renders: {
         count: totalCommits,
@@ -1256,7 +1251,8 @@ export const createReactTreeStore = (options?: {
   const getTree = (deviceId: string, rawRequest: unknown): ReactGetTreeResult => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
-    const rootId = getOptionalRootId(request.root);
+    const rootId =
+      request.root !== undefined ? resolveNodeId(state, request.root, 'root') : undefined;
     const depth = normalizeDepth(request.depth);
     const noHost = normalizeBoolean(request.noHost, 'noHost');
 
@@ -1606,8 +1602,8 @@ export const createReactTreeStore = (options?: {
       allItems.push({
         fiberId,
         displayName,
-        actualDurationMs,
-        selfDurationMs: commitData.fiberSelfDurations.get(fiberId) ?? 0,
+        actualDurationMs: roundMs(actualDurationMs),
+        selfDurationMs: roundMs(commitData.fiberSelfDurations.get(fiberId) ?? 0),
         isSlow: actualDurationMs > slowRenderThresholdMs,
         ...(changeTypeHints.length > 0 ? { changeTypeHints } : {}),
         ...(changedKeys ? { changedKeys } : {}),
@@ -1634,10 +1630,10 @@ export const createReactTreeStore = (options?: {
       commit: {
         rootId,
         commitIndex,
-        durationMs: commitData.duration,
-        effectDurationMs: commitData.effectDuration,
-        passiveEffectDurationMs: commitData.passiveEffectDuration,
-        timestampMs: commitData.timestamp,
+        durationMs: roundMs(commitData.duration),
+        effectDurationMs: roundOptionalMs(commitData.effectDuration),
+        passiveEffectDurationMs: roundOptionalMs(commitData.passiveEffectDuration),
+        timestampMs: roundMs(commitData.timestamp),
         priorityLevel: commitData.priorityLevel,
       },
       summary: {
@@ -1729,12 +1725,12 @@ export const createReactTreeStore = (options?: {
       ({ rootId: commitRootId, commitIndex, commit }) => ({
         rootId: commitRootId,
         commitIndex,
-        durationMs: commit.duration,
-        timestampMs: commit.timestamp,
+        durationMs: roundMs(commit.duration),
+        timestampMs: roundMs(commit.timestamp),
         renderedFiberCount: commit.fiberActualDurations.size,
         isSlow: commit.duration > slowRenderThresholdMs,
-        effectDurationMs: commit.effectDuration,
-        passiveEffectDurationMs: commit.passiveEffectDuration,
+        effectDurationMs: roundOptionalMs(commit.effectDuration),
+        passiveEffectDurationMs: roundOptionalMs(commit.passiveEffectDuration),
         priorityLevel: commit.priorityLevel,
         updaterCount: commit.updaters?.length ?? 0,
         hasChangeDescriptions: commit.changeDescriptions !== null,
@@ -1763,7 +1759,9 @@ export const createReactTreeStore = (options?: {
       summary: {
         roots: session.roots,
         totalCommits: allItems.length,
-        totalRenderDurationMs: allItems.reduce((total, item) => total + item.durationMs, 0),
+        totalRenderDurationMs: roundMs(
+          session.commits.reduce((total, { commit }) => total + commit.duration, 0),
+        ),
         slowCommitCount: allItems.filter((item) => item.isSlow).length,
         slowRenderThresholdMs,
         ...(session.skippedRootIds.length > 0 ? { skippedRootIds: session.skippedRootIds } : {}),
@@ -1858,6 +1856,9 @@ export const createReactTreeStore = (options?: {
       // which is seventeen characters of noise per row at microsecond precision
       // nothing measured here has.
       aggregate.avgDurationMs = roundMs(aggregate.totalDurationMs / aggregate.renderCount);
+      aggregate.totalDurationMs = roundMs(aggregate.totalDurationMs);
+      aggregate.maxDurationMs = roundMs(aggregate.maxDurationMs);
+      aggregate.totalSelfDurationMs = roundMs(aggregate.totalSelfDurationMs);
     }
     allItems.sort(compareComponentRenders(sort));
 

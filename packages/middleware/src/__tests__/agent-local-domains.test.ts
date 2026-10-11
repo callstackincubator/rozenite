@@ -98,6 +98,53 @@ describe('paginated local domain contracts', () => {
   });
 });
 
+describe('React default columns', () => {
+  it('identifies nodes by label and keeps every other column selectable', async () => {
+    const react = createReactDomainService({
+      sessionId: 'session-1',
+      sendReactDevToolsMessage() {},
+    });
+    const pagination = (name: string) =>
+      react.getTools().find((tool) => tool.name === name)?.pagination;
+
+    expect(pagination('getTree')?.defaultFields).toEqual([
+      'label',
+      'displayName',
+      'childCount',
+      'depth',
+    ]);
+    expect(pagination('getChildren')?.defaultFields).toEqual([
+      'label',
+      'displayName',
+      'childCount',
+    ]);
+    expect(pagination('searchNodes')?.defaultFields).toEqual([
+      'label',
+      'displayName',
+      'childCount',
+      'parentLabel',
+    ]);
+    for (const name of ['getTree', 'getChildren', 'searchNodes']) {
+      expect(pagination(name)?.fields).toEqual(
+        expect.arrayContaining([
+          'nodeId',
+          'elementType',
+          'key',
+          'parentId',
+          'errorCount',
+          'warningCount',
+        ]),
+      );
+    }
+    expect(pagination('getTree')?.fields).toContain('childIds');
+
+    expect(pagination('getComponentRenders')?.defaultFields).not.toContain('avgDurationMs');
+    expect(pagination('getComponentRenders')?.fields).toContain('avgDurationMs');
+
+    await react.dispose();
+  });
+});
+
 describe('memory domain service', () => {
   it('waits for pending heap snapshot chunk writes before finalizing', async () => {
     const listeners = new Map<
