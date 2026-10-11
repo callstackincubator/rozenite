@@ -1,4 +1,10 @@
-import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+import {
+  defineAgentToolContract,
+  definePaginatedAgentToolContract,
+  defineRowsAgentToolContract,
+  type AgentToolContract,
+  type PageEnvelope,
+} from '@rozenite/agent-shared';
 import type { ReduxActionTrace } from './trace';
 import type { BoundedValueArgs } from './bounded-value';
 
@@ -9,8 +15,12 @@ export type ReduxDevToolsStoreInput = {
 };
 
 export type ReduxDevToolsPaginatedStoreInput = ReduxDevToolsStoreInput & {
-  offset?: number;
+  /** Page size. Defaults to 20, max 100. */
   limit?: number;
+  /** Opaque cursor from a previous page. */
+  cursor?: string;
+  /** @deprecated Use `cursor`. Index the first page starts at. */
+  offset?: number;
 };
 
 export type ReduxDevToolsActionInput = ReduxDevToolsStoreInput & {
@@ -77,9 +87,11 @@ export type ReduxDevToolsListActionsArgs = ReduxDevToolsPaginatedStoreInput;
 export type ReduxDevToolsListActionsResult = {
   store: ReduxDevToolsStoreSummary;
   total: number;
+  /** Index of the first returned action in the newest-first history. */
   offset: number;
   limit: number;
   items: ReduxDevToolsActionSummary[];
+  page: PageEnvelope;
 };
 
 export type ReduxDevToolsGetActionDetailsInclude = 'state';
@@ -138,12 +150,28 @@ const boundedValueProperties = {
 } as const;
 
 export const reduxDevToolsToolDefinitions = {
-  listStores: defineAgentToolContract<ReduxDevToolsListStoresArgs, ReduxDevToolsListStoresResult>({
+  listStores: defineRowsAgentToolContract<
+    ReduxDevToolsListStoresArgs,
+    ReduxDevToolsListStoresResult,
+    'stores'
+  >({
     name: 'list-stores',
     description: 'List all Redux DevTools store instances currently registered on the device.',
     inputSchema: {
       type: 'object',
       properties: {},
+    },
+    rows: {
+      key: 'stores',
+      fields: [
+        'instanceId',
+        'name',
+        'maxAge',
+        'actionCount',
+        'currentStateIndex',
+        'isLocked',
+        'isPaused',
+      ],
     },
   }),
   getStoreState: defineAgentToolContract<
@@ -166,25 +194,47 @@ export const reduxDevToolsToolDefinitions = {
       },
     },
   }),
-  listActions: defineAgentToolContract<
+  listActions: definePaginatedAgentToolContract<
     ReduxDevToolsListActionsArgs,
     ReduxDevToolsListActionsResult
   >({
     name: 'list-actions',
-    description: 'List Redux action history for a store in newest-first order using pagination.',
+    description:
+      'List Redux action history for a store in newest-first order using cursor pagination.',
     inputSchema: {
       type: 'object',
       properties: {
         ...storeIdProperty,
-        offset: {
-          type: 'number',
-          description: 'Pagination offset. Defaults to 0.',
-        },
         limit: {
           type: 'number',
-          description: 'Pagination size. Defaults to 20 and is capped at 100.',
+          description: 'Pagination size. Defaults to 20, max 100.',
+        },
+        cursor: {
+          type: 'string',
+          description:
+            'Opaque cursor from a previous list-actions page; the next page starts after the last action returned.',
+        },
+        offset: {
+          type: 'number',
+          description:
+            '@deprecated Use cursor. Index the first page starts at; cannot be combined with cursor.',
         },
       },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: [
+        'actionId',
+        'type',
+        'timestamp',
+        'isCurrent',
+        'isSkipped',
+        'hasError',
+        'liftedType',
+        'instanceId',
+      ],
+      defaultFields: ['actionId', 'type', 'timestamp', 'isCurrent'],
+      meta: ['total'],
     },
   }),
   getActionDetails: defineAgentToolContract<

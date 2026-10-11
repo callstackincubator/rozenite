@@ -225,6 +225,7 @@ describe('redux devtools agent helpers', () => {
           hasError: false,
         },
       ],
+      page: { limit: 1, hasMore: true, nextCursor: expect.any(String) },
     });
   });
 
@@ -257,6 +258,54 @@ describe('redux devtools agent helpers', () => {
     for (const bad of [Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(() => listReduxActionsResult({ limit: bad })).toThrow(/"limit"/);
     }
+  });
+
+  it('continues list-actions after the last action, skipping nothing when older ones are dropped', () => {
+    const liftedState = createLiftedState();
+    registerStore({ liftedState });
+
+    const first = listReduxActionsResult({ limit: 1 });
+    expect(first.items.map((item) => item.actionId)).toEqual([2]);
+
+    // A new action arrives on top while paging.
+    liftedState.actionsById[3] = ActionCreators.performAction({ type: 'counter/reset' });
+    liftedState.stagedActionIds = [0, 1, 2, 3];
+    liftedState.computedStates = [...liftedState.computedStates, { state: { count: 0 } }];
+
+    const second = listReduxActionsResult({ limit: 1, cursor: first.page.nextCursor });
+    expect(second).toMatchObject({
+      total: 3,
+      offset: 2,
+      limit: 1,
+      items: [{ actionId: 1 }],
+      page: { limit: 1, hasMore: false },
+    });
+
+    // The action the cursor points at is gone: restart.
+    const restart = listReduxActionsResult({ limit: 1 });
+    liftedState.stagedActionIds = [0, 1, 2];
+    expect(listReduxActionsResult({ cursor: restart.page.nextCursor })).toMatchObject({
+      items: [],
+      page: { reset: true },
+    });
+  });
+
+  it('still starts list-actions at a deprecated offset and defaults to 20 rows', () => {
+    registerStore();
+
+    expect(listReduxActionsResult({ offset: 1 })).toMatchObject({
+      offset: 1,
+      limit: 20,
+      items: [{ actionId: 1 }],
+    });
+    expect(() => listReduxActionsResult({ offset: 1, cursor: 'x' })).toThrow(
+      'either cursor or offset',
+    );
+    expect(reduxDevToolsToolDefinitions.listActions.pagination).toMatchObject({
+      defaultFields: ['actionId', 'type', 'timestamp', 'isCurrent'],
+      meta: ['total'],
+    });
+    expect(reduxDevToolsToolDefinitions.listStores.rows).toMatchObject({ key: 'stores' });
   });
 
   it('returns action details without computed state by default', () => {

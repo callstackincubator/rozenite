@@ -1,7 +1,7 @@
 import { ActionCreators } from '@redux-devtools/instrument';
+import { paginateArray } from '@rozenite/agent-shared';
 import type { Action } from 'redux';
 import { parse, stringify } from 'jsan';
-import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import {
   getReduxDevToolsStore,
   listReduxDevToolsStores,
@@ -268,25 +268,44 @@ export const getReduxStoreStateResult = ({
   };
 };
 
+const getDeprecatedOffset = (offset: unknown): number =>
+  typeof offset === 'number' && Number.isFinite(offset) ? Math.max(0, Math.floor(offset)) : 0;
+
 export const listReduxActionsResult = ({
   instanceId,
-  offset = 0,
-  limit = DEFAULT_PAGE_LIMIT,
+  limit,
+  cursor,
+  offset,
 }: PaginatedStoreInput): ReduxDevToolsListActionsResult => {
+  if (cursor !== undefined && offset !== undefined) {
+    throw new Error('Provide either cursor or offset, not both.');
+  }
+
   const { store, liftedState } = getStoreAndLiftedState(instanceId);
   const actionIds = getVisibleActionIds(liftedState);
-  const safeOffset = Math.max(0, Math.floor(offset));
-  const safeLimit = Number.isFinite(limit)
-    ? Math.min(MAX_PAGE_LIMIT, Math.max(1, Math.floor(limit)))
-    : DEFAULT_PAGE_LIMIT;
-  const selectedIds = actionIds.slice(safeOffset, safeOffset + safeLimit);
+  // `offset` is deprecated: it only picks where the first page starts.
+  const start = cursor === undefined ? getDeprecatedOffset(offset) : 0;
+  const { items: pageIds, page } = paginateArray(actionIds.slice(start), {
+    keyOf: (actionId) => actionId,
+    limit,
+    cursor,
+    scope: store.instanceId,
+  });
 
   return {
     store: buildStoreSummary(store),
     total: actionIds.length,
-    offset: safeOffset,
-    limit: safeLimit,
-    items: selectedIds.map((actionId) => buildActionSummary(store, liftedState, actionId)),
+    offset:
+      pageIds.length > 0
+        ? actionIds.indexOf(pageIds[0])
+        : page.reset
+          ? 0
+          : cursor !== undefined
+            ? actionIds.length
+            : Math.min(start, actionIds.length),
+    limit: page.limit,
+    items: pageIds.map((actionId) => buildActionSummary(store, liftedState, actionId)),
+    page,
   };
 };
 
