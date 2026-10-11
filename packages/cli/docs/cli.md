@@ -35,8 +35,9 @@ Example: `npx rozenite agent console getMessages --levels error --limit 10`.
 ## Sessions
 
 - The first command creates the agent session for the connected device, or
-  reuses the one already running, and prints one line on stderr saying so.
-  Every later command reuses it. There is no separate start step.
+  reuses the one already running; when it creates one it prints one line on
+  stderr saying so. Every later command reuses it. There is no separate
+  start step.
 - With more than one device connected, the command fails and lists the
   targets (`id`, name, integration). Pick the right `id` and pass
   `--device <id>`, or set `ROZENITE_DEVICE=<id>` once for the shell.
@@ -46,6 +47,9 @@ Example: `npx rozenite agent console getMessages --levels error --limit 10`.
   `npx rozenite agent session stop` when the work is done.
 - `--session <id>` (or `ROZENITE_SESSION`) uses one specific session; you
   rarely need it. Session IDs are public runtime identifiers, not secrets.
+- A flag you type wins over the environment: the CLI uses `--session`, then
+  `--device`, then `ROZENITE_SESSION`, then `ROZENITE_DEVICE`, then the only
+  connected device.
 
 ## Calling tools
 
@@ -58,6 +62,7 @@ Example: `npx rozenite agent console getMessages --levels error --limit 10`.
   Use it for an argument named like a CLI option (`session`, `device`,
   `host`, `port`, `pretty`, `fields`, `limit`, `cursor`, `args`, `schema`).
 - An unknown flag fails and lists the tool's arguments.
+- A value that starts with `-` goes after `=`: `--search=-n`.
 - Tool names ignore case, `-` and `_`: `getmessages`, `get-messages` and
   `getMessages` are the same tool.
 - Get a tool's arguments from its domain doc (`npx rozenite skills list`,

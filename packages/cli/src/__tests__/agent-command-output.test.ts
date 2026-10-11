@@ -1243,6 +1243,20 @@ describe('agent command output', () => {
       });
     });
 
+    it('takes a value that starts with - through --name=value', async () => {
+      setupClient();
+      setupConsoleTool();
+      mocks.session.tools.call.mockResolvedValueOnce({
+        items: [],
+        page: { limit: 20, hasMore: false },
+      });
+      vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+      await run('console', 'getMessages', '--search=-n', '--session', 'session-1');
+
+      expect(mocks.session.tools.call).toHaveBeenCalledWith({ search: '-n' });
+    });
+
     it('merges --args under explicit flags', async () => {
       setupClient();
       setupConsoleTool();
