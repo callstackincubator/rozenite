@@ -378,10 +378,10 @@ describe('agent command output', () => {
       { from: 'node' },
     );
 
-    // The next command is the user's command with --cursor appended: no
-    // connection options and no session id.
+    // The next command is the user's command, typed --session included,
+    // with --cursor appended.
     expect(stdoutWrite).toHaveBeenCalledWith(
-      `{"items":[{"id":"app","kind":"plugin","availability":"supported"}],"next":"npx rozenite agent domains --limit 1 --cursor ${listingCursor('app', 'domains')}"}\n`,
+      `{"items":[{"id":"app","kind":"plugin","availability":"supported"}],"next":"npx rozenite agent domains --session 'session 1' --limit 1 --cursor ${listingCursor('app', 'domains')}"}\n`,
     );
   });
 
@@ -704,7 +704,7 @@ describe('agent command output', () => {
 
     // Emitted in the new grammar even though the call used the old one.
     expect(output.next).toBe(
-      `npx rozenite agent domain listRequests --limit 1 --args '{"filter":"two words"}' --fields url,status --cursor 'next '"'"' cursor'`,
+      `npx rozenite agent domain listRequests --limit 1 --args '{"filter":"two words"}' --fields url,status --session 'session id' --pretty --cursor 'next '"'"' cursor'`,
     );
   });
 
@@ -1033,7 +1033,7 @@ describe('agent command output', () => {
     );
   });
 
-  it('drops connection options and --pretty from listing continuations', async () => {
+  it('keeps typed connection options and --pretty in listing continuations', async () => {
     setupClient();
     mocks.session.tools.list.mockResolvedValue([
       {
@@ -1070,7 +1070,7 @@ describe('agent command output', () => {
 
     const output = JSON.parse(String(stdoutWrite.mock.calls[0][0]));
     expect(output.next).toBe(
-      `npx rozenite agent network --limit 1 --cursor ${listingCursor('getRequestDetails', 'domain:network')}`,
+      `npx rozenite agent network --session 'session id' --pretty --limit 1 --cursor ${listingCursor('getRequestDetails', 'domain:network')}`,
     );
   });
 
@@ -1162,15 +1162,19 @@ describe('agent command output', () => {
       });
     };
 
-    const createdSession = (overrides: Record<string, unknown> = {}) => ({
+    const createdSession = (
+      overrides: Record<string, unknown> = {},
+      response: { created?: boolean } = {},
+    ) => ({
       session: {
         id: 'device-1-1',
         deviceId: 'device-1-1',
         deviceName: 'iPhone 17',
         status: 'connected',
-        createdAt: Date.now() + 1_000,
+        createdAt: 1,
         ...overrides,
       },
+      ...response,
     });
 
     const run = async (...argv: string[]) => {
@@ -1466,10 +1470,10 @@ describe('agent command output', () => {
         expect(process.exitCode).toBe(1);
       });
 
-      it('says once on stderr which device a new session attached to', async () => {
+      it('says on stderr which device a session attached to only when the server created it', async () => {
         setupImplicit();
         const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
-        mocks.transport.createSession.mockResolvedValue(createdSession());
+        mocks.transport.createSession.mockResolvedValue(createdSession({}, { created: true }));
 
         await run('console');
         expect(stderrWrite).toHaveBeenCalledWith(
@@ -1477,9 +1481,65 @@ describe('agent command output', () => {
         );
 
         stderrWrite.mockClear();
-        mocks.transport.createSession.mockResolvedValue(createdSession({ createdAt: 1 }));
+        mocks.transport.createSession.mockResolvedValue(createdSession({}, { created: false }));
         await run('console');
         expect(stderrWrite).not.toHaveBeenCalled();
+      });
+
+      it('prints no new-session notice when an older server omits created', async () => {
+        setupImplicit();
+        const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+        // A session that looks brand new by the clock is still not announced.
+        mocks.transport.createSession.mockResolvedValue(
+          createdSession({ createdAt: Date.now() + 60_000 }),
+        );
+
+        await run('console');
+
+        expect(mocks.client.attachSession).toHaveBeenCalledWith('device-1-1');
+        expect(stderrWrite).not.toHaveBeenCalled();
+      });
+
+      it('lets a typed --device beat ROZENITE_SESSION', async () => {
+        setupImplicit();
+        process.env.ROZENITE_SESSION = 'env-session-A';
+
+        await run('console', 'getMessages', '--device', 'dev-B');
+
+        expect(mocks.transport.createSession).toHaveBeenCalledWith({
+          deviceId: 'dev-B',
+          cliVersion: getPackageJSON().version,
+        });
+        expect(mocks.client.attachSession).toHaveBeenCalledWith('device-1-1');
+        expect(mocks.client.attachSession).not.toHaveBeenCalledWith('env-session-A');
+      });
+
+      it('prefers ROZENITE_SESSION over ROZENITE_DEVICE when no flag is typed', async () => {
+        setupImplicit();
+        process.env.ROZENITE_SESSION = 'env-session-A';
+        process.env.ROZENITE_DEVICE = 'env-device';
+
+        await run('console');
+
+        expect(mocks.transport.createSession).not.toHaveBeenCalled();
+        expect(mocks.client.attachSession).toHaveBeenCalledWith('env-session-A');
+      });
+
+      it('stops the --device session even when ROZENITE_SESSION names another', async () => {
+        setupImplicit();
+        process.env.ROZENITE_SESSION = 'env-session-A';
+        mocks.transport.listSessions.mockResolvedValue({
+          sessions: [
+            { id: 'env-session-A', deviceId: 'dev-A-1', deviceName: 'iPhone', status: 'connected' },
+            { id: 'dev-B-1', deviceId: 'dev-B-1', deviceName: 'Pixel', status: 'connected' },
+          ],
+        });
+        mocks.transport.stopSession.mockResolvedValue({ stopped: true });
+
+        await run('session', 'stop', '--device', 'dev-B');
+
+        expect(mocks.transport.stopSession).toHaveBeenCalledWith('dev-B-1');
+        expect(mocks.transport.stopSession).not.toHaveBeenCalledWith('env-session-A');
       });
 
       it('stops the resolved session when session stop has no id', async () => {
@@ -1535,7 +1595,7 @@ describe('agent command output', () => {
       );
     });
 
-    it('prints a next command in the new grammar, with only --cursor changed', async () => {
+    it('prints a next command in the new grammar, keeping every flag typed and replacing --cursor', async () => {
       setupClient();
       setupConsoleTool();
       mocks.session.tools.call.mockResolvedValueOnce({
@@ -1558,17 +1618,23 @@ describe('agent command output', () => {
         'session-1',
         '--host',
         '127.0.0.1',
+        '--port',
+        '8082',
+        '--device',
+        'ios-1',
+        '--fields',
+        'seq,text',
         '--pretty',
       );
 
       const printed = JSON.parse(output(stdoutWrite));
       expect(printed.next).toBe(
-        'npx rozenite agent console getMessages --levels error --cursor 120',
+        'npx rozenite agent console getMessages --levels error --fields seq,text --session session-1 --device ios-1 --host 127.0.0.1 --port 8082 --pretty --cursor 120',
       );
       expect(mocks.session.tools.call).toHaveBeenCalledWith({ levels: ['error'], cursor: '118' });
     });
 
-    it('rejects --fields for a tool that declares no rows', async () => {
+    it('rejects --fields (new grammar, never accepted before) for a tool that declares no rows', async () => {
       setupClient();
       const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
@@ -1576,6 +1642,52 @@ describe('agent command output', () => {
 
       expect(mocks.session.tools.call).not.toHaveBeenCalled();
       expect(output(stdoutWrite)).toContain('does not declare row fields');
+    });
+
+    it('ignores the old -v/--verbose silently for a tool that declares no rows', async () => {
+      for (const spelling of [
+        ['app', 'echo', '--verbose'],
+        ['app', 'call', '--tool', 'echo', '--args', '{}', '-v'],
+      ]) {
+        vi.clearAllMocks();
+        setupClient();
+        mocks.session.tools.call.mockResolvedValueOnce({ value: 1 });
+        const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+        const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+        await run(...spelling, '--session', 'session-1');
+
+        expect(mocks.session.tools.call, spelling.join(' ')).toHaveBeenCalledWith({});
+        expect(output(stdoutWrite), spelling.join(' ')).toBe('{"value":1}\n');
+        expect(stderrWrite, spelling.join(' ')).not.toHaveBeenCalled();
+      }
+    });
+
+    it('ignores --limit and --cursor on a tool that does not page, with a note on stderr', async () => {
+      setupClient();
+      mocks.session.tools.call.mockResolvedValueOnce({ value: 1 });
+      const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+      const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      await run(
+        'app',
+        'call',
+        '--tool',
+        'echo',
+        '--args',
+        '{"id":"1"}',
+        '--limit',
+        '5',
+        '--cursor',
+        'abc',
+        '--session',
+        'session-1',
+      );
+
+      expect(mocks.session.tools.call).toHaveBeenCalledWith({ id: '1' });
+      expect(output(stdoutWrite)).toBe('{"value":1}\n');
+      expect(stderrWrite).toHaveBeenCalledWith('Note: echo does not page; --limit was ignored.\n');
+      expect(stderrWrite).toHaveBeenCalledWith('Note: echo does not page; --cursor was ignored.\n');
     });
 
     it('prints only the metadata a paginated tool declares', async () => {
@@ -1752,6 +1864,17 @@ describe('agent command output', () => {
       expect(output(stdoutWrite)).toBe(
         '{"cols":["id","deviceName","status"],"rows":[["s-1","iPhone","connected"],["s-2","Pixel","connecting"]]}\n',
       );
+    });
+
+    it('prints the agent help for rozenite agent help', async () => {
+      setupClient();
+      const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+      await run('help');
+
+      expect(output(stdoutWrite)).toContain('Usage: test agent');
+      expect(mocks.client.attachSession).not.toHaveBeenCalled();
+      expect(mocks.transport.createSession).not.toHaveBeenCalled();
     });
 
     it('rejects a tool name given after flags with a pointer to the grammar', async () => {

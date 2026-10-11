@@ -184,14 +184,29 @@ describe('buildToolArguments', () => {
     );
   });
 
-  it('rejects --limit and --cursor for a tool that does not page', () => {
-    const noPaging = { ...base, argsJson: {}, acceptsPaging: { limit: false, cursor: false } };
-    expect(() => buildToolArguments({ ...noPaging, limit: '1' })).toThrow(
-      'Tool "tool" does not page its results; --limit does not apply.',
-    );
-    expect(() => buildToolArguments({ ...noPaging, cursor: 'c' })).toThrow(
-      /--cursor does not apply/,
-    );
+  it('ignores --limit and --cursor for a tool that does not page, and reports each', () => {
+    const ignored: string[] = [];
+    const noPaging = {
+      ...base,
+      argsJson: { id: '1' },
+      acceptsPaging: { limit: false, cursor: false },
+      onIgnored: (flag: string) => ignored.push(flag),
+    };
+    expect(buildToolArguments({ ...noPaging, limit: 'not-a-number', cursor: 'c' })).toEqual({
+      id: '1',
+    });
+    expect(ignored).toEqual(['--limit', '--cursor']);
+  });
+
+  it('passes --limit to a tool that declares limit in its schema without paging', () => {
+    expect(
+      buildToolArguments({
+        ...base,
+        argsJson: {},
+        acceptsPaging: { limit: true, cursor: false },
+        limit: '5',
+      }),
+    ).toEqual({ limit: 5 });
   });
 });
 
