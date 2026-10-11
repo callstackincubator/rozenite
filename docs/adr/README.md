@@ -23,3 +23,5 @@ Status values:
 | [0000](./0000-single-target-discovery-endpoint.md) | One Rozenite endpoint for debug-target discovery | Accepted |
 | [0001](./0001-xhr-first-network-capture.md) | XHR-first network capture with one recorder | Accepted |
 | [0002](./0002-network-activity-on-device-regression-harness.md) | On-device regression harness for Network Activity | Accepted |
+| [0004](./0004-one-agent-list-contract.md) | One agent list contract | Accepted — not yet implemented |
+| [0005](./0005-agent-cli-grammar-v3.md) | Agent CLI grammar v3 | Accepted — not yet implemented |
