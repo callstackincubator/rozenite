@@ -3,12 +3,23 @@ export type {
   UseRozenitePluginAgentToolOptions,
   UseRozeniteInAppAgentToolOptions,
 } from './src/react-native/useRozeniteAgentTool';
-export { definePaginatedAgentToolContract, isAgentToolPagination } from '@rozenite/agent-shared';
+export {
+  decodeCursor,
+  definePaginatedAgentToolContract,
+  defineRowsAgentToolContract,
+  encodeCursor,
+  isAgentToolPagination,
+  isAgentToolRows,
+  normalizePageLimit,
+  paginateArray,
+} from '@rozenite/agent-shared';
 export type {
   JSONSchema7,
   AgentTool,
   AgentToolTraits,
   AgentToolPagination,
+  AgentToolRows,
+  PaginateArrayOptions,
   PageEnvelope,
   PageResult,
   AgentMessage,

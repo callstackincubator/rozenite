@@ -10,6 +10,8 @@
 
 - **Shared Tool Types**: Common `AgentTool` and JSON-schema-like input types
 - **Paginated Tool Contracts**: Typed row fields and a shared page envelope for built-in and third-party tools
+- **One List Pager**: `paginateArray` pages any array with cursors that resume after a row, so a live list never skips or repeats one; runs in Node, browsers, Hermes, and Lynx
+- **Non-Paginated Lists**: `rows` metadata so lists that do not page can still declare their columns
 - **Row Shaping**: Frontend-neutral columnar/row-keyed encoding (`shapePaginatedRows`, `shapeToolResult`) shared by the CLI and any other Agent frontend
 - **Message Contracts**: Typed payloads for register, unregister, call, and result messages
 - **Single Protocol Constant**: Shared `AGENT_PLUGIN_ID` for the Agent transport
@@ -29,10 +31,15 @@ This package exports:
 
 - `AGENT_PLUGIN_ID`
 - `AgentTool`
-- `AgentToolPagination`
+- `AgentToolPagination` (with optional `itemsKey` and `meta`) and `isAgentToolPagination`
+- `AgentToolRows` and `isAgentToolRows`
 - `PageEnvelope`
 - `PageResult`
 - `definePaginatedAgentToolContract`
+- `defineRowsAgentToolContract`
+- `paginateArray`, `PaginateArrayOptions`, `CursorKey`, and `CursorPayload`
+- `encodeCursor` and `decodeCursor`
+- `normalizePageLimit`
 - `DEFAULT_PAGE_LIMIT`
 - `MAX_PAGE_LIMIT`
 - `parseFields`

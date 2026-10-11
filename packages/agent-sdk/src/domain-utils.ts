@@ -405,4 +405,5 @@ export const toAgentToolSchema = (tool: AgentTool): AgentToolSchema => ({
   ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
   ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
   ...(tool.pagination ? { pagination: tool.pagination } : {}),
+  ...(tool.rows ? { rows: tool.rows } : {}),
 });
