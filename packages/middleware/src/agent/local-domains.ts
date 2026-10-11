@@ -159,8 +159,26 @@ type NetworkBodyResult = {
   base64Encoded?: boolean;
   decoded?: boolean;
   mimeType?: string;
+  /** Size of the whole body in bytes, before `offset`/`maxBytes` were applied. */
+  totalBytes?: number;
+  /** True when bytes remain after the returned slice. */
+  truncated?: boolean;
+  /** Where the next slice starts; present only when `truncated` is true. */
+  nextOffset?: number;
   reason?: string;
 };
+
+const DEFAULT_BODY_MAX_BYTES = 16_384;
+
+const NETWORK_DETAIL_SECTIONS = [
+  'headers',
+  'timing',
+  'initiator',
+  'cookies',
+  'redirectChain',
+] as const;
+type NetworkDetailSection = (typeof NETWORK_DETAIL_SECTIONS)[number];
+const DEFAULT_NETWORK_DETAIL_SECTIONS: readonly NetworkDetailSection[] = ['headers'];
 
 const DEFAULT_RN_DEVTOOLS_TRACE_CATEGORIES = [
   '-*',
@@ -294,6 +312,103 @@ const isTextLikeMimeType = (mimeType: string | undefined): boolean => {
     normalized.endsWith('+json') ||
     normalized.endsWith('+xml')
   );
+};
+
+const readBodyWindow = (input: Record<string, unknown>): { maxBytes: number; offset: number } => {
+  const { maxBytes, offset } = input;
+  if (
+    maxBytes !== undefined &&
+    (typeof maxBytes !== 'number' || !Number.isInteger(maxBytes) || maxBytes < 1)
+  ) {
+    throw new Error('"maxBytes" must be a positive integer');
+  }
+  if (
+    offset !== undefined &&
+    (typeof offset !== 'number' || !Number.isInteger(offset) || offset < 0)
+  ) {
+    throw new Error('"offset" must be a non-negative integer');
+  }
+
+  return {
+    maxBytes: (maxBytes as number | undefined) ?? DEFAULT_BODY_MAX_BYTES,
+    offset: (offset as number | undefined) ?? 0,
+  };
+};
+
+const isUtf8ContinuationByte = (byte: number | undefined): boolean =>
+  byte !== undefined && (byte & 0xc0) === 0x80;
+
+/**
+ * Cut one window out of a body, counting UTF-8 bytes.
+ *
+ * Both edges are moved onto character boundaries so a multi-byte character is
+ * never split: the start moves forward, the end moves back (or forward, when
+ * `maxBytes` is smaller than the character at the start). For a base64 body
+ * every character is one byte, so the window counts base64 characters.
+ */
+const sliceBody = (
+  body: string,
+  window: { maxBytes: number; offset: number },
+): Pick<NetworkBodyResult, 'body' | 'totalBytes' | 'truncated' | 'nextOffset'> => {
+  const bytes = Buffer.from(body, 'utf8');
+  const totalBytes = bytes.length;
+
+  let start = Math.min(window.offset, totalBytes);
+  while (start < totalBytes && isUtf8ContinuationByte(bytes[start])) {
+    start += 1;
+  }
+
+  let end = Math.min(start + window.maxBytes, totalBytes);
+  while (end > start && end < totalBytes && isUtf8ContinuationByte(bytes[end])) {
+    end -= 1;
+  }
+  if (end === start && start < totalBytes) {
+    end = start + 1;
+    while (end < totalBytes && isUtf8ContinuationByte(bytes[end])) {
+      end += 1;
+    }
+  }
+
+  const truncated = end < totalBytes;
+  return {
+    body: start === 0 && end === totalBytes ? body : bytes.subarray(start, end).toString('utf8'),
+    totalBytes,
+    truncated,
+    ...(truncated ? { nextOffset: end } : {}),
+  };
+};
+
+const readDetailSections = (value: unknown): Set<NetworkDetailSection> => {
+  if (value === undefined) {
+    return new Set(DEFAULT_NETWORK_DETAIL_SECTIONS);
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`"include" must be an array of ${NETWORK_DETAIL_SECTIONS.join(', ')}`);
+  }
+
+  const sections = new Set<NetworkDetailSection>();
+  for (const entry of value) {
+    if (!NETWORK_DETAIL_SECTIONS.includes(entry as NetworkDetailSection)) {
+      throw new Error(
+        `Unknown "include" value ${JSON.stringify(entry)}. Use ${NETWORK_DETAIL_SECTIONS.join(', ')}.`,
+      );
+    }
+    sections.add(entry as NetworkDetailSection);
+  }
+
+  return sections;
+};
+
+/** Drop keys whose value is `undefined` or `null`, so absent data costs nothing. */
+const omitNullish = <T extends Record<string, unknown>>(value: T): Partial<T> => {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined && entry !== null),
+  ) as Partial<T>;
+};
+
+const getInitiatorType = (initiator: unknown): string | undefined => {
+  return getString(getOptionalRecord(initiator)?.type);
 };
 
 /**
@@ -1656,13 +1771,26 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: NETWORK_TOOL_NAMES.getRequestDetails,
-      description: 'Return detailed metadata for a captured network request without bodies.',
+      description:
+        'Return detailed metadata for a captured network request without bodies. Keys with no ' +
+        'value are omitted; initiator carries only its type unless include names "initiator".',
       inputSchema: {
         type: 'object',
         properties: {
           requestId: {
             type: 'string',
             description: 'Captured CDP requestId to inspect.',
+          },
+          include: {
+            type: 'array',
+            items: {
+              type: 'string',
+              enum: [...NETWORK_DETAIL_SECTIONS],
+            },
+            description:
+              'Optional sections to include. Defaults to ["headers"]. "timing" adds response.timing, ' +
+              '"initiator" the full initiator with its stack, "cookies" the associated and blocked ' +
+              'cookies, "redirectChain" the redirects that led here.',
           },
         },
         required: ['requestId'],
@@ -1679,6 +1807,15 @@ export const createNetworkDomainService = (deps: {
             type: 'string',
             description: 'Captured CDP requestId to inspect.',
           },
+          maxBytes: {
+            type: 'integer',
+            description: `Maximum bytes of body to return. Defaults to ${DEFAULT_BODY_MAX_BYTES}. The result reports totalBytes, truncated and, when truncated, nextOffset.`,
+          },
+          offset: {
+            type: 'integer',
+            description:
+              'Byte offset to start reading from, for reading a large body in slices. Defaults to 0.',
+          },
         },
         required: ['requestId'],
       },
@@ -1686,13 +1823,23 @@ export const createNetworkDomainService = (deps: {
     {
       name: NETWORK_TOOL_NAMES.getResponseBody,
       description:
-        'Fetch the response body for a captured network request when supported by the target.',
+        'Fetch the response body for a captured network request when supported by the target. ' +
+        'Text bodies the target sent base64-encoded are decoded; byte counts then refer to the decoded text.',
       inputSchema: {
         type: 'object',
         properties: {
           requestId: {
             type: 'string',
             description: 'Captured CDP requestId to inspect.',
+          },
+          maxBytes: {
+            type: 'integer',
+            description: `Maximum bytes of body to return. Defaults to ${DEFAULT_BODY_MAX_BYTES}. The result reports totalBytes, truncated and, when truncated, nextOffset.`,
+          },
+          offset: {
+            type: 'integer',
+            description:
+              'Byte offset to start reading from, for reading a large body in slices. Defaults to 0.',
           },
         },
         required: ['requestId'],
@@ -2004,35 +2151,67 @@ export const createNetworkDomainService = (deps: {
       throw new Error('"requestId" is required');
     }
 
+    const include = readDetailSections(input.include);
     const record = getRecordById(requestId);
+
+    let request: Record<string, unknown> | undefined;
+    if (record.request) {
+      const { headers, ...rest } = record.request;
+      request = include.has('headers') ? { ...rest, headers } : rest;
+    }
+
+    let response: Record<string, unknown> | undefined;
+    if (record.response) {
+      const { headers, timing, ...rest } = record.response;
+      response = {
+        ...rest,
+        ...(include.has('headers') ? { headers } : {}),
+        ...(include.has('timing') ? { timing } : {}),
+      };
+    }
+
+    const initiatorType = getInitiatorType(record.initiator);
+    const initiator = include.has('initiator')
+      ? record.initiator
+      : initiatorType !== undefined
+        ? { type: initiatorType }
+        : undefined;
 
     return {
       ...createNetworkStatus(state),
-      request: {
+      request: omitNullish({
         requestId: record.requestId,
-        method: record.method || record.request?.method || null,
-        url: record.url || record.request?.url || null,
-        type: record.type ?? null,
-        priority: record.priority ?? null,
-        initiator: record.initiator ?? null,
-        startTimeMs: record.startTimeMs ?? null,
-        wallTimeMs: record.wallTimeMs ?? null,
-        endTimeMs: record.endTimeMs ?? null,
-        durationMs: record.durationMs ?? null,
-        request: record.request ?? null,
-        requestHeadersExtra: record.requestHeadersExtra ?? null,
-        requestAssociatedCookies: record.requestAssociatedCookies ?? null,
-        response: record.response ?? null,
-        responseHeadersExtra: record.responseHeadersExtra ?? null,
-        responseBlockedCookies: record.responseBlockedCookies ?? null,
-        redirectChain: record.redirectChain ?? [],
+        method: record.method || record.request?.method,
+        url: record.url || record.request?.url,
+        type: record.type,
+        priority: record.priority,
+        initiator,
+        startTimeMs: record.startTimeMs,
+        wallTimeMs: record.wallTimeMs,
+        endTimeMs: record.endTimeMs,
+        durationMs: record.durationMs,
+        request,
+        ...(include.has('headers')
+          ? {
+              requestHeadersExtra: record.requestHeadersExtra,
+              responseHeadersExtra: record.responseHeadersExtra,
+            }
+          : {}),
+        ...(include.has('cookies')
+          ? {
+              requestAssociatedCookies: record.requestAssociatedCookies,
+              responseBlockedCookies: record.responseBlockedCookies,
+            }
+          : {}),
+        response,
+        ...(include.has('redirectChain') ? { redirectChain: record.redirectChain ?? [] } : {}),
         servedFromCache: record.servedFromCache ?? false,
         loadingFinished: record.loadingFinished ?? false,
         loadingFailed: record.loadingFailed ?? false,
-        failureText: record.failureText ?? null,
-        blockedReason: record.blockedReason ?? null,
-        corsErrorStatus: record.corsErrorStatus ?? null,
-      },
+        failureText: record.failureText,
+        blockedReason: record.blockedReason,
+        corsErrorStatus: record.corsErrorStatus,
+      }),
     };
   };
 
@@ -2043,6 +2222,7 @@ export const createNetworkDomainService = (deps: {
       throw new Error('"requestId" is required');
     }
 
+    const window = readBodyWindow(input);
     const record = getRecordById(requestId);
     if (!record.request?.hasPostData) {
       return {
@@ -2069,8 +2249,8 @@ export const createNetworkDomainService = (deps: {
       return {
         requestId,
         available: true,
-        body,
         base64Encoded: false,
+        ...sliceBody(body, window),
       };
     } catch (error) {
       return {
@@ -2088,6 +2268,7 @@ export const createNetworkDomainService = (deps: {
       throw new Error('"requestId" is required');
     }
 
+    const window = readBodyWindow(input);
     const record = getRecordById(requestId);
     if (record.loadingFailed) {
       return {
@@ -2125,10 +2306,10 @@ export const createNetworkDomainService = (deps: {
           return {
             requestId,
             available: true,
-            body: Buffer.from(body, 'base64').toString('utf8'),
             base64Encoded: false,
             decoded: true,
             mimeType,
+            ...sliceBody(Buffer.from(body, 'base64').toString('utf8'), window),
           };
         } catch (error) {
           return {
@@ -2142,10 +2323,10 @@ export const createNetworkDomainService = (deps: {
       return {
         requestId,
         available: true,
-        body,
         base64Encoded,
         decoded: false,
         mimeType,
+        ...sliceBody(body, window),
       };
     } catch (error) {
       return {
