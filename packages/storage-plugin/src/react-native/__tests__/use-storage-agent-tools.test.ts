@@ -89,7 +89,9 @@ describe('storage Agent tool handlers', () => {
       kind: 'cursor',
       fields: ['key'],
       defaultFields: ['key'],
+      meta: ['total'],
     });
+    expect(storageToolDefinitions.listStorages.rows).toMatchObject({ key: 'storages' });
 
     const first = await handlers.listEntries({ limit: 2 });
     expect(first).toEqual({
@@ -115,7 +117,7 @@ describe('storage Agent tool handlers', () => {
     expect(adapters[0].storages[0].storage.get).not.toHaveBeenCalled();
   });
 
-  it('defaults invalid limits and offsets and caps oversized finite limits', async () => {
+  it('rejects invalid limits, ignores invalid deprecated offsets and caps oversized limits', async () => {
     const { views } = createViews([
       {
         adapterId: 'adapter',
@@ -128,9 +130,7 @@ describe('storage Agent tool handlers', () => {
     const handlers = createStorageAgentHandlers(views);
 
     for (const limit of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
-      await expect(handlers.listEntries({ limit })).resolves.toMatchObject({
-        page: { limit: 20 },
-      });
+      await expect(handlers.listEntries({ limit })).rejects.toThrow('"limit" must be an integer');
     }
     for (const offset of [
       -1,
@@ -149,6 +149,40 @@ describe('storage Agent tool handlers', () => {
       limit: MAX_PAGE_LIMIT,
       hasMore: true,
     });
+  });
+
+  it('resumes after the last key, so a deletion behind the cursor skips nothing', async () => {
+    const storageEntries = entries('a', 'b', 'c', 'd');
+    const { views } = createViews([
+      { adapterId: 'adapter', storageId: 'storage', entries: storageEntries },
+    ]);
+    const handlers = createStorageAgentHandlers(views);
+
+    const first = await handlers.listEntries({ limit: 2 });
+    expect(first.items).toEqual([{ key: 'a' }, { key: 'b' }]);
+
+    delete storageEntries.a;
+    const second = await handlers.listEntries({ limit: 2, cursor: first.page.nextCursor });
+    expect(second.items).toEqual([{ key: 'c' }, { key: 'd' }]);
+
+    const restart = await handlers.listEntries({ limit: 1 });
+    delete storageEntries.b;
+    await expect(
+      handlers.listEntries({ limit: 1, cursor: restart.page.nextCursor }),
+    ).resolves.toMatchObject({ items: [], page: { limit: 1, hasMore: false, reset: true } });
+  });
+
+  it('still starts the first page at a deprecated offset', async () => {
+    const { views } = createViews([
+      { adapterId: 'adapter', storageId: 'storage', entries: entries('a', 'b', 'c', 'd') },
+    ]);
+    const handlers = createStorageAgentHandlers(views);
+
+    const first = await handlers.listEntries({ offset: 1, limit: 2 });
+    expect(first).toMatchObject({ total: 4, items: [{ key: 'b' }, { key: 'c' }] });
+    await expect(
+      handlers.listEntries({ limit: 2, cursor: first.page.nextCursor }),
+    ).resolves.toMatchObject({ items: [{ key: 'd' }], page: { hasMore: false } });
   });
 
   it('rejects malformed and target-mismatched cursors and ambiguous selections', async () => {
@@ -172,14 +206,14 @@ describe('storage Agent tool handlers', () => {
         storageId: 'one',
         cursor: 'bad',
       }),
-    ).rejects.toThrow('Invalid cursor');
+    ).rejects.toThrow('Invalid "cursor"');
     await expect(
       handlers.listEntries({
         adapterId: 'other',
         storageId: 'one',
         cursor,
       }),
-    ).rejects.toThrow('Cursor does not match the requested storage');
+    ).rejects.toThrow('Cursor does not match this listing');
     await expect(
       handlers.listEntries({
         adapterId: 'adapter',
