@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   transport: {
     openSessionTap: vi.fn(),
     sendSessionTapMessage: vi.fn(),
+    createSession: vi.fn(),
+    listTargets: vi.fn(),
   },
 }));
 
@@ -34,11 +36,13 @@ describe('rozenite agent tap', () => {
     mocks.createAgentTransport.mockReturnValue(mocks.transport);
   };
 
+  // A terminal unless a test says otherwise: arrow lines, errors on stderr.
   const baseOptions = {
     host: '127.0.0.1',
     port: '8081',
     session: 'session-1',
     payload: '{}',
+    tty: true,
   };
 
   it('rejects invalid --payload JSON before opening a session', async () => {
@@ -64,13 +68,15 @@ describe('rozenite agent tap', () => {
     expect(process.exitCode).toBe(1);
   });
 
-  it('requires --plugin when --type is provided', async () => {
+  it('requires a plugin when a message is sent', async () => {
     setupTransport();
     const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
     await runTapCommand({ ...baseOptions, type: 'sqlite:query' });
 
-    expect(stderrWrite).toHaveBeenCalledWith('--plugin is required when --type is provided\n');
+    expect(stderrWrite).toHaveBeenCalledWith(
+      'A plugin is required to send a message: rozenite agent tap <plugin> --send <type>\n',
+    );
     expect(mocks.transport.openSessionTap).not.toHaveBeenCalled();
   });
 
@@ -126,7 +132,34 @@ describe('rozenite agent tap', () => {
     expect(printedLine).toContain('{"requestId":"a1"}');
   });
 
-  it('prints newline-delimited JSON with --json', async () => {
+  it('prints newline-delimited JSON when stdout is not a terminal', async () => {
+    setupTransport();
+    let handlers: Handlers | undefined;
+    mocks.transport.openSessionTap.mockImplementation((_sessionId, _filter, h: Handlers) => {
+      handlers = h;
+      return { close: vi.fn() };
+    });
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    const done = runTapCommand({ ...baseOptions, tty: false });
+    await vi.waitFor(() => expect(handlers).toBeDefined());
+
+    const event = {
+      direction: 'in' as const,
+      timestamp: 5,
+      pluginId: '@acme/sqlite-plugin',
+      type: 'result',
+      payload: { rows: 1 },
+    };
+    handlers?.onEvent(event);
+    handlers?.onError(new Error('gone'));
+    await done;
+
+    expect(stdoutWrite).toHaveBeenCalledWith(`${JSON.stringify(event)}\n`);
+    expect(stdoutWrite).toHaveBeenCalledWith('{"error":{"message":"gone"}}\n');
+  });
+
+  it('prints newline-delimited JSON with --json on a terminal', async () => {
     setupTransport();
     let handlers: Handlers | undefined;
     mocks.transport.openSessionTap.mockImplementation((_sessionId, _filter, h: Handlers) => {
@@ -288,6 +321,92 @@ describe('rozenite agent tap', () => {
     expect(mocks.createAgentTransport).toHaveBeenCalledWith({
       host: '10.0.0.5',
       port: 9090,
+    });
+  });
+
+  describe('command line', () => {
+    const runTap = async (...argv: string[]) => {
+      const program = new Command();
+      registerTapCommand(program.command('agent'));
+      await program.parseAsync(['node', 'test', 'agent', 'tap', ...argv], { from: 'node' });
+    };
+
+    const setupStream = () => {
+      setupTransport();
+      mocks.transport.sendSessionTapMessage.mockResolvedValue({ sent: true });
+      mocks.transport.openSessionTap.mockImplementation((_sessionId, _filter, h: Handlers) => {
+        queueMicrotask(() => {
+          h.onOpen?.();
+          queueMicrotask(() => h.onEnd());
+        });
+        return { close: vi.fn() };
+      });
+      vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    };
+
+    it('takes the plugin as a positional and sends with --send/--payload', async () => {
+      setupStream();
+
+      await runTap(
+        '@acme/sqlite-plugin',
+        '--send',
+        'ping',
+        '--payload',
+        '{"a":1}',
+        '--session',
+        's-1',
+      );
+
+      expect(mocks.transport.openSessionTap).toHaveBeenCalledWith(
+        's-1',
+        { pluginId: '@acme/sqlite-plugin' },
+        expect.any(Object),
+      );
+      expect(mocks.transport.sendSessionTapMessage).toHaveBeenCalledWith('s-1', {
+        pluginId: '@acme/sqlite-plugin',
+        type: 'ping',
+        payload: { a: 1 },
+      });
+    });
+
+    it('still parses --plugin, --type, -a and --json', async () => {
+      setupStream();
+
+      await runTap(
+        '-s',
+        's-1',
+        '-p',
+        '@acme/sqlite-plugin',
+        '-t',
+        'ping',
+        '-a',
+        '{"a":1}',
+        '--json',
+      );
+
+      expect(mocks.transport.sendSessionTapMessage).toHaveBeenCalledWith('s-1', {
+        pluginId: '@acme/sqlite-plugin',
+        type: 'ping',
+        payload: { a: 1 },
+      });
+    });
+
+    it('resolves the session implicitly when none is given', async () => {
+      setupStream();
+      mocks.transport.createSession.mockResolvedValue({
+        session: { id: 'device-1-1', deviceName: 'iPhone', createdAt: 1 },
+      });
+
+      await runTap('@acme/sqlite-plugin');
+
+      expect(mocks.transport.createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ deviceId: undefined }),
+      );
+      expect(mocks.transport.openSessionTap).toHaveBeenCalledWith(
+        'device-1-1',
+        { pluginId: '@acme/sqlite-plugin' },
+        expect.any(Object),
+      );
     });
   });
 });
