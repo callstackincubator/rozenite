@@ -119,7 +119,9 @@ const decodeCursor = (value: string): Cursor | undefined => {
 const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
   left.adapterId === right.adapterId && left.storageId === right.storageId;
 
-const compareKeys = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
+/** Key order shared by the panel's pager and the agent's `list-entries`. */
+export const compareKeys = (left: string, right: string) =>
+  left < right ? -1 : left > right ? 1 : 0;
 
 const readPreviews = async (
   view: StorageView,

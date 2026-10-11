@@ -7,6 +7,7 @@ import {
 } from '../shared/agent-tools';
 import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
 import type { StorageView } from './storage-view';
+import { compareKeys } from './entry-preview-pagination';
 
 const parseValueForType = (type: StorageEntryType, value: unknown): StorageEntryValue => {
   if (type === 'string') {
@@ -99,7 +100,10 @@ const listStorageKeys = async (view: StorageView, input: StorageListEntriesArgs)
     throw new Error('Provide either cursor or offset, not both.');
   }
 
-  const rows = (await view.getAllKeys()).map((key) => ({ key }));
+  // A cursor resumes after a key, so the keys need an order that does not
+  // change between calls: MMKV and AsyncStorage return theirs in hash order,
+  // which a write can reshuffle. Sorted the way the panel sorts them.
+  const rows = [...(await view.getAllKeys())].sort(compareKeys).map((key) => ({ key }));
   // `offset` is deprecated: it only picks where the first page starts. The
   // cursor of that page resumes after its last key like any other.
   const start = input.cursor === undefined ? sanitizeOffset(input.offset) : 0;

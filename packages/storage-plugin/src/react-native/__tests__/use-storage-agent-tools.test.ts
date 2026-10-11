@@ -172,6 +172,44 @@ describe('storage Agent tool handlers', () => {
     ).resolves.toMatchObject({ items: [], page: { limit: 1, hasMore: false, reset: true } });
   });
 
+  it('pages over sorted keys, so an insertion that reorders the store skips nothing', async () => {
+    let keys = ['c', 'a', 'd', 'b'];
+    const views = createStorageViews([
+      {
+        id: 'adapter',
+        name: 'Adapter',
+        storages: [
+          {
+            id: 'storage',
+            name: 'Storage',
+            capabilities: { supportedTypes: ['string'] },
+            storage: {
+              kind: 'sync',
+              getAllKeys: vi.fn(() => keys),
+              get: vi.fn(),
+              set: vi.fn(),
+              delete: vi.fn(),
+              clear: vi.fn(),
+            },
+          },
+        ],
+      },
+    ]);
+    const handlers = createStorageAgentHandlers(views);
+
+    const first = await handlers.listEntries({ limit: 2 });
+    expect(first.items).toEqual([{ key: 'a' }, { key: 'b' }]);
+
+    // A write that reorders the underlying hash map and inserts a key
+    // between the two pages.
+    keys = ['d', 'bb', 'b', 'a', 'c'];
+    const second = await handlers.listEntries({ limit: 2, cursor: first.page.nextCursor });
+    expect(second.items).toEqual([{ key: 'bb' }, { key: 'c' }]);
+    const third = await handlers.listEntries({ limit: 2, cursor: second.page.nextCursor });
+    expect(third.items).toEqual([{ key: 'd' }]);
+    expect(third.page.hasMore).toBe(false);
+  });
+
   it('still starts the first page at a deprecated offset', async () => {
     const { views } = createViews([
       { adapterId: 'adapter', storageId: 'storage', entries: entries('a', 'b', 'c', 'd') },
