@@ -1,5 +1,5 @@
 import { request as httpRequest } from 'node:http';
-import type { MetroTarget } from '@rozenite/agent-shared';
+import { getErrorDetails, type MetroTarget } from '@rozenite/agent-shared';
 import type { RozeniteHostIntegration } from '@rozenite/tools/integration';
 
 type JsonPageDescription = {
@@ -15,20 +15,6 @@ type JsonPageDescription = {
       prefersFuseboxFrontend?: boolean;
     };
   };
-};
-
-const getErrorDetails = (error: unknown): string | null => {
-  if (!error) {
-    return null;
-  }
-
-  if (error instanceof AggregateError && error.errors.length > 0) {
-    return error.errors
-      .map((entry) => (entry instanceof Error ? entry.message : String(entry)))
-      .join('; ');
-  }
-
-  return error instanceof Error ? error.message : String(error);
 };
 
 const requestJson = async <T>(host: string, port: number, pathname: string): Promise<T> => {

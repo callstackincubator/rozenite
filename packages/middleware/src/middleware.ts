@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { AGENT_ROUTE_BASE } from '@rozenite/agent-shared';
 import { type RozeniteHostIntegration } from '@rozenite/tools';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
@@ -50,7 +51,7 @@ export const getNormalizedRequestUrl = (url: string): string => {
   }
 
   if (url === '/rozenite' || url.startsWith('/rozenite/')) {
-    if (url === '/rozenite/agent' || url.startsWith('/rozenite/agent/')) {
+    if (url === AGENT_ROUTE_BASE || url.startsWith(`${AGENT_ROUTE_BASE}/`)) {
       return url;
     }
 

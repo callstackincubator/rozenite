@@ -1,3 +1,4 @@
+import { BUILT_IN_DOMAIN_TOOL_NAMES } from '@rozenite/agent-shared';
 import type { DomainDefinition } from './types.js';
 
 export const STATIC_DOMAINS: DomainDefinition[] = [
@@ -40,34 +41,6 @@ export const RESERVED_DOMAIN_NAMES: ReadonlySet<string> = new Set(
 
 export const STATIC_DOMAIN_TOOL_PREFIXES: Record<string, string> = {};
 
-export const STATIC_DOMAIN_TOOL_NAMES: Record<string, string[]> = {
-  console: ['clearMessages', 'getMessages'],
-  react: [
-    'getTree',
-    'searchNodes',
-    'getComponent',
-    'getNode',
-    'getChildren',
-    'getProps',
-    'getState',
-    'getHooks',
-    'getErrors',
-    'startProfiling',
-    'isProfilingStarted',
-    'stopProfiling',
-    'getComponentRenders',
-    'getProfileTimeline',
-    'getRenderData',
-  ],
-  performance: ['startTrace', 'stopTrace'],
-  memory: ['takeHeapSnapshot', 'startSampling', 'stopSampling'],
-  network: [
-    'startRecording',
-    'stopRecording',
-    'getRecordingStatus',
-    'listRequests',
-    'getRequestDetails',
-    'getRequestBody',
-    'getResponseBody',
-  ],
-};
+export const STATIC_DOMAIN_TOOL_NAMES: Record<string, string[]> = Object.fromEntries(
+  Object.entries(BUILT_IN_DOMAIN_TOOL_NAMES).map(([domain, names]) => [domain, [...names]]),
+);
