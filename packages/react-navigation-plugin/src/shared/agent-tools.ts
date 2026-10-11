@@ -1,4 +1,9 @@
-import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+import {
+  defineAgentToolContract,
+  definePaginatedAgentToolContract,
+  type AgentToolContract,
+  type PageEnvelope,
+} from '@rozenite/agent-shared';
 import type { NavigationAction, NavigationState } from './index';
 import type { ActionOrigin } from '../react-native/symbolication/types';
 
@@ -22,9 +27,32 @@ export type NavigationActionHistoryEntry = {
   origin?: ActionOrigin;
 };
 
+export type ReactNavigationListActionsInclude = 'state' | 'origin';
+
 export type ReactNavigationListActionsArgs = {
-  offset?: number;
+  /** Page size. Defaults to 20, max 100. */
   limit?: number;
+  /** Opaque cursor from a previous page. */
+  cursor?: string;
+  /** @deprecated Use `cursor`. Index the first page starts at. */
+  offset?: number;
+  /** Heavy row fields to add: the state after each action and its dispatch origin. */
+  include?: ReactNavigationListActionsInclude[];
+};
+
+/**
+ * A `list-actions` row. `state` and `origin` are present only when asked
+ * for with `include`; `get-action-details` always returns them.
+ */
+export type ReactNavigationActionRow = {
+  id: number;
+  timestamp: number;
+  type: string;
+  /** Target route name from the action payload, else the focused route after it. */
+  routeName: string | null;
+  action: NavigationAction;
+  state?: NavigationState | undefined;
+  origin?: ActionOrigin;
 };
 
 /**
@@ -91,9 +119,11 @@ export type ReactNavigationGetFocusedRouteResult = {
 
 export type ReactNavigationListActionsResult = {
   total: number;
+  /** Index of the first returned action in the newest-first history. */
   offset: number;
   limit: number;
-  items: NavigationActionHistoryEntry[];
+  items: ReactNavigationActionRow[];
+  page: PageEnvelope;
 };
 
 export type ReactNavigationResetRootResult = {
@@ -144,24 +174,43 @@ export const reactNavigationToolDefinitions = {
       properties: {},
     },
   }),
-  listActions: defineAgentToolContract<
+  listActions: definePaginatedAgentToolContract<
     ReactNavigationListActionsArgs,
     ReactNavigationListActionsResult
   >({
     name: 'list-actions',
-    description: 'List recorded navigation actions with states using pagination.',
+    description:
+      'List recorded navigation actions, newest first, using cursor pagination. Rows carry id, timestamp, type and target routeName; use include or get-action-details for the state after an action and its dispatch origin.',
     inputSchema: {
       type: 'object',
       properties: {
-        offset: {
-          type: 'number',
-          description: 'Pagination offset. Defaults to 0.',
-        },
         limit: {
           type: 'number',
-          description: 'Pagination size. Defaults to 100. Maximum 100.',
+          description: 'Pagination size. Defaults to 20, max 100.',
+        },
+        cursor: {
+          type: 'string',
+          description:
+            'Opaque cursor from a previous list-actions page; the next page starts after the last action returned.',
+        },
+        offset: {
+          type: 'number',
+          description:
+            '@deprecated Use cursor. Index the first page starts at; cannot be combined with cursor.',
+        },
+        include: {
+          type: 'array',
+          items: { type: 'string', enum: ['state', 'origin'] },
+          description:
+            'Heavy fields to add to each row: "state" (navigation state after the action) and "origin" (captured dispatch stack).',
         },
       },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: ['id', 'timestamp', 'type', 'routeName', 'action', 'state', 'origin'],
+      defaultFields: ['id', 'timestamp', 'type', 'routeName'],
+      meta: ['total'],
     },
   }),
   getActionDetails: defineAgentToolContract<

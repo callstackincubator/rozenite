@@ -11,7 +11,7 @@ import {
   type NavigationActionHistoryEntry,
   type ReactNavigationNavigateArgs,
 } from '../shared/agent-tools';
-import { getReactNavigationActionDetails } from './agent-actions';
+import { getReactNavigationActionDetails, listReactNavigationActions } from './agent-actions';
 
 export type { NavigationActionHistoryEntry } from '../shared/agent-tools';
 
@@ -109,18 +109,7 @@ export const useReactNavigationAgentTools = <
   useRozenitePluginAgentTool({
     pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
     tool: reactNavigationToolDefinitions.listActions,
-    handler: ({ offset = 0, limit = 100 }) => {
-      const history = getActionHistory();
-      const safeOffset = Math.max(0, Math.floor(offset));
-      const safeLimit = Math.min(100, Math.max(1, Math.floor(limit)));
-
-      return {
-        total: history.length,
-        offset: safeOffset,
-        limit: safeLimit,
-        items: history.slice(safeOffset, safeOffset + safeLimit),
-      };
-    },
+    handler: (input) => listReactNavigationActions(getActionHistory(), input),
   });
 
   useRozenitePluginAgentTool({
