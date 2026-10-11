@@ -27,6 +27,23 @@ export type ReactNavigationListActionsArgs = {
   limit?: number;
 };
 
+/**
+ * A navigation action as `get-action-details` returns it: the full history
+ * entry, plus the action `type` and target `routeName` that `list-actions`
+ * rows carry.
+ */
+export type ReactNavigationActionDetails = NavigationActionHistoryEntry & {
+  type: string;
+  /** Target route name from the action payload, else the focused route after it. */
+  routeName: string | null;
+};
+
+export type ReactNavigationGetActionDetailsArgs = {
+  id: number;
+};
+
+export type ReactNavigationGetActionDetailsResult = ReactNavigationActionDetails;
+
 export type ReactNavigationResetRootArgs = {
   state: NavigationState;
 };
@@ -145,6 +162,24 @@ export const reactNavigationToolDefinitions = {
           description: 'Pagination size. Defaults to 100. Maximum 100.',
         },
       },
+    },
+  }),
+  getActionDetails: defineAgentToolContract<
+    ReactNavigationGetActionDetailsArgs,
+    ReactNavigationGetActionDetailsResult
+  >({
+    name: 'get-action-details',
+    description:
+      'Get one recorded navigation action by id, including the navigation state after it and the captured dispatch origin.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'number',
+          description: 'Action id from list-actions.',
+        },
+      },
+      required: ['id'],
     },
   }),
   resetRoot: defineAgentToolContract<ReactNavigationResetRootArgs, ReactNavigationResetRootResult>({

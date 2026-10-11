@@ -11,6 +11,7 @@ import {
   type NavigationActionHistoryEntry,
   type ReactNavigationNavigateArgs,
 } from '../shared/agent-tools';
+import { getReactNavigationActionDetails } from './agent-actions';
 
 export type { NavigationActionHistoryEntry } from '../shared/agent-tools';
 
@@ -120,6 +121,12 @@ export const useReactNavigationAgentTools = <
         items: history.slice(safeOffset, safeOffset + safeLimit),
       };
     },
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.getActionDetails,
+    handler: (input) => getReactNavigationActionDetails(getActionHistory(), input),
   });
 
   useRozenitePluginAgentTool({
