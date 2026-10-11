@@ -1,14 +1,12 @@
-import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import type {
   Mutation,
-  MutationCacheNotifyEvent,
   MutationObserverOptions,
   MutationState,
   Query,
-  QueryCacheNotifyEvent,
   QueryClient,
 } from '@tanstack/react-query';
 import { onlineManager } from '@tanstack/react-query';
+import { paginateArray } from '@rozenite/agent-shared';
 import { applyTanStackQueryDevtoolsAction } from '../devtools-actions';
 import {
   boundValue,
@@ -27,13 +25,6 @@ import {
   type TanStackQueryMutationOptionsSummary,
   type TanStackQueryObserverOptionsSummary,
 } from '../../shared/agent-tools';
-
-type CursorKind = 'queries' | 'mutations';
-
-type CursorState = {
-  queriesGeneration: number;
-  mutationsGeneration: number;
-};
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   return !!value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype;
@@ -107,59 +98,6 @@ export const serializeForAgent = (value: unknown, seen = new WeakSet<object>()):
   }
 
   return String(value);
-};
-
-const sanitizeLimit = (limit?: number) => {
-  if (
-    typeof limit !== 'number' ||
-    !Number.isFinite(limit) ||
-    !Number.isInteger(limit) ||
-    limit < 1
-  ) {
-    return DEFAULT_PAGE_LIMIT;
-  }
-
-  return Math.min(limit, MAX_PAGE_LIMIT);
-};
-
-const encodeCursor = (kind: CursorKind, generation: number, offset: number): string => {
-  return `${kind}:${generation}:${offset}`;
-};
-
-const decodeCursor = (cursor: string, kind: CursorKind, generation: number): number => {
-  const [cursorKind, rawGeneration, rawOffset] = cursor.split(':', 3);
-  if (cursorKind !== kind || !rawGeneration || !rawOffset) {
-    throw new Error('Cursor does not match the requested listing. Run the command again.');
-  }
-
-  const cursorGeneration = Number(rawGeneration);
-  const offset = Number(rawOffset);
-
-  if (!Number.isInteger(cursorGeneration) || cursorGeneration !== generation) {
-    throw new Error('Cursor does not match the requested listing. Run the command again.');
-  }
-
-  if (!Number.isInteger(offset) || offset < 0) {
-    throw new Error('Cursor is invalid. Run the command again.');
-  }
-
-  return offset;
-};
-
-const paginate = <T>(rows: T[], kind: CursorKind, generation: number, input: PaginationInput) => {
-  const limit = sanitizeLimit(input.limit);
-  const startIndex = input.cursor ? decodeCursor(input.cursor, kind, generation) : 0;
-  const endIndex = Math.min(startIndex + limit, rows.length);
-  const hasMore = endIndex < rows.length;
-
-  return {
-    items: rows.slice(startIndex, endIndex),
-    page: {
-      limit,
-      hasMore,
-      ...(hasMore ? { nextCursor: encodeCursor(kind, generation, endIndex) } : {}),
-    },
-  };
 };
 
 export const getCacheSummaryTool = tanstackQueryToolDefinitions.getCacheSummary;
@@ -371,24 +309,7 @@ export const buildTanStackQueryCacheSummary = (queryClient: QueryClient) => {
 };
 
 export const createTanStackQueryAgentController = (queryClient: QueryClient) => {
-  const cursorState: CursorState = {
-    queriesGeneration: 0,
-    mutationsGeneration: 0,
-  };
-
   return {
-    handleQueryCacheEvent(event: QueryCacheNotifyEvent) {
-      if (event.type === 'added' || event.type === 'removed') {
-        cursorState.queriesGeneration += 1;
-      }
-    },
-
-    handleMutationCacheEvent(event: MutationCacheNotifyEvent) {
-      if (event.type === 'added' || event.type === 'removed') {
-        cursorState.mutationsGeneration += 1;
-      }
-    },
-
     getCacheSummary() {
       return buildTanStackQueryCacheSummary(queryClient);
     },
@@ -411,7 +332,12 @@ export const createTanStackQueryAgentController = (queryClient: QueryClient) => 
       return {
         ...buildTanStackQueryCacheSummary(queryClient),
         total: queries.length,
-        ...paginate(queries.map(getQuerySummary), 'queries', cursorState.queriesGeneration, input),
+        ...paginateArray(queries.map(getQuerySummary), {
+          keyOf: (row) => row.queryHash,
+          limit: input.limit,
+          cursor: input.cursor,
+          scope: 'queries',
+        }),
       };
     },
 
@@ -490,12 +416,12 @@ export const createTanStackQueryAgentController = (queryClient: QueryClient) => 
       return {
         ...buildTanStackQueryCacheSummary(queryClient),
         total: mutations.length,
-        ...paginate(
-          mutations.map(getMutationSummary),
-          'mutations',
-          cursorState.mutationsGeneration,
-          input,
-        ),
+        ...paginateArray(mutations.map(getMutationSummary), {
+          keyOf: (row) => row.mutationId,
+          limit: input.limit,
+          cursor: input.cursor,
+          scope: 'mutations',
+        }),
       };
     },
 

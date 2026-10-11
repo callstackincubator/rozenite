@@ -63,6 +63,8 @@ export type TanStackQueryPage = {
   limit: number;
   hasMore: boolean;
   nextCursor?: string;
+  /** The row the cursor pointed at is gone; restart the listing without a cursor. */
+  reset?: boolean;
 };
 
 export type TanStackQueryQuerySummary = {
@@ -216,7 +218,8 @@ const paginationProperties = {
   },
   cursor: {
     type: 'string',
-    description: 'Opaque pagination cursor from a previous list call.',
+    description:
+      'Opaque cursor from a previous page; the next page starts after the last row returned.',
   },
 } satisfies Record<string, JSONSchema7>;
 
@@ -297,6 +300,7 @@ export const tanstackQueryToolDefinitions = {
         'hasError',
       ],
       defaultFields: ['queryHash', 'status', 'fetchStatus', 'hasError'],
+      meta: ['total'],
     },
   }),
   getQueryDetails: defineAgentToolContract<
@@ -427,6 +431,7 @@ export const tanstackQueryToolDefinitions = {
         'hasError',
       ],
       defaultFields: ['mutationId', 'mutationKey', 'status', 'hasError'],
+      meta: ['total'],
     },
   }),
   getMutationDetails: defineAgentToolContract<

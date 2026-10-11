@@ -18,23 +18,6 @@ const createQueryClient = () =>
     },
   });
 
-const subscribeController = (
-  queryClient: QueryClient,
-  controller: ReturnType<typeof createTanStackQueryAgentController>,
-) => {
-  const unsubscribeQuery = queryClient
-    .getQueryCache()
-    .subscribe((event) => controller.handleQueryCacheEvent(event));
-  const unsubscribeMutation = queryClient
-    .getMutationCache()
-    .subscribe((event) => controller.handleMutationCacheEvent(event));
-
-  return () => {
-    unsubscribeQuery();
-    unsubscribeMutation();
-  };
-};
-
 const createMutation = (
   queryClient: QueryClient,
   options?: {
@@ -125,115 +108,72 @@ describe('tanstack query agent controller', () => {
     }
   });
 
-  it('lists queries with cursor pagination and invalidates stale cursors after additions', async () => {
+  it('pages queries by queryHash so an insertion neither repeats nor skips a row', () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);
-    const unsubscribe = subscribeController(queryClient, controller);
 
-    queryClient.setQueryData(['first'], { value: 1 });
-    queryClient.setQueryData(['second'], { value: 2 });
+    queryClient.setQueryData(['first'], 1, { updatedAt: 300 });
+    queryClient.setQueryData(['second'], 2, { updatedAt: 200 });
+    queryClient.setQueryData(['third'], 3, { updatedAt: 100 });
 
-    const firstPage = controller.listQueries({ limit: 1 });
-    expect(firstPage.items).toHaveLength(1);
-    expect(firstPage.page.hasMore).toBe(true);
+    const firstPage = controller.listQueries({ limit: 2 });
+    expect(firstPage.items.map((item) => item.queryKey)).toEqual([['first'], ['second']]);
+    expect(firstPage).toMatchObject({ total: 3, page: { limit: 2, hasMore: true } });
 
-    queryClient.setQueryData(['third'], { value: 3 });
+    // A newer query lands ahead of the cursor and does not shift the next page.
+    queryClient.setQueryData(['newest'], 4, { updatedAt: 400 });
 
-    expect(() =>
-      controller.listQueries({
-        limit: 1,
-        cursor: firstPage.page.nextCursor,
-      }),
-    ).toThrow('Cursor does not match the requested listing. Run the command again.');
-
-    unsubscribe();
+    const secondPage = controller.listQueries({ limit: 2, cursor: firstPage.page.nextCursor });
+    expect(secondPage.items.map((item) => item.queryKey)).toEqual([['third']]);
+    expect(secondPage.page).toEqual({ limit: 2, hasMore: false });
   });
 
-  it('invalidates query cursors after removals and cache clears', () => {
+  it('answers reset when the query a cursor points at is gone', () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);
-    const unsubscribe = subscribeController(queryClient, controller);
 
-    queryClient.setQueryData(['first'], { value: 1 });
-    queryClient.setQueryData(['second'], { value: 2 });
+    queryClient.setQueryData(['first'], 1, { updatedAt: 200 });
+    queryClient.setQueryData(['second'], 2, { updatedAt: 100 });
 
     const firstPage = controller.listQueries({ limit: 1 });
-    queryClient.removeQueries({ queryKey: ['second'] });
+    queryClient.removeQueries({ queryKey: ['first'] });
 
-    expect(() =>
-      controller.listQueries({
-        limit: 1,
-        cursor: firstPage.page.nextCursor,
-      }),
-    ).toThrow('Cursor does not match the requested listing. Run the command again.');
-
-    queryClient.setQueryData(['third'], { value: 3 });
-    queryClient.setQueryData(['fourth'], { value: 4 });
-    const secondPageSeed = controller.listQueries({ limit: 1 });
-    queryClient.getQueryCache().clear();
-
-    expect(() =>
-      controller.listQueries({
-        limit: 1,
-        cursor: secondPageSeed.page.nextCursor,
-      }),
-    ).toThrow('Cursor does not match the requested listing. Run the command again.');
-
-    unsubscribe();
+    expect(controller.listQueries({ limit: 1, cursor: firstPage.page.nextCursor })).toMatchObject({
+      items: [],
+      page: { limit: 1, hasMore: false, reset: true },
+    });
   });
 
-  it('lists mutations with cursor pagination and invalidates stale cursors after structural changes', () => {
+  it('pages mutations by mutationId and rejects a query cursor', () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);
-    const unsubscribe = subscribeController(queryClient, controller);
 
-    createMutation(queryClient, {
-      mutationKey: ['first'],
-      submittedAt: 100,
-      data: { ok: true },
-    });
-    createMutation(queryClient, {
-      mutationKey: ['second'],
-      submittedAt: 200,
-      data: { ok: true },
-    });
+    createMutation(queryClient, { mutationKey: ['first'], submittedAt: 100 });
+    createMutation(queryClient, { mutationKey: ['second'], submittedAt: 200 });
 
     const firstPage = controller.listMutations({ limit: 1 });
-    expect(firstPage.items).toHaveLength(1);
+    expect(firstPage.items.map((item) => item.mutationKey)).toEqual([['second']]);
 
-    createMutation(queryClient, {
-      mutationKey: ['third'],
-      submittedAt: 300,
-      data: { ok: true },
-    });
+    createMutation(queryClient, { mutationKey: ['third'], submittedAt: 300 });
+    const secondPage = controller.listMutations({ limit: 1, cursor: firstPage.page.nextCursor });
+    expect(secondPage.items.map((item) => item.mutationKey)).toEqual([['first']]);
 
-    expect(() =>
-      controller.listMutations({
-        limit: 1,
-        cursor: firstPage.page.nextCursor,
-      }),
-    ).toThrow('Cursor does not match the requested listing. Run the command again.');
+    queryClient.setQueryData(['query'], 1);
+    queryClient.setQueryData(['query-2'], 2);
+    const queryCursor = controller.listQueries({ limit: 1 }).page.nextCursor;
+    expect(() => controller.listMutations({ cursor: queryCursor })).toThrow(
+      'Cursor does not match this listing',
+    );
+  });
 
-    const mutation = queryClient.getMutationCache().getAll()[0];
-    queryClient.getMutationCache().remove(mutation);
-
-    const secondPageSeed = controller.listMutations({ limit: 1 });
-    queryClient.getMutationCache().clear();
-
-    expect(() =>
-      controller.listMutations({
-        limit: 1,
-        cursor: secondPageSeed.page.nextCursor,
-      }),
-    ).toThrow('Cursor does not match the requested listing. Run the command again.');
-
-    unsubscribe();
+  it('declares total as the only page metadata worth printing', () => {
+    expect(tanstackQueryToolDefinitions.listQueries.pagination?.meta).toEqual(['total']);
+    expect(tanstackQueryToolDefinitions.listMutations.pagination?.meta).toEqual(['total']);
   });
 
   it('returns JSON-safe query details with curated observer summaries', async () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);
-    const unsubscribe = subscribeController(queryClient, controller);
     const queryFn = vi.fn(async () => ({
       ok: true,
       nested: { fn: () => 'ignored' },
@@ -272,13 +212,11 @@ describe('tanstack query agent controller', () => {
     });
 
     observerUnsubscribe();
-    unsubscribe();
   });
 
   it('returns JSON-safe mutation details and validates unknown ids', () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);
-    const unsubscribe = subscribeController(queryClient, controller);
 
     const mutation = createMutation(queryClient, {
       mutationKey: ['save'],
@@ -318,8 +256,6 @@ describe('tanstack query agent controller', () => {
     expect(() => controller.getMutationDetails({ mutationId: 9999 })).toThrow(
       'Unknown mutationId "9999"',
     );
-
-    unsubscribe();
   });
 
   it('defaults list-queries to columns that do not repeat the query key', () => {
