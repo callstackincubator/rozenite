@@ -262,7 +262,49 @@ describe('agent domain utils', () => {
     ).toThrow('Ambiguous tool "echo" for domain "app". Matches: app.alpha.echo, app.beta.echo.');
 
     expect(() => resolveDomainTool([tool('app.echo')], 'app', 'missing')).toThrow(
-      'Tool "missing" not found for domain "app". Available: app.echo. Hint: rozenite agent app tools',
+      'Tool "missing" not found for domain "app". Available: echo. Run `rozenite agent app` to list its tools.',
+    );
+  });
+
+  it('resolves tool names ignoring case, hyphens and underscores', () => {
+    const builtIns = [tool('getMessages'), tool('clearMessages')];
+    for (const token of ['getmessages', 'get-messages', 'GET_MESSAGES', 'Get-Messages']) {
+      expect(resolveDomainTool(builtIns, 'console', token).name).toBe('getMessages');
+    }
+
+    const pluginTools = [
+      tool('@rozenite/storage-plugin.list-entries'),
+      tool('@rozenite/storage-plugin.list-storages'),
+    ];
+    for (const token of ['listEntries', 'list_entries', 'LIST-ENTRIES']) {
+      expect(resolveDomainTool(pluginTools, '@rozenite/storage-plugin', token).name).toBe(
+        '@rozenite/storage-plugin.list-entries',
+      );
+    }
+  });
+
+  it('prefers an exact match over a folded one', () => {
+    const tools = [tool('app.list-entries'), tool('app.listEntries')];
+    expect(resolveDomainTool(tools, 'app', 'listEntries').name).toBe('app.listEntries');
+    expect(resolveDomainTool(tools, 'app', 'list-entries').name).toBe('app.list-entries');
+    expect(resolveDomainTool(tools, 'app', 'app.listEntries').name).toBe('app.listEntries');
+  });
+
+  it('reports a folded match on several tools as ambiguous', () => {
+    expect(() =>
+      resolveDomainTool([tool('app.list-entries'), tool('app.listEntries')], 'app', 'list_entries'),
+    ).toThrow(
+      'Ambiguous tool "list_entries" for domain "app". Matches: app.list-entries, app.listEntries.',
+    );
+  });
+
+  it('reserves CLI command names so no plugin domain can shadow them', () => {
+    for (const name of ['session', 'sessions', 'targets', 'domains', 'tap', 'help']) {
+      expect(RESERVED_DOMAIN_NAMES.has(name)).toBe(true);
+    }
+    expect(deriveDomainName('@rozenite/tap-plugin')).toBe('@rozenite/tap-plugin');
+    expect(() => buildRuntimePluginDomains([tool('targets.list')])).toThrow(
+      'Plugin "targets" derives the domain name "targets", which shadows the built-in "targets" command.',
     );
   });
 

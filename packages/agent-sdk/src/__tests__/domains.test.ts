@@ -293,7 +293,7 @@ describe('agent session domain and tool helpers', () => {
         tool: 'missing',
       }),
     ).rejects.toThrow(
-      'Tool "missing" not found for domain "app". Available: app.echo. Hint: rozenite agent app tools',
+      'Tool "missing" not found for domain "app". Available: echo. Run `rozenite agent app` to list its tools.',
     );
   });
 
