@@ -145,6 +145,46 @@ describe('createFileSystemAgentHandlers', () => {
       offset: 1,
       limit: 1,
       entries: [entries[1]],
+      page: { limit: 1, hasMore: true, nextCursor: expect.any(String) },
+    });
+  });
+
+  it('continues listing after the last entry path and resets when it is gone', async () => {
+    const entries = ['a', 'b', 'c', 'd'].map((name) =>
+      createEntry({ name: `${name}.txt`, path: `/tmp/${name}.txt` }),
+    );
+    const provider = createProvider({ listDir: vi.fn(async () => [...entries]) });
+    const handlers = createFileSystemAgentHandlers(async () => provider);
+
+    const first = await handlers.listEntries({ path: '/tmp/', limit: 2 });
+    expect(first).toMatchObject({ offset: 0, limit: 2, total: 4 });
+    expect(first.entries.map((entry) => entry.name)).toEqual(['a.txt', 'b.txt']);
+
+    // A file deleted behind the cursor does not make the next page skip one.
+    entries.shift();
+    const second = await handlers.listEntries({ path: '/tmp/', cursor: first.page.nextCursor });
+    expect(second.entries.map((entry) => entry.name)).toEqual(['c.txt', 'd.txt']);
+    expect(second).toMatchObject({ offset: 1, limit: 20, page: { hasMore: false } });
+
+    const restart = await handlers.listEntries({ path: '/tmp/', limit: 1 });
+    entries.shift();
+    await expect(
+      handlers.listEntries({ path: '/tmp/', cursor: restart.page.nextCursor }),
+    ).resolves.toMatchObject({ entries: [], page: { reset: true } });
+    await expect(
+      handlers.listEntries({ path: '/other/', cursor: restart.page.nextCursor }),
+    ).rejects.toThrow('Cursor does not match this listing');
+  });
+
+  it('declares entries as the rows of list-entries and roots as the rows of list-roots', () => {
+    expect(fileSystemToolDefinitions.listEntries.pagination).toMatchObject({
+      itemsKey: 'entries',
+      defaultFields: ['name', 'isDirectory', 'size'],
+      meta: ['path', 'total'],
+    });
+    expect(fileSystemToolDefinitions.listRoots.rows).toEqual({
+      key: 'roots',
+      fields: ['id', 'label', 'path'],
     });
   });
 

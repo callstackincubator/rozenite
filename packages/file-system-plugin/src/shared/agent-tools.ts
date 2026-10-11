@@ -1,4 +1,10 @@
-import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+import {
+  defineAgentToolContract,
+  definePaginatedAgentToolContract,
+  defineRowsAgentToolContract,
+  type AgentToolContract,
+  type PageEnvelope,
+} from '@rozenite/agent-shared';
 import type { FileSystemProvider, FsEntry, FsRoots } from './protocol';
 
 export const FILE_SYSTEM_AGENT_PLUGIN_ID = '@rozenite/file-system-plugin';
@@ -25,17 +31,23 @@ export type FileSystemListRootsArgs = undefined;
 export type FileSystemListRootsResult = FsRoots;
 
 export type FileSystemListEntriesArgs = FileSystemPathArgs & {
-  offset?: number;
+  /** Page size. Defaults to 20, max 100. */
   limit?: number;
+  /** Opaque cursor from a previous page. */
+  cursor?: string;
+  /** @deprecated Use `cursor`. Index the first page starts at. */
+  offset?: number;
 };
 
 export type FileSystemListEntriesResult = {
   provider: FileSystemProvider;
   path: string;
   total: number;
+  /** Index of the first returned entry in the directory listing. */
   offset: number;
   limit: number;
   entries: FsEntry[];
+  page: PageEnvelope;
 };
 
 export type FileSystemReadEntryArgs = FileSystemPathArgs;
@@ -118,7 +130,11 @@ export type FileSystemImportFileResult = {
 };
 
 export const fileSystemToolDefinitions = {
-  listRoots: defineAgentToolContract<FileSystemListRootsArgs, FileSystemListRootsResult>({
+  listRoots: defineRowsAgentToolContract<
+    FileSystemListRootsArgs,
+    FileSystemListRootsResult,
+    'roots'
+  >({
     name: 'list-roots',
     description:
       'List the filesystem roots currently available on the device and report which provider is active.',
@@ -126,11 +142,19 @@ export const fileSystemToolDefinitions = {
       type: 'object',
       properties: {},
     },
+    rows: {
+      key: 'roots',
+      fields: ['id', 'label', 'path'],
+    },
   }),
-  listEntries: defineAgentToolContract<FileSystemListEntriesArgs, FileSystemListEntriesResult>({
+  listEntries: definePaginatedAgentToolContract<
+    FileSystemListEntriesArgs,
+    FileSystemListEntriesResult,
+    'entries'
+  >({
     name: 'list-entries',
     description:
-      'List entries in a directory path without returning file contents. Use this before reading a file preview.',
+      'List entries in a directory path without returning file contents, using cursor pagination. Use this before reading a file preview.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -138,16 +162,29 @@ export const fileSystemToolDefinitions = {
           type: 'string',
           description: 'Absolute or provider-root-qualified directory path.',
         },
-        offset: {
-          type: 'number',
-          description: 'Pagination offset. Defaults to 0.',
-        },
         limit: {
           type: 'number',
-          description: 'Pagination size. Defaults to 100.',
+          description: 'Pagination size. Defaults to 20, max 100.',
+        },
+        cursor: {
+          type: 'string',
+          description:
+            'Opaque cursor from a previous list-entries page; the next page starts after the last entry returned.',
+        },
+        offset: {
+          type: 'number',
+          description:
+            '@deprecated Use cursor. Index the first page starts at; cannot be combined with cursor.',
         },
       },
       required: ['path'],
+    },
+    pagination: {
+      kind: 'cursor',
+      itemsKey: 'entries',
+      fields: ['name', 'isDirectory', 'size', 'path', 'modifiedAtMs', 'mimeTypeHint'],
+      defaultFields: ['name', 'isDirectory', 'size'],
+      meta: ['path', 'total'],
     },
   }),
   readEntry: defineAgentToolContract<FileSystemReadEntryArgs, FileSystemReadEntryResult>({

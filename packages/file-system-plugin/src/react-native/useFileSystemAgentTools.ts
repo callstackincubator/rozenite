@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import { paginateArray } from '@rozenite/agent-shared';
 import type { FileSystemAdapter, UseFileSystemDevToolsOptions } from './fileSystemProvider';
 import {
   resolveAgentFileTransferCapabilities,
@@ -17,6 +18,7 @@ import {
   type FileSystemExportFileArgs,
   type FileSystemImportFileArgs,
   type FileSystemListEntriesArgs,
+  type FileSystemListEntriesResult,
   type FileSystemPathArgs,
   type FileSystemReadImageFileArgs,
   type FileSystemReadImageFileResult,
@@ -93,19 +95,45 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  listEntries: async ({ path, offset = 0, limit = 100 }: FileSystemListEntriesArgs) => {
+  listEntries: async ({
+    path,
+    limit,
+    cursor,
+    offset,
+  }: FileSystemListEntriesArgs): Promise<FileSystemListEntriesResult> => {
+    if (cursor !== undefined && offset !== undefined) {
+      throw new Error('Provide either cursor or offset, not both.');
+    }
+
     const provider = await getProviderOrThrow(resolveProvider);
     const allEntries = await provider.listDir(path);
-    const safeOffset = Math.max(0, Math.floor(offset));
-    const safeLimit = Math.max(1, Math.floor(limit));
+    // `offset` is deprecated: it only picks where the first page starts.
+    const start =
+      cursor === undefined && typeof offset === 'number' && Number.isFinite(offset)
+        ? Math.max(0, Math.floor(offset))
+        : 0;
+    const { items, page } = paginateArray(allEntries.slice(start), {
+      keyOf: (entry) => entry.path,
+      limit,
+      cursor,
+      scope: path,
+    });
 
     return {
       provider: provider.provider,
       path,
       total: allEntries.length,
-      offset: safeOffset,
-      limit: safeLimit,
-      entries: allEntries.slice(safeOffset, safeOffset + safeLimit),
+      offset:
+        items.length > 0
+          ? allEntries.indexOf(items[0])
+          : page.reset
+            ? 0
+            : cursor !== undefined
+              ? allEntries.length
+              : Math.min(start, allEntries.length),
+      limit: page.limit,
+      entries: items,
+      page,
     };
   },
 
