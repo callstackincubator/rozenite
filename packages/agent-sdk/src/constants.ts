@@ -40,14 +40,7 @@ export const STATIC_DOMAINS: DomainDefinition[] = [
  * name a CLI command instead. A plugin that derived one of them as its
  * domain would be unreachable, because the command always wins.
  */
-export const CLI_COMMAND_NAMES: readonly string[] = [
-  'session',
-  'sessions',
-  'targets',
-  'domains',
-  'tap',
-  'help',
-];
+export const CLI_COMMAND_NAMES: readonly string[] = ['session', 'targets', 'domains', 'tap'];
 
 export const RESERVED_DOMAIN_NAMES: ReadonlySet<string> = new Set([
   ...STATIC_DOMAINS.map((domain) => domain.id),

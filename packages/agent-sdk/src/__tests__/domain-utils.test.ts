@@ -299,9 +299,18 @@ describe('agent domain utils', () => {
   });
 
   it('reserves CLI command names so no plugin domain can shadow them', () => {
-    for (const name of ['session', 'sessions', 'targets', 'domains', 'tap', 'help']) {
+    for (const name of ['session', 'targets', 'domains', 'tap']) {
       expect(RESERVED_DOMAIN_NAMES.has(name)).toBe(true);
     }
+    // Neither is a CLI command, so a plugin may use them.
+    for (const name of ['sessions', 'help']) {
+      expect(RESERVED_DOMAIN_NAMES.has(name)).toBe(false);
+    }
+    expect(
+      buildRuntimePluginDomains([tool('sessions.list'), tool('help.ask')]).map(
+        (domain) => domain.id,
+      ),
+    ).toEqual(['help', 'sessions']);
     expect(deriveDomainName('@rozenite/tap-plugin')).toBe('@rozenite/tap-plugin');
     expect(() => buildRuntimePluginDomains([tool('targets.list')])).toThrow(
       'Plugin "targets" derives the domain name "targets", which shadows the built-in "targets" command.',
