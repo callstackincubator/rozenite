@@ -1,6 +1,6 @@
 ---
 name: cli
-description: Shell-driven `rozenite agent ...` workflow — command syntax, session lifecycle, the listing/pagination output contract, calls, and the end-to-end flow.
+description: Shell-driven `rozenite agent ...` workflow — command syntax, sessions, the listing/pagination output contract, calls, and the end-to-end flow.
 ---
 
 # CLI
@@ -19,103 +19,95 @@ instead.
   app. In monorepos, this is usually the app package root, not the
   repository root.
 
-## Session lifecycle
+## Commands
 
-- Start with `npx rozenite agent session create`. It creates or reuses the
-  device session and returns when ready. Stop the session when done with
-  `npx rozenite agent session stop <sessionId>`.
-- If `session create` fails because multiple devices are connected, run
-  `npx rozenite agent targets`, choose the right `id`, then retry with
-  `--deviceId <id>`.
-- Treat `npx rozenite agent targets` as the source of truth for available
-  targets. If the expected target is missing, ask the user to run the app on
-  a device.
-- Pass `--session <id>` on every domain command.
-- Treat the Rozenite session ID as a public runtime identifier, not a
-  secret, credential, or token.
+```bash
+npx rozenite agent domains                                # list domains
+npx rozenite agent <domain>                               # list a domain's tools
+npx rozenite agent <domain> <tool> --help                 # a tool's arguments
+npx rozenite agent <domain> <tool> --schema               # a tool's input schema
+npx rozenite agent <domain> <tool> [--<arg> <value>...]   # call a tool
+npx rozenite agent session stop                           # stop the session
+```
 
-## Discovering domains and tools
+Example: `npx rozenite agent console getMessages --levels error --limit 10`.
 
-- Discover domains from the live session with
-  `npx rozenite agent domains --session <id>` only if a domain call fails,
-  the expected domain is unclear, or you need to confirm what is currently
-  registered.
-- Do not call `npx rozenite agent <domain> tools` or fetch a tool schema
-  when the expected tool name and arguments are already known (for example
-  from a domain doc — run `npx rozenite skills list` to find the doc id for
-  a domain, then `npx rozenite skills show <id>`).
-- Check `npx rozenite agent <domain> tools --session <id>` or
-  `npx rozenite agent <domain> schema --tool <name> --session <id>` only
-  when no matching domain doc exists, a domain doc doesn't answer the
-  question, a call fails, or the live domain exposes behavior that differs
-  from the docs.
-- Skip confirmation or discovery steps that do not add new information.
+## Sessions
+
+- The first command creates the agent session for the connected device, or
+  reuses the one already running, and prints one line on stderr saying so.
+  Every later command reuses it. There is no separate start step.
+- With more than one device connected, the command fails and lists the
+  targets (`id`, name, integration). Pick the right `id` and pass
+  `--device <id>`, or set `ROZENITE_DEVICE=<id>` once for the shell.
+- `npx rozenite agent targets` lists connected targets. If the expected
+  target is missing, ask the user to run the app on a device.
+- An open session holds the device's only debugger connection. Stop it with
+  `npx rozenite agent session stop` when the work is done.
+- `--session <id>` (or `ROZENITE_SESSION`) uses one specific session; you
+  rarely need it. Session IDs are public runtime identifiers, not secrets.
+
+## Calling tools
+
+- A tool's arguments are flags named after its input schema:
+  - text, number and boolean arguments take one value (`--id @c12`,
+    `--limit 10`); a boolean flag on its own means `true` (`--noHost`);
+  - list arguments repeat or take commas (`--levels error,warning`);
+  - object arguments take JSON (`--action '{"type":"counter/increment"}'`).
+- `--args '<json>'` passes arguments as one JSON object; flags win over it.
+  Use it for an argument named like a CLI option (`session`, `device`,
+  `host`, `port`, `pretty`, `fields`, `limit`, `cursor`, `args`, `schema`).
+- An unknown flag fails and lists the tool's arguments.
+- Tool names ignore case, `-` and `_`: `getmessages`, `get-messages` and
+  `getMessages` are the same tool.
+- Get a tool's arguments from its domain doc (`npx rozenite skills list`,
+  then `npx rozenite skills show <id>`) or from `<tool> --help`. Skip
+  discovery when the doc already names the tool and its arguments.
 
 ## Listing output contract
 
-`agent domains`, `agent <domain> tools`, and tools that declare the shared
-pagination contract always write compact JSON by default. This includes
-built-in and third-party plugin tools. Pass `--pretty` for indented JSON. The
-`--json` / `-j` option is retained as a compatibility no-op and never changes
-the output shape.
+Agent commands print JSON: compact when piped, indented on a terminal, and
+indented anywhere with `--pretty`. Every list — `domains`, a domain's
+tools, `targets`, `session list`, and every tool that declares its rows —
+follows the same shape:
 
-- With two or more rows, row-shaped results use the stable columnar contract:
+- With two or more rows: columns,
   `{"cols":["id","kind"],"rows":[["console","static"],["react","static"]]}`.
-  `cols` is exactly the requested field order; an absent optional value is
-  represented by `null` in its row, since a positional array cell can't
-  simply be omitted without shifting the columns after it.
-- With zero or one row, row-shaped results remain row-keyed:
-  `{"items":[{"id":"console","kind":"static"}]}`. Here an absent optional
-  value is omitted from the object entirely (not `null`), so these payloads
-  never grow past their pre-columnar shape — the reason 0/1-row results stay
-  row-keyed in the first place.
-- Tool listings default to `name`, `description`, `readOnly`, `destructive`,
-  and `idempotent`. `name` is the globally qualified identifier to pass to a
-  later `call` or `schema` command. Traits are optional; `null` in a columnar
-  row or an omitted key in a row-keyed result means unknown, not `false`.
-- Terminal pages omit pagination metadata. When more rows exist, `next` is a
-  shell-escaped, runnable `npx rozenite agent ...` command that preserves the
-  connection, session, projection, and limit options. CLI-owned domain and
-  tool listings pass their cursor with `--cursor`; paginated tool calls pass
-  the producer cursor inside `--args`.
-- A `--cursor` from an earlier page can go stale if the underlying data was
-  invalidated (for example, an app relaunch resets the network domain's
-  capture buffer). Re-running a stale cursor returns
-  `{"page":{"reset":true},"items":[]}` instead of a normal empty page — treat
-  that as "restart this listing from scratch," not "no more rows."
+  `cols` is the column order; a missing value is `null` in its row.
+- With zero or one row: objects, `{"items":[{"id":"console","kind":"static"}]}`.
+  A missing value is left out.
+- A column that is `null` on every row of a page is left out, unless you
+  asked for it with `--fields`. Read `cols` on every page.
+- Each listing prints a default set of columns. `--fields <csv>` picks
+  columns; `--fields all` prints every column the listing declares.
+- Domain listings print each tool's short name; pass it straight to a call.
+  Traits (`readOnly`, `destructive`, `idempotent`) that are absent mean
+  unknown, not `false`.
+- Tool-specific metadata the tool declares (for example `totalCount` or
+  `roots`) is printed next to the rows.
 
-Declared paginated calls include console messages, React
-tree/search/inspection rows, per-commit render data, component render
-aggregates, the profiling timeline, components with logged errors or warnings,
-network request listings, and any plugin tool registered with pagination
-metadata. Tool-specific metadata (for
-example `roots`, `totalCount`, or `recording`) remains alongside the row shape.
-Undeclared tool results, SDK responses, and genuinely non-row command results
-retain their existing shapes.
+## Paging
 
-- Paginated calls return a **trimmed default projection**, not every declared
-  field. For example, `console getMessages` omits `argsPreview` and `context`
-  by default. Pass `-f, --fields <csv>` to pick specific columns, or
-  `-v, --verbose` to include every field the tool declares.
-
-## Calls
-
-- Do not pass domain tool names as direct CLI subcommands.
-- Always invoke domain tools with `npx rozenite agent <domain> call --tool <toolName> --args '<json>' --session <id>`.
-- Continue a paginated domain tool call by passing its returned cursor inside `--args`; `--cursor` is only for CLI-owned domain and tool listings.
-- If a domain doc lists only tool names, treat them as tool names, not CLI actions.
-- Example: `npx rozenite agent storage call --tool list-storages --args '{}' --session <id>`.
-- If a command fails with `Unknown domain action`, check the CLI syntax and retry with `call --tool <toolName> --session <id>`.
+- `--limit <n>` and `--cursor <token>` page every listing, whether the CLI
+  or the tool does the paging. The default page is 20 rows, the maximum 100.
+- The last page has no `next`. Any other page has `next`: the same command
+  with `--cursor` set. Run it to get the following page.
+- A stale cursor (for example after an app relaunch) answers
+  `{"page":{"reset":true},"items":[]}`. That means "start this listing
+  again without `--cursor`", not "no more rows".
 
 ## Flow
 
 1. Run Rozenite commands one at a time.
-2. Use `npx rozenite agent targets` as the source of truth for available targets when device selection matters. If the expected target is missing, ask the user to run the app on a device.
-3. Run `npx rozenite agent session create`.
-4. Run `npx rozenite skills list` to find a matching domain doc id, then `npx rozenite skills show <id>` to read it, if one exists for the expected domain.
-5. If the doc already lists the needed tool and arguments for the expected domain, call it directly.
-6. Run `npx rozenite agent domains --session <id>` only if the call fails, the expected domain is unclear, or you need to confirm what is currently registered.
-7. If the expected plugin domain is missing, tell the user to install and register the corresponding plugin in the app.
-8. Check `npx rozenite agent <domain> tools --session <id>` or `npx rozenite agent <domain> schema --tool <name> --session <id>` only if the doc is insufficient, the call fails, or you need to confirm a live mismatch.
-9. Fall back to source-code exploration only if no relevant domain exists or the task is about implementation or setup.
-10. When no further Rozenite calls are needed, stop the session with `npx rozenite agent session stop <sessionId>`.
+2. Run `npx rozenite skills list` to find a matching domain doc, then
+   `npx rozenite skills show <id>` to read it, if one exists.
+3. If the doc names the tool and its arguments, call it:
+   `npx rozenite agent <domain> <tool> --<arg> <value>`.
+4. Otherwise, or if the call fails, run `npx rozenite agent domains`,
+   `npx rozenite agent <domain>` or `npx rozenite agent <domain> <tool> --help`.
+   If the expected plugin domain is missing, tell the user to install and
+   register the plugin in the app.
+5. Fall back to source-code exploration only if no relevant domain exists or
+   the task is about implementation or setup.
+6. When no further Rozenite calls are needed, run
+   `npx rozenite agent session stop`.

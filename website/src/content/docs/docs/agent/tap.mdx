@@ -9,7 +9,7 @@ The full loop for checking that a plugin's native side behaves — Metro, a simu
 ## Watch a plugin's traffic
 
 ```bash
-npx rozenite agent tap --session <id> --plugin @acme/sqlite-plugin
+npx rozenite agent tap @acme/sqlite-plugin
 ```
 
 ```
@@ -22,26 +22,26 @@ Each line is a direction arrow, a local timestamp, the message type, and the JSO
 - `←` — received from the device.
 - `→` — sent to the device.
 
-Omit `--plugin` to watch every plugin's traffic on the session. `tap` keeps running until you stop it with Ctrl-C, closing the underlying connection cleanly.
+Omit the plugin to watch every plugin's traffic on the session. `tap` uses the same session as every other `rozenite agent` command, and creates it on first use. `tap` keeps running until you stop it with Ctrl-C, closing the underlying connection cleanly.
 
 ## Poke a plugin and watch what comes back
 
 Because the stream is bidirectional, `tap` doubles as a minimal stand-in for DevTools: send one message from the terminal, then keep watching for whatever comes back.
 
 ```bash
-npx rozenite agent tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
+npx rozenite agent tap @acme/sqlite-plugin --send sqlite:query --payload '{"sql":"select 1"}'
 ```
 
-`--plugin`, `--type`, and `--payload` map directly onto the three fields of the message sent to the device (`pluginId`, `type`, `payload`). `--payload` defaults to `{}` and is validated as JSON on its own, so a malformed payload is reported against `--payload`, not against a blended argument. `--type` requires `--plugin`, since a message needs to know which plugin it's addressed to.
+The plugin, `--send`, and `--payload` map directly onto the three fields of the message sent to the device (`pluginId`, `type`, `payload`). `--payload` defaults to `{}` and is validated as JSON on its own, so a malformed payload is reported against `--payload`, not against a blended argument. `--send` requires a plugin, since a message needs to know which plugin it's addressed to.
 
-`--plugin` also filters the stream — `--type` does not, since filtering on it would hide the very response your poke is meant to surface.
+The plugin also filters the stream — `--send` does not, since filtering on it would hide the very response your poke is meant to surface.
 
 ## Machine-readable output
 
-Pass `--json` for newline-delimited JSON, one message per line, so another program or agent can consume the stream directly instead of screenshotting a terminal:
+When stdout is not a terminal, `tap` writes newline-delimited JSON, one message per line, so another program or agent can consume the stream directly instead of screenshotting a terminal:
 
 ```bash
-npx rozenite agent tap --session <id> --json
+npx rozenite agent tap @acme/sqlite-plugin | your-script
 ```
 
 ```json
@@ -66,12 +66,11 @@ Each line has this shape:
 
 ## Options
 
-- `-s, --session <id>` — target Agent session ID (required). Create one with `npx rozenite agent session create`.
-- `-p, --plugin <id>` — filter the stream to this plugin ID; required together with `--type`.
-- `-t, --type <name>` — send one message of this type before watching. Requires `--plugin`.
-- `-a, --payload <json>` — JSON payload for the sent message. Defaults to `{}`.
-- `--json` — newline-delimited JSON output instead of the human-readable format.
-- `--host <host>` / `--port <port>` — Metro host and port, inherited from `rozenite agent`, so they go before `tap`: `npx rozenite agent --host 192.168.1.10 --port 8082 tap --session <id>` (defaults to `127.0.0.1:8081`).
+- `[plugin]` — only stream this plugin ID; required together with `--send`.
+- `--send <type>` — send one message of this type before watching. Requires a plugin.
+- `--payload <json>` — JSON payload for the sent message. Defaults to `{}`.
+- `--device <id>` — the device to tap when more than one is connected; `--session <id>` picks one session directly.
+- `--host <host>` / `--port <port>` — Metro host and port: `npx rozenite agent tap @acme/sqlite-plugin --host 192.168.1.10 --port 8082` (defaults to `127.0.0.1:8081`).
 
 ## `tap` and React Native DevTools
 

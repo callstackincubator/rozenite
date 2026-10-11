@@ -205,7 +205,7 @@ const result = await client.withSession(
 
 When more than one simulator, emulator, or device may be connected, run
 `npx rozenite agent targets` to enumerate and choose the live target first
-(see the `cli` doc). Then pass the chosen `deviceId` into the SDK flow
+(see the `cli` doc). Then pass the chosen target `id` as `deviceId` into the SDK flow
 instead of duplicating target-discovery logic here.
 
 ## Advanced: Manual Session Lifecycle

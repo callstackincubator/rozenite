@@ -65,6 +65,12 @@ const result = await client.withSession(async (session) => {
 console.log(result);
 ```
 
+Tool names resolve the way the CLI resolves them: a qualified name
+(`@rozenite/storage-plugin.list-entries`) or a short name (`list-entries`)
+matches exactly, and otherwise case, `-` and `_` are ignored, so
+`listEntries` and `list_entries` find the same tool. A name that matches
+more than one tool is an error that lists them.
+
 ## Made with ❤️ at Callstack
 
 `rozenite` is an open source project and will always remain free to use. If you think it's cool, please star it 🌟.
