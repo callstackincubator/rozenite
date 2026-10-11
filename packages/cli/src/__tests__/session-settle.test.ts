@@ -50,6 +50,9 @@ describe('waitForToolsToSettle', () => {
   });
 
   it('gives up after maxWaitMs when the count keeps changing', async () => {
+    // Advance the clock per read so the deadline does not depend on CI speed.
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => (now += 10));
     let count = 0;
     const transport = {
       getSession: vi.fn(async () => ({ session: sessionInfo((count += 1)) })),
@@ -62,7 +65,7 @@ describe('waitForToolsToSettle', () => {
     });
 
     expect(transport.getSession.mock.calls.length).toBeGreaterThan(1);
-    expect(transport.getSession.mock.calls.length).toBeLessThan(60);
+    expect(transport.getSession.mock.calls.length).toBeLessThan(10);
   });
 
   it('swallows a failed read so the command reports the real error itself', async () => {
