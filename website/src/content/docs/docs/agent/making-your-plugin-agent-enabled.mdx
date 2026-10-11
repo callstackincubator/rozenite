@@ -212,7 +212,7 @@ type EntryRow = {
   size?: number;
 };
 
-type ListEntriesResult = PageResult<EntryRow>;
+type ListEntriesResult = PageResult<EntryRow> & { total: number };
 
 export const listEntriesTool = definePaginatedAgentToolContract<ListEntriesArgs, ListEntriesResult>(
   {
@@ -229,16 +229,86 @@ export const listEntriesTool = definePaginatedAgentToolContract<ListEntriesArgs,
       kind: 'cursor',
       fields: ['key', 'type', 'size'],
       defaultFields: ['key', 'type'],
+      meta: ['total'],
     },
   },
 );
 ```
 
-Return `{items, page}` from the handler. `fields` is the stable set available
-to agents, while `defaultFields` is the smaller projection used unless the
-caller passes `--fields` or `--verbose`. Both arrays are validated against the
-row type, and the CLI never infers columns from observed values. Tools without
-pagination metadata keep their original output unchanged.
+`fields` is the stable set available to agents, while `defaultFields` is the
+smaller projection used unless the caller passes `--fields` or `--verbose`.
+Both arrays are validated against the row type, and the CLI never infers
+columns from observed values. Tools without pagination metadata keep their
+original output unchanged.
+
+Page the rows in the handler with `paginateArray`. Give it the full list and
+a `keyOf` function that returns each row's stable identity:
+
+```tsx
+import { paginateArray, useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+
+useRozenitePluginAgentTool({
+  pluginId: PLUGIN_ID,
+  tool: listEntriesTool,
+  handler: ({ limit, cursor }) => {
+    const rows = readEntries();
+    return {
+      ...paginateArray(rows, { keyOf: (row) => row.key, limit, cursor }),
+      total: rows.length,
+    };
+  },
+});
+```
+
+`paginateArray` applies the shared limit rules (20 rows by default, at most 100) and returns `{ items, page }`. Its cursor points after the last row
+returned, not at an index, so rows added or removed while an agent pages
+through a live app are never skipped or repeated. If that row no longer
+exists, the next call answers an empty page with `page.reset: true`, which
+tells the agent to start the listing again. Pass `scope` (for example a key
+built from the filters) to reject a cursor reused with different filters,
+and `generation` to reset cursors after the whole collection is replaced.
+
+Two optional fields describe what surrounds the rows:
+
+- `itemsKey` names the result key that holds the rows when it is not
+  `items`. Pass the key as the third type argument too, for example
+  `definePaginatedAgentToolContract<Args, Result, 'entries'>`, so the fields
+  are checked against the right rows.
+- `meta` lists the other top-level result keys the CLI prints with each
+  page, such as `total`. Leave it out to print every key, or pass `[]` to
+  print only the rows. It changes only what the CLI shows; SDK callers
+  still receive the full result.
+
+### Lists without pagination
+
+A tool that returns a short list in one go can still declare its rows, so
+agents get the same compact columns and `--fields` projection. Use
+`defineRowsAgentToolContract` and name the key that holds the rows:
+
+```ts
+import { defineRowsAgentToolContract } from '@rozenite/agent-bridge';
+
+type StorageRow = { id: string; name: string; adapter: string };
+type ListStoragesResult = { storages: StorageRow[] };
+
+export const listStoragesTool = defineRowsAgentToolContract<
+  Record<string, never>,
+  ListStoragesResult,
+  'storages'
+>({
+  name: 'list-storages',
+  description: 'List the configured storages.',
+  inputSchema: { type: 'object', properties: {} },
+  rows: {
+    key: 'storages',
+    fields: ['id', 'name', 'adapter'],
+    defaultFields: ['id', 'name'],
+  },
+});
+```
+
+`key` defaults to `items`. The handler returns its result as before;
+`rows` only describes it.
 
 :::tip
 You do not need to hand-maintain the `./sdk` export in `package.json`. If your plugin has `sdk.ts`, `rozenite build` will detect it and publish the `./sdk` subpath automatically.
