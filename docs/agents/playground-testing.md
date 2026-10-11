@@ -94,6 +94,6 @@ reached from within their parent screen, not from the home index.)
 | React Hook Form | Edit the profile form fields | RHF panel in DevTools (form id `profile-form`) |
 | React Navigation | Navigate between tabs / push successive screens | React Navigation panel in DevTools |
 | SQLite | Native only — inspect the seeded `app`/`analytics`/`testing`/`binary` databases | SQLite panel in DevTools |
-| TanStack Query | Any Network Activity fetch also populates the query cache from boot-time calls in `src/main.tsx` | TanStack Query panel in DevTools |
+| TanStack Query | The playground mounts a `QueryClient` (in `App.tsx`) but registers no queries of its own; add a temporary `useQuery` to a screen to populate the cache | TanStack Query panel in DevTools |
 | Overlay | Always mounted via `<RozeniteOverlay />` | Overlay panel in DevTools |
 | Agent tools | Call `show-alert`, `random-number`, or `echo-payload` from an MCP client | Agent tool call result |
