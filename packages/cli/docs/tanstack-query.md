@@ -42,10 +42,10 @@ npx rozenite agent tanstack-query clear-mutation-cache
 
 ## Details
 
-`get-query-details` and `get-mutation-details` cut values to 4 levels of nesting and 512 characters per string. Deeper objects read `[object(N keys)]` or `[array(N)]`, cut strings end in `[+N chars]`, and `truncated: true` says something was cut. To read further:
+`get-query-details` and `get-mutation-details` cut values to 4 levels of nesting, 512 characters per string and 100 items per array or object. Deeper objects read `[object(N keys)]` or `[array(N)]`, cut strings end in `[+N chars]`, a cut array ends in a `"[+N items]"` item, a cut object ends in a `"[+N keys]": true` entry, and `truncated: true` says something was cut. To read further:
 
 - `--path` selects one sub-tree. It starts with the field to read: `data` or `error` for a query, `variables`, `data`, `error`, `context` or `failureReason` for a mutation (`--path data.items.0`).
-- `--maxDepth` and `--maxValueLength` raise the limits.
+- `--maxDepth`, `--maxValueLength` and `--maxItems` raise the limits.
 
 ## Minimal Flow
 

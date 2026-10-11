@@ -310,6 +310,21 @@ describe('tanstack query agent controller', () => {
     });
   });
 
+  it('caps query data arrays at maxItems items', () => {
+    const queryClient = createQueryClient();
+    const controller = createTanStackQueryAgentController(queryClient);
+    queryClient.setQueryData(
+      ['many'],
+      Array.from({ length: 5_000 }, (_, id) => ({ id })),
+    );
+    const queryHash = queryClient.getQueryCache().find({ queryKey: ['many'] })!.queryHash;
+
+    const details = controller.getQueryDetails({ queryHash, maxItems: 2 });
+    expect(details.truncated).toBe(true);
+    expect(details.query.data).toEqual([{ id: 0 }, { id: 1 }, '[+4998 items]']);
+    expect(controller.getQueryDetails({ queryHash }).query.data).toHaveLength(101);
+  });
+
   it('validates unknown query hashes', () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);

@@ -2,11 +2,11 @@ import {
   defineAgentToolContract,
   definePaginatedAgentToolContract,
   type AgentToolContract,
+  type BoundedValueArgs,
   type JSONSchema7,
 } from '@rozenite/agent-shared';
 import type { FetchStatus, MutationStatus, QueryStatus } from '@tanstack/react-query';
 import type { applyTanStackQueryDevtoolsAction } from '../react-native/devtools-actions';
-import type { BoundedValueArgs } from './bounded-value';
 
 export const TANSTACK_QUERY_AGENT_PLUGIN_ID = '@rozenite/tanstack-query-plugin';
 
@@ -108,7 +108,7 @@ export type TanStackQueryListQueriesResult = TanStackQueryCacheSummary & {
 export type TanStackQueryGetQueryDetailsResult = {
   summary: TanStackQueryCacheSummary;
   query: TanStackQueryQuerySummary & {
-    /** Query data (or the sub-tree at `path`), cut to `maxDepth` / `maxValueLength`. */
+    /** Query data (or the sub-tree at `path`), cut to `maxDepth` / `maxValueLength` / `maxItems`. */
     data: TanStackQueryAgentSafeValue;
     error: TanStackQueryAgentSafeValue;
     observers: Array<{
@@ -234,6 +234,11 @@ const boundedValueProperties = {
     description:
       'Truncate string values longer than this, marking the cut with "[+N chars]". Defaults to 512.',
   },
+  maxItems: {
+    type: 'integer',
+    description:
+      'Most array items or object keys returned per level; the rest are marked with a last "[+N items]" item or "[+N keys]" key. Defaults to 100, max 10000.',
+  },
 } satisfies Record<string, JSONSchema7>;
 
 const emptyInputSchema: JSONSchema7 = {
@@ -309,7 +314,7 @@ export const tanstackQueryToolDefinitions = {
   >({
     name: 'get-query-details',
     description:
-      'Return a JSON-safe TanStack Query query snapshot and observer summary. data and error are cut to maxDepth levels and maxValueLength characters per string; use path to read a deeper sub-tree.',
+      'Return a JSON-safe TanStack Query query snapshot and observer summary. data and error are cut to maxDepth levels, maxValueLength characters per string and maxItems entries per array or object; use path to read a deeper sub-tree.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -440,7 +445,7 @@ export const tanstackQueryToolDefinitions = {
   >({
     name: 'get-mutation-details',
     description:
-      'Return a JSON-safe TanStack Query mutation snapshot for a mutationId. variables, data, error, context and failureReason are cut to maxDepth levels and maxValueLength characters per string; use path to read a deeper sub-tree.',
+      'Return a JSON-safe TanStack Query mutation snapshot for a mutationId. variables, data, error, context and failureReason are cut to maxDepth levels, maxValueLength characters per string and maxItems entries per array or object; use path to read a deeper sub-tree.',
     inputSchema: {
       type: 'object',
       properties: {
