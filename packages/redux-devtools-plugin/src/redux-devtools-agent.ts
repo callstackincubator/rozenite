@@ -1,7 +1,7 @@
 import { ActionCreators } from '@redux-devtools/instrument';
+import { paginateArray } from '@rozenite/agent-shared';
 import type { Action } from 'redux';
 import { parse, stringify } from 'jsan';
-import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import {
   getReduxDevToolsStore,
   listReduxDevToolsStores,
@@ -14,7 +14,9 @@ import {
   type ReduxDevToolsApplyStoreActionResult,
   type ReduxDevToolsDispatchActionInput as DispatchActionInput,
   type ReduxDevToolsDispatchActionResult,
+  type ReduxDevToolsGetActionDetailsArgs,
   type ReduxDevToolsGetActionDetailsResult,
+  type ReduxDevToolsGetStoreStateArgs,
   type ReduxDevToolsGetStoreStateResult,
   type ReduxDevToolsListActionsResult,
   type ReduxDevToolsListStoresResult,
@@ -25,6 +27,7 @@ import {
   type ReduxDevToolsStoreSummary,
 } from './shared/agent-tools';
 import type { ReduxActionTrace, ReduxActionWithTrace } from './shared/trace';
+import { boundValue, normalizeBoundedValueArgs, selectValuePath } from './shared/bounded-value';
 import { parseStack } from './symbolication/parse';
 
 type AnyAction = Action<string> & Record<string, unknown>;
@@ -244,9 +247,13 @@ export const listReduxDevToolsStoresResult = (): ReduxDevToolsListStoresResult =
 
 export const getReduxStoreStateResult = ({
   instanceId,
-}: StoreInput): ReduxDevToolsGetStoreStateResult => {
+  ...boundArgs
+}: ReduxDevToolsGetStoreStateArgs): ReduxDevToolsGetStoreStateResult => {
+  const bounds = normalizeBoundedValueArgs(boundArgs);
   const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
   const currentActionId = liftedState.stagedActionIds[liftedState.currentStateIndex] ?? null;
+  const state = serializeForAgent(enhancedStore.getState());
+  const bounded = boundValue(bounds.path ? selectValuePath(state, bounds.path) : state, bounds);
 
   return {
     store: buildStoreSummary(store),
@@ -255,36 +262,73 @@ export const getReduxStoreStateResult = ({
       currentActionId && currentActionId !== 0
         ? buildActionSummary(store, liftedState, currentActionId)
         : null,
-    state: serializeForAgent(enhancedStore.getState()),
+    state: bounded.value,
+    ...(bounds.path ? { path: bounds.path.join('.') } : {}),
+    truncated: bounded.truncated,
   };
 };
 
+const getDeprecatedOffset = (offset: unknown): number =>
+  typeof offset === 'number' && Number.isFinite(offset) ? Math.max(0, Math.floor(offset)) : 0;
+
 export const listReduxActionsResult = ({
   instanceId,
-  offset = 0,
-  limit = DEFAULT_PAGE_LIMIT,
+  limit,
+  cursor,
+  offset,
 }: PaginatedStoreInput): ReduxDevToolsListActionsResult => {
+  if (cursor !== undefined && offset !== undefined) {
+    throw new Error('Provide either cursor or offset, not both.');
+  }
+
   const { store, liftedState } = getStoreAndLiftedState(instanceId);
   const actionIds = getVisibleActionIds(liftedState);
-  const safeOffset = Math.max(0, Math.floor(offset));
-  const safeLimit = Number.isFinite(limit)
-    ? Math.min(MAX_PAGE_LIMIT, Math.max(1, Math.floor(limit)))
-    : DEFAULT_PAGE_LIMIT;
-  const selectedIds = actionIds.slice(safeOffset, safeOffset + safeLimit);
+  // `offset` is deprecated: it only picks where the first page starts.
+  const start = cursor === undefined ? getDeprecatedOffset(offset) : 0;
+  const { items: pageIds, page } = paginateArray(actionIds.slice(start), {
+    keyOf: (actionId) => actionId,
+    limit,
+    cursor,
+    scope: store.instanceId,
+  });
 
   return {
     store: buildStoreSummary(store),
     total: actionIds.length,
-    offset: safeOffset,
-    limit: safeLimit,
-    items: selectedIds.map((actionId) => buildActionSummary(store, liftedState, actionId)),
+    offset:
+      pageIds.length > 0
+        ? actionIds.indexOf(pageIds[0])
+        : page.reset
+          ? 0
+          : cursor !== undefined
+            ? actionIds.length
+            : Math.min(start, actionIds.length),
+    limit: page.limit,
+    items: pageIds.map((actionId) => buildActionSummary(store, liftedState, actionId)),
+    page,
   };
 };
+
+const ACTION_DETAILS_VALUE_FIELDS = ['liftedAction', 'state'] as const;
 
 export const getReduxActionDetailsResult = ({
   instanceId,
   actionId,
-}: ActionInput): ReduxDevToolsGetActionDetailsResult => {
+  include,
+  ...boundArgs
+}: ReduxDevToolsGetActionDetailsArgs): ReduxDevToolsGetActionDetailsResult => {
+  const bounds = normalizeBoundedValueArgs(boundArgs);
+  const pathField = bounds.path?.[0];
+  if (
+    bounds.path &&
+    !ACTION_DETAILS_VALUE_FIELDS.includes(pathField as (typeof ACTION_DETAILS_VALUE_FIELDS)[number])
+  ) {
+    throw new Error(
+      `"path" must start with ${ACTION_DETAILS_VALUE_FIELDS.map((field) => `"${field}"`).join(' or ')}.`,
+    );
+  }
+  const includeState = (include ?? []).includes('state') || pathField === 'state';
+
   const { store, liftedState } = getStoreAndLiftedState(instanceId);
   assertKnownAction(store, liftedState, actionId);
 
@@ -292,13 +336,26 @@ export const getReduxActionDetailsResult = ({
   const liftedAction = liftedState.actionsById[actionId];
   const computedState = liftedState.computedStates[stagedIndex];
 
+  let truncated = false;
+  const bound = (field: (typeof ACTION_DETAILS_VALUE_FIELDS)[number], value: unknown) => {
+    const selected =
+      bounds.path && pathField === field
+        ? selectValuePath(value, bounds.path.slice(1), [field])
+        : value;
+    const result = boundValue(selected, bounds);
+    truncated = truncated || result.truncated;
+    return result.value;
+  };
+
   return {
     store: buildStoreSummary(store),
     action: buildActionSummary(store, liftedState, actionId),
-    liftedAction: serializeForAgent(liftedAction),
-    state: serializeForAgent(computedState?.state),
+    liftedAction: bound('liftedAction', serializeForAgent(liftedAction)),
+    ...(includeState ? { state: bound('state', serializeForAgent(computedState?.state)) } : {}),
     error: computedState?.error ?? null,
     trace: getActionTraceForAgent(store, actionId, liftedAction),
+    ...(bounds.path ? { path: bounds.path.join('.') } : {}),
+    truncated,
   };
 };
 

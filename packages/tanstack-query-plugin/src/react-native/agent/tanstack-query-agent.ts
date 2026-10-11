@@ -1,15 +1,19 @@
-import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import type {
   Mutation,
-  MutationCacheNotifyEvent,
   MutationObserverOptions,
   MutationState,
   Query,
-  QueryCacheNotifyEvent,
   QueryClient,
 } from '@tanstack/react-query';
 import { onlineManager } from '@tanstack/react-query';
+import { paginateArray } from '@rozenite/agent-shared';
 import { applyTanStackQueryDevtoolsAction } from '../devtools-actions';
+import {
+  boundValue,
+  normalizeBoundedValueArgs,
+  selectValuePath,
+  type BoundedValueArgs,
+} from '../../shared/bounded-value';
 import {
   tanstackQueryToolDefinitions,
   type TanStackQueryAgentMutationIdInput as MutationIdInput,
@@ -21,13 +25,6 @@ import {
   type TanStackQueryMutationOptionsSummary,
   type TanStackQueryObserverOptionsSummary,
 } from '../../shared/agent-tools';
-
-type CursorKind = 'queries' | 'mutations';
-
-type CursorState = {
-  queriesGeneration: number;
-  mutationsGeneration: number;
-};
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   return !!value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype;
@@ -101,59 +98,6 @@ export const serializeForAgent = (value: unknown, seen = new WeakSet<object>()):
   }
 
   return String(value);
-};
-
-const sanitizeLimit = (limit?: number) => {
-  if (
-    typeof limit !== 'number' ||
-    !Number.isFinite(limit) ||
-    !Number.isInteger(limit) ||
-    limit < 1
-  ) {
-    return DEFAULT_PAGE_LIMIT;
-  }
-
-  return Math.min(limit, MAX_PAGE_LIMIT);
-};
-
-const encodeCursor = (kind: CursorKind, generation: number, offset: number): string => {
-  return `${kind}:${generation}:${offset}`;
-};
-
-const decodeCursor = (cursor: string, kind: CursorKind, generation: number): number => {
-  const [cursorKind, rawGeneration, rawOffset] = cursor.split(':', 3);
-  if (cursorKind !== kind || !rawGeneration || !rawOffset) {
-    throw new Error('Cursor does not match the requested listing. Run the command again.');
-  }
-
-  const cursorGeneration = Number(rawGeneration);
-  const offset = Number(rawOffset);
-
-  if (!Number.isInteger(cursorGeneration) || cursorGeneration !== generation) {
-    throw new Error('Cursor does not match the requested listing. Run the command again.');
-  }
-
-  if (!Number.isInteger(offset) || offset < 0) {
-    throw new Error('Cursor is invalid. Run the command again.');
-  }
-
-  return offset;
-};
-
-const paginate = <T>(rows: T[], kind: CursorKind, generation: number, input: PaginationInput) => {
-  const limit = sanitizeLimit(input.limit);
-  const startIndex = input.cursor ? decodeCursor(input.cursor, kind, generation) : 0;
-  const endIndex = Math.min(startIndex + limit, rows.length);
-  const hasMore = endIndex < rows.length;
-
-  return {
-    items: rows.slice(startIndex, endIndex),
-    page: {
-      limit,
-      hasMore,
-      ...(hasMore ? { nextCursor: encodeCursor(kind, generation, endIndex) } : {}),
-    },
-  };
 };
 
 export const getCacheSummaryTool = tanstackQueryToolDefinitions.getCacheSummary;
@@ -270,6 +214,43 @@ const getMutationSummary = (mutation: Mutation<unknown, Error, unknown, unknown>
   };
 };
 
+/**
+ * Applies `path`, `maxDepth` and `maxValueLength` to the named value fields
+ * of a details result. `path` must start with one of `fields`.
+ */
+const createValueBounder = <TField extends string>(
+  fields: readonly TField[],
+  args: BoundedValueArgs,
+) => {
+  const bounds = normalizeBoundedValueArgs(args);
+  const pathField = bounds.path?.[0];
+  if (bounds.path && !fields.includes(pathField as TField)) {
+    throw new Error(`"path" must start with ${fields.map((field) => `"${field}"`).join(', ')}.`);
+  }
+
+  let truncated = false;
+  return {
+    bound(field: TField, value: AgentSafeValue): AgentSafeValue {
+      const selected =
+        bounds.path && pathField === field
+          ? selectValuePath(value, bounds.path.slice(1), [field])
+          : value;
+      const result = boundValue(selected, bounds);
+      truncated = truncated || result.truncated;
+      return result.value as AgentSafeValue;
+    },
+    finish() {
+      return {
+        ...(bounds.path ? { path: bounds.path.join('.') } : {}),
+        truncated,
+      };
+    },
+  };
+};
+
+const QUERY_VALUE_FIELDS = ['data', 'error'] as const;
+const MUTATION_VALUE_FIELDS = ['variables', 'data', 'error', 'context', 'failureReason'] as const;
+
 const resolveQuery = (queryClient: QueryClient, queryHash: string) => {
   const query = queryClient.getQueryCache().get(queryHash);
   if (!query) {
@@ -328,24 +309,7 @@ export const buildTanStackQueryCacheSummary = (queryClient: QueryClient) => {
 };
 
 export const createTanStackQueryAgentController = (queryClient: QueryClient) => {
-  const cursorState: CursorState = {
-    queriesGeneration: 0,
-    mutationsGeneration: 0,
-  };
-
   return {
-    handleQueryCacheEvent(event: QueryCacheNotifyEvent) {
-      if (event.type === 'added' || event.type === 'removed') {
-        cursorState.queriesGeneration += 1;
-      }
-    },
-
-    handleMutationCacheEvent(event: MutationCacheNotifyEvent) {
-      if (event.type === 'added' || event.type === 'removed') {
-        cursorState.mutationsGeneration += 1;
-      }
-    },
-
     getCacheSummary() {
       return buildTanStackQueryCacheSummary(queryClient);
     },
@@ -368,19 +332,25 @@ export const createTanStackQueryAgentController = (queryClient: QueryClient) => 
       return {
         ...buildTanStackQueryCacheSummary(queryClient),
         total: queries.length,
-        ...paginate(queries.map(getQuerySummary), 'queries', cursorState.queriesGeneration, input),
+        ...paginateArray(queries.map(getQuerySummary), {
+          keyOf: (row) => row.queryHash,
+          limit: input.limit,
+          cursor: input.cursor,
+          scope: 'queries',
+        }),
       };
     },
 
-    getQueryDetails({ queryHash }: QueryHashInput) {
+    getQueryDetails({ queryHash, ...boundArgs }: QueryHashInput & BoundedValueArgs) {
+      const bounder = createValueBounder(QUERY_VALUE_FIELDS, boundArgs);
       const query = resolveQuery(queryClient, queryHash);
 
       return {
         summary: buildTanStackQueryCacheSummary(queryClient),
         query: {
           ...getQuerySummary(query),
-          data: serializeForAgent(query.state.data),
-          error: serializeForAgent(query.state.error),
+          data: bounder.bound('data', serializeForAgent(query.state.data)),
+          error: bounder.bound('error', serializeForAgent(query.state.error)),
           observers: query.observers.map((observer) => ({
             queryHash: query.queryHash,
             options: pickObserverOptionsSummary(
@@ -388,6 +358,7 @@ export const createTanStackQueryAgentController = (queryClient: QueryClient) => 
             ),
           })),
         },
+        ...bounder.finish(),
       };
     },
 
@@ -445,29 +416,34 @@ export const createTanStackQueryAgentController = (queryClient: QueryClient) => 
       return {
         ...buildTanStackQueryCacheSummary(queryClient),
         total: mutations.length,
-        ...paginate(
-          mutations.map(getMutationSummary),
-          'mutations',
-          cursorState.mutationsGeneration,
-          input,
-        ),
+        ...paginateArray(mutations.map(getMutationSummary), {
+          keyOf: (row) => row.mutationId,
+          limit: input.limit,
+          cursor: input.cursor,
+          scope: 'mutations',
+        }),
       };
     },
 
-    getMutationDetails({ mutationId }: MutationIdInput) {
+    getMutationDetails({ mutationId, ...boundArgs }: MutationIdInput & BoundedValueArgs) {
+      const bounder = createValueBounder(MUTATION_VALUE_FIELDS, boundArgs);
       const mutation = resolveMutation(queryClient, mutationId);
 
       return {
         summary: buildTanStackQueryCacheSummary(queryClient),
         mutation: {
           ...getMutationSummary(mutation),
-          variables: serializeForAgent(mutation.state.variables),
-          data: serializeForAgent(mutation.state.data),
-          error: serializeForAgent(mutation.state.error),
-          context: serializeForAgent(mutation.state.context),
-          failureReason: serializeForAgent(mutation.state.failureReason),
+          variables: bounder.bound('variables', serializeForAgent(mutation.state.variables)),
+          data: bounder.bound('data', serializeForAgent(mutation.state.data)),
+          error: bounder.bound('error', serializeForAgent(mutation.state.error)),
+          context: bounder.bound('context', serializeForAgent(mutation.state.context)),
+          failureReason: bounder.bound(
+            'failureReason',
+            serializeForAgent(mutation.state.failureReason),
+          ),
           options: pickMutationOptionsSummary(mutation.options),
         },
+        ...bounder.finish(),
       };
     },
 

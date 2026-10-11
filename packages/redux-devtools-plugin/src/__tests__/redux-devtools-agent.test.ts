@@ -63,7 +63,7 @@ const registerStore = ({
   name = 'App Store',
   maxAge = 50,
   liftedState = createLiftedState(),
-  currentState = { count: 0 },
+  currentState = { count: 0 } as unknown,
 } = {}) => {
   const dispatch = vi.fn();
   const liftedDispatch = vi.fn();
@@ -160,7 +160,37 @@ describe('redux devtools agent helpers', () => {
         hasError: false,
       },
       state: { count: 0 },
+      truncated: false,
     });
+  });
+
+  it('bounds store state by depth and string length and selects a path', () => {
+    registerStore({
+      currentState: {
+        user: { profile: { address: { city: { name: 'Kraków' } } } },
+        bio: 'x'.repeat(600),
+        todos: [{ title: 'first' }, { title: 'second' }],
+      },
+    });
+
+    const result = getReduxStoreStateResult({});
+    expect(result.truncated).toBe(true);
+    expect(result.state).toMatchObject({
+      user: { profile: { address: { city: '[object(1 keys)]' } } },
+      bio: `${'x'.repeat(512)}[+88 chars]`,
+    });
+
+    expect(getReduxStoreStateResult({ path: 'todos.1', maxValueLength: 3 })).toMatchObject({
+      path: 'todos.1',
+      state: { title: 'sec[+3 chars]' },
+      truncated: true,
+    });
+    expect(getReduxStoreStateResult({ path: 'user', maxDepth: 1 }).state).toEqual({
+      profile: '[object(1 keys)]',
+    });
+    expect(() => getReduxStoreStateResult({ path: 'todos.9' })).toThrow(
+      'Path "todos.9" does not exist.',
+    );
   });
 
   it('lists actions newest first with pagination', () => {
@@ -195,6 +225,7 @@ describe('redux devtools agent helpers', () => {
           hasError: false,
         },
       ],
+      page: { limit: 1, hasMore: true, nextCursor: expect.any(String) },
     });
   });
 
@@ -225,11 +256,59 @@ describe('redux devtools agent helpers', () => {
     expect(capped.items).toHaveLength(100);
 
     for (const bad of [Number.NaN, Number.POSITIVE_INFINITY]) {
-      expect(listReduxActionsResult({ limit: bad }).limit).toBe(20);
+      expect(() => listReduxActionsResult({ limit: bad })).toThrow(/"limit"/);
     }
   });
 
-  it('returns action details with computed state', () => {
+  it('continues list-actions after the last action, skipping nothing when older ones are dropped', () => {
+    const liftedState = createLiftedState();
+    registerStore({ liftedState });
+
+    const first = listReduxActionsResult({ limit: 1 });
+    expect(first.items.map((item) => item.actionId)).toEqual([2]);
+
+    // A new action arrives on top while paging.
+    liftedState.actionsById[3] = ActionCreators.performAction({ type: 'counter/reset' });
+    liftedState.stagedActionIds = [0, 1, 2, 3];
+    liftedState.computedStates = [...liftedState.computedStates, { state: { count: 0 } }];
+
+    const second = listReduxActionsResult({ limit: 1, cursor: first.page.nextCursor });
+    expect(second).toMatchObject({
+      total: 3,
+      offset: 2,
+      limit: 1,
+      items: [{ actionId: 1 }],
+      page: { limit: 1, hasMore: false },
+    });
+
+    // The action the cursor points at is gone: restart.
+    const restart = listReduxActionsResult({ limit: 1 });
+    liftedState.stagedActionIds = [0, 1, 2];
+    expect(listReduxActionsResult({ cursor: restart.page.nextCursor })).toMatchObject({
+      items: [],
+      page: { reset: true },
+    });
+  });
+
+  it('still starts list-actions at a deprecated offset and defaults to 20 rows', () => {
+    registerStore();
+
+    expect(listReduxActionsResult({ offset: 1 })).toMatchObject({
+      offset: 1,
+      limit: 20,
+      items: [{ actionId: 1 }],
+    });
+    expect(() => listReduxActionsResult({ offset: 1, cursor: 'x' })).toThrow(
+      'either cursor or offset',
+    );
+    expect(reduxDevToolsToolDefinitions.listActions.pagination).toMatchObject({
+      defaultFields: ['actionId', 'type', 'timestamp', 'isCurrent'],
+      meta: ['total'],
+    });
+    expect(reduxDevToolsToolDefinitions.listStores.rows).toMatchObject({ key: 'stores' });
+  });
+
+  it('returns action details without computed state by default', () => {
     registerStore();
 
     expect(getReduxActionDetailsResult({ actionId: 1 })).toEqual({
@@ -261,10 +340,29 @@ describe('redux devtools agent helpers', () => {
         timestamp: expect.any(Number),
         stack: undefined,
       },
-      state: { count: 1 },
       error: null,
       trace: null,
+      truncated: false,
     });
+  });
+
+  it('returns the computed state of an action only when asked for it', () => {
+    registerStore();
+
+    expect(getReduxActionDetailsResult({ actionId: 1 })).not.toHaveProperty('state');
+    expect(getReduxActionDetailsResult({ actionId: 1, include: ['state'] }).state).toEqual({
+      count: 1,
+    });
+    expect(getReduxActionDetailsResult({ actionId: 1, path: 'state.count' })).toMatchObject({
+      path: 'state.count',
+      state: 1,
+    });
+    expect(
+      getReduxActionDetailsResult({ actionId: 1, path: 'liftedAction.action.type' }),
+    ).toMatchObject({ liftedAction: 'counter/increment' });
+    expect(() => getReduxActionDetailsResult({ actionId: 1, path: 'count' })).toThrow(
+      '"path" must start with "liftedAction" or "state".',
+    );
   });
 
   it('dispatches a normal Redux action through the real store', () => {

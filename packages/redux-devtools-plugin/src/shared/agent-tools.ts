@@ -1,5 +1,12 @@
-import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+import {
+  defineAgentToolContract,
+  definePaginatedAgentToolContract,
+  defineRowsAgentToolContract,
+  type AgentToolContract,
+  type PageEnvelope,
+} from '@rozenite/agent-shared';
 import type { ReduxActionTrace } from './trace';
+import type { BoundedValueArgs } from './bounded-value';
 
 export const REDUX_DEVTOOLS_AGENT_PLUGIN_ID = '@rozenite/redux-devtools-plugin';
 
@@ -8,8 +15,12 @@ export type ReduxDevToolsStoreInput = {
 };
 
 export type ReduxDevToolsPaginatedStoreInput = ReduxDevToolsStoreInput & {
-  offset?: number;
+  /** Page size. Defaults to 20, max 100. */
   limit?: number;
+  /** Opaque cursor from a previous page. */
+  cursor?: string;
+  /** @deprecated Use `cursor`. Index the first page starts at. */
+  offset?: number;
 };
 
 export type ReduxDevToolsActionInput = ReduxDevToolsStoreInput & {
@@ -55,13 +66,20 @@ export type ReduxDevToolsListStoresResult = {
   stores: ReduxDevToolsStoreSummary[];
 };
 
-export type ReduxDevToolsGetStoreStateArgs = ReduxDevToolsStoreInput;
+export type ReduxDevToolsBoundedValueArgs = BoundedValueArgs;
+
+export type ReduxDevToolsGetStoreStateArgs = ReduxDevToolsStoreInput & BoundedValueArgs;
 
 export type ReduxDevToolsGetStoreStateResult = {
   store: ReduxDevToolsStoreSummary;
   currentActionId: number | null;
   currentAction: ReduxDevToolsActionSummary | null;
+  /** The store state (or the sub-tree at `path`), cut to `maxDepth` / `maxValueLength`. */
   state: unknown;
+  /** The `path` the state was narrowed to, when one was given. */
+  path?: string;
+  /** Whether any value in `state` was cut. */
+  truncated: boolean;
 };
 
 export type ReduxDevToolsListActionsArgs = ReduxDevToolsPaginatedStoreInput;
@@ -69,20 +87,33 @@ export type ReduxDevToolsListActionsArgs = ReduxDevToolsPaginatedStoreInput;
 export type ReduxDevToolsListActionsResult = {
   store: ReduxDevToolsStoreSummary;
   total: number;
+  /** Index of the first returned action in the newest-first history. */
   offset: number;
   limit: number;
   items: ReduxDevToolsActionSummary[];
+  page: PageEnvelope;
 };
 
-export type ReduxDevToolsGetActionDetailsArgs = ReduxDevToolsActionInput;
+export type ReduxDevToolsGetActionDetailsInclude = 'state';
+
+export type ReduxDevToolsGetActionDetailsArgs = ReduxDevToolsActionInput &
+  BoundedValueArgs & {
+    /** Opt-in parts of the result. `state` adds the state computed after the action. */
+    include?: ReduxDevToolsGetActionDetailsInclude[];
+  };
 
 export type ReduxDevToolsGetActionDetailsResult = {
   store: ReduxDevToolsStoreSummary;
   action: ReduxDevToolsActionSummary;
   liftedAction: unknown;
-  state: unknown;
+  /** Present only with `include: ["state"]` or a `path` starting with `state`. */
+  state?: unknown;
   error: unknown;
   trace: ReduxActionTrace | null;
+  /** The `path` a value was narrowed to, when one was given. */
+  path?: string;
+  /** Whether any value in `liftedAction` or `state` was cut. */
+  truncated: boolean;
 };
 
 export type ReduxDevToolsDispatchActionArgs = ReduxDevToolsDispatchActionInput;
@@ -105,13 +136,42 @@ const storeIdProperty = {
   },
 } as const;
 
+const boundedValueProperties = {
+  maxDepth: {
+    type: 'integer',
+    description:
+      'Levels of nesting expanded below the returned value. Deeper objects and arrays collapse to "[object(N keys)]" / "[array(N)]". Defaults to 4, max 64.',
+  },
+  maxValueLength: {
+    type: 'integer',
+    description:
+      'Truncate string values longer than this, marking the cut with "[+N chars]". Defaults to 512.',
+  },
+} as const;
+
 export const reduxDevToolsToolDefinitions = {
-  listStores: defineAgentToolContract<ReduxDevToolsListStoresArgs, ReduxDevToolsListStoresResult>({
+  listStores: defineRowsAgentToolContract<
+    ReduxDevToolsListStoresArgs,
+    ReduxDevToolsListStoresResult,
+    'stores'
+  >({
     name: 'list-stores',
     description: 'List all Redux DevTools store instances currently registered on the device.',
     inputSchema: {
       type: 'object',
       properties: {},
+    },
+    rows: {
+      key: 'stores',
+      fields: [
+        'instanceId',
+        'name',
+        'maxAge',
+        'actionCount',
+        'currentStateIndex',
+        'isLocked',
+        'isPaused',
+      ],
     },
   }),
   getStoreState: defineAgentToolContract<
@@ -120,31 +180,61 @@ export const reduxDevToolsToolDefinitions = {
   >({
     name: 'get-store-state',
     description:
-      'Return the current Redux store state together with lifted Redux DevTools metadata.',
-    inputSchema: {
-      type: 'object',
-      properties: storeIdProperty,
-    },
-  }),
-  listActions: defineAgentToolContract<
-    ReduxDevToolsListActionsArgs,
-    ReduxDevToolsListActionsResult
-  >({
-    name: 'list-actions',
-    description: 'List Redux action history for a store in newest-first order using pagination.',
+      'Return the current Redux store state together with lifted Redux DevTools metadata. The state is cut to maxDepth levels and maxValueLength characters per string; use path to read a deeper sub-tree.',
     inputSchema: {
       type: 'object',
       properties: {
         ...storeIdProperty,
-        offset: {
-          type: 'number',
-          description: 'Pagination offset. Defaults to 0.',
+        path: {
+          type: 'string',
+          description:
+            'Dot path into the store state selecting the sub-tree to return, for example "todos.items.0".',
         },
+        ...boundedValueProperties,
+      },
+    },
+  }),
+  listActions: definePaginatedAgentToolContract<
+    ReduxDevToolsListActionsArgs,
+    ReduxDevToolsListActionsResult
+  >({
+    name: 'list-actions',
+    description:
+      'List Redux action history for a store in newest-first order using cursor pagination.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...storeIdProperty,
         limit: {
           type: 'number',
-          description: 'Pagination size. Defaults to 20 and is capped at 100.',
+          description: 'Pagination size. Defaults to 20, max 100.',
+        },
+        cursor: {
+          type: 'string',
+          description:
+            'Opaque cursor from a previous list-actions page; the next page starts after the last action returned.',
+        },
+        offset: {
+          type: 'number',
+          description:
+            '@deprecated Use cursor. Index the first page starts at; cannot be combined with cursor.',
         },
       },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: [
+        'actionId',
+        'type',
+        'timestamp',
+        'isCurrent',
+        'isSkipped',
+        'hasError',
+        'liftedType',
+        'instanceId',
+      ],
+      defaultFields: ['actionId', 'type', 'timestamp', 'isCurrent'],
+      meta: ['total'],
     },
   }),
   getActionDetails: defineAgentToolContract<
@@ -153,7 +243,7 @@ export const reduxDevToolsToolDefinitions = {
   >({
     name: 'get-action-details',
     description:
-      'Return the lifted action payload, computed state, and metadata for a Redux action history entry.',
+      'Return the lifted action payload and metadata for a Redux action history entry. The state computed after the action is returned only with include ["state"]. Values are cut to maxDepth levels and maxValueLength characters per string.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -162,6 +252,18 @@ export const reduxDevToolsToolDefinitions = {
           type: 'number',
           description: 'Redux DevTools action ID to inspect.',
         },
+        include: {
+          type: 'array',
+          items: { type: 'string', enum: ['state'] },
+          description:
+            'Opt-in parts of the result. "state" adds the state computed after the action.',
+        },
+        path: {
+          type: 'string',
+          description:
+            'Dot path selecting a sub-tree, starting with "liftedAction" or "state", for example "state.todos" or "liftedAction.action.payload". A path into state implies include ["state"].',
+        },
+        ...boundedValueProperties,
       },
       required: ['actionId'],
     },

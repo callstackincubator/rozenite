@@ -49,11 +49,20 @@ export type NetworkActivityGetRequestDetailsResult = ReturnType<
   NetworkActivityAgentState['getRequestDetails']
 >;
 
-export type NetworkActivityGetRequestBodyArgs = NetworkActivityRequestIdArgs;
+export type NetworkActivityBodyRangeArgs = {
+  /** Byte offset to start reading from. Defaults to 0. */
+  offset?: number;
+  /** Maximum number of bytes to return. Defaults to 16384. */
+  maxBytes?: number;
+};
+
+export type NetworkActivityGetRequestBodyArgs = NetworkActivityRequestIdArgs &
+  NetworkActivityBodyRangeArgs;
 
 export type NetworkActivityGetRequestBodyResult = NetworkActivityAgentBodyResult;
 
-export type NetworkActivityGetResponseBodyArgs = NetworkActivityRequestIdArgs;
+export type NetworkActivityGetResponseBodyArgs = NetworkActivityRequestIdArgs &
+  NetworkActivityBodyRangeArgs;
 
 export type NetworkActivityGetResponseBodyResult = NetworkActivityAgentBodyResult;
 
@@ -68,6 +77,19 @@ export type NetworkActivityGetRealtimeConnectionDetailsArgs = NetworkActivityReq
 export type NetworkActivityGetRealtimeConnectionDetailsResult = ReturnType<
   NetworkActivityAgentState['getRealtimeConnectionDetails']
 >;
+
+const bodyRangeProperties = {
+  offset: {
+    type: 'integer',
+    description:
+      'Byte offset to start reading from. Defaults to 0. Pass the nextOffset of a truncated result to read the next range.',
+  },
+  maxBytes: {
+    type: 'integer',
+    description:
+      'Maximum number of body bytes to return. Defaults to 16384. The result reports totalBytes, truncated and, when truncated, nextOffset.',
+  },
+} as const;
 
 export const networkActivityToolDefinitions = {
   startRecording: defineAgentToolContract<
@@ -115,11 +137,12 @@ export const networkActivityToolDefinitions = {
       properties: {
         limit: {
           type: 'number',
-          description: 'Maximum number of requests to return. Defaults to 20.',
+          description: 'Maximum number of requests to return. Defaults to 20, max 100.',
         },
         cursor: {
           type: 'string',
-          description: 'Opaque pagination cursor from a previous listRequests call.',
+          description:
+            'Opaque cursor from a previous listRequests page; the next page starts after the last request returned.',
         },
       },
     },
@@ -139,6 +162,7 @@ export const networkActivityToolDefinitions = {
         'outcome',
       ],
       defaultFields: ['requestId', 'method', 'url', 'status', 'durationMs', 'outcome'],
+      meta: [],
     },
   }),
   getRequestDetails: defineAgentToolContract<
@@ -165,7 +189,7 @@ export const networkActivityToolDefinitions = {
   >({
     name: 'getRequestBody',
     description:
-      'Return the captured request body for a plugin-recorded HTTP request when available.',
+      'Return the captured request body for a plugin-recorded HTTP request when available, up to maxBytes (16384 by default) starting at offset.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -173,6 +197,7 @@ export const networkActivityToolDefinitions = {
           type: 'string',
           description: 'Captured plugin request ID to inspect.',
         },
+        ...bodyRangeProperties,
       },
       required: ['requestId'],
     },
@@ -183,7 +208,7 @@ export const networkActivityToolDefinitions = {
   >({
     name: 'getResponseBody',
     description:
-      'Return the captured response body for a plugin-recorded HTTP request when available.',
+      'Return the captured response body for a plugin-recorded HTTP request when available, up to maxBytes (16384 by default) starting at offset.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -191,6 +216,7 @@ export const networkActivityToolDefinitions = {
           type: 'string',
           description: 'Captured plugin request ID to inspect.',
         },
+        ...bodyRangeProperties,
       },
       required: ['requestId'],
     },
@@ -206,11 +232,12 @@ export const networkActivityToolDefinitions = {
       properties: {
         limit: {
           type: 'number',
-          description: 'Maximum number of realtime connections to return. Defaults to 20.',
+          description: 'Maximum number of realtime connections to return. Defaults to 20, max 100.',
         },
         cursor: {
           type: 'string',
-          description: 'Opaque pagination cursor from a previous listRealtimeConnections call.',
+          description:
+            'Opaque cursor from a previous listRealtimeConnections page; the next page starts after the last connection returned.',
         },
       },
     },
@@ -230,6 +257,7 @@ export const networkActivityToolDefinitions = {
         'httpStatus',
       ],
       defaultFields: ['requestId', 'kind', 'url', 'status', 'durationMs', 'messageCount'],
+      meta: [],
     },
   }),
   getRealtimeConnectionDetails: defineAgentToolContract<

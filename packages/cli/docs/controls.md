@@ -15,10 +15,15 @@ A Rozenite plugin for exposing app-defined controls in React Native DevTools. Yo
 
 ## Tools
 
-- `list-sections` -> `{}`
-- `get-item` -> `{"sectionId":"<id>","itemId":"<id>"}`
-- `set-value` -> `{"sectionId":"<id>","itemId":"<id>","value":true}` | `{"sectionId":"<id>","itemId":"<id>","value":"option-a"}`
-- `press-button` -> `{"sectionId":"<id>","itemId":"<id>"}`
+```
+npx rozenite agent controls list-sections
+npx rozenite agent controls get-item --sectionId <id> --itemId <id>
+npx rozenite agent controls set-value --sectionId <id> --itemId <id> --value true
+npx rozenite agent controls set-value --sectionId <id> --itemId <id> --value option-a
+npx rozenite agent controls press-button --sectionId <id> --itemId <id>
+```
+
+`list-sections` prints one row per section, with its items (`id`, `type`, `title`) nested in the `items` column.
 
 ## Item Types
 

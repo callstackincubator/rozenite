@@ -1,7 +1,9 @@
 import {
   defineAgentToolContract,
   definePaginatedAgentToolContract,
+  defineRowsAgentToolContract,
   type AgentToolContract,
+  type PageEnvelope,
 } from '@rozenite/agent-shared';
 
 import type { StorageEntry, StorageEntryType, StorageTarget } from './types';
@@ -55,11 +57,7 @@ export type StorageListEntriesResult = {
   storageId: string;
   total: number;
   items: Array<{ key: string }>;
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
+  page: PageEnvelope;
 };
 
 export type StorageReadEntryArgs = StorageSelection & {
@@ -104,11 +102,19 @@ export type StorageRemoveEntryResult = {
 };
 
 export const storageToolDefinitions = {
-  listStorages: defineAgentToolContract<StorageListStoragesArgs, StorageListStoragesResult>({
+  listStorages: defineRowsAgentToolContract<
+    StorageListStoragesArgs,
+    StorageListStoragesResult,
+    'storages'
+  >({
     name: 'list-storages',
     description:
       'List all storage adapters and their storage nodes currently available on the device, including supported entry types. Entry counts are omitted to avoid enumerating every storage.',
     inputSchema: { type: 'object', properties: {} },
+    rows: {
+      key: 'storages',
+      fields: ['adapterId', 'storageId', 'adapterName', 'storageName', 'supportedTypes'],
+    },
   }),
   listEntries: definePaginatedAgentToolContract<StorageListEntriesArgs, StorageListEntriesResult>({
     name: 'list-entries',
@@ -124,12 +130,13 @@ export const storageToolDefinitions = {
         },
         cursor: {
           type: 'string',
-          description: 'Opaque pagination cursor from a previous list-entries call.',
+          description:
+            'Opaque cursor from a previous list-entries page; the next page starts after the last key returned.',
         },
         offset: {
           type: 'number',
           description:
-            'Deprecated initial pagination offset. Must be a non-negative integer and cannot be combined with cursor.',
+            '@deprecated Use cursor. Index the first page starts at; cannot be combined with cursor.',
         },
       },
     },
@@ -137,6 +144,7 @@ export const storageToolDefinitions = {
       kind: 'cursor',
       fields: ['key'],
       defaultFields: ['key'],
+      meta: ['total'],
     },
   }),
   readEntry: defineAgentToolContract<StorageReadEntryArgs, StorageReadEntryResult>({

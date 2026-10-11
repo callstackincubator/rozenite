@@ -6,6 +6,7 @@ import {
 } from '@rozenite/agent-shared';
 import type { FetchStatus, MutationStatus, QueryStatus } from '@tanstack/react-query';
 import type { applyTanStackQueryDevtoolsAction } from '../react-native/devtools-actions';
+import type { BoundedValueArgs } from './bounded-value';
 
 export const TANSTACK_QUERY_AGENT_PLUGIN_ID = '@rozenite/tanstack-query-plugin';
 
@@ -62,6 +63,8 @@ export type TanStackQueryPage = {
   limit: number;
   hasMore: boolean;
   nextCursor?: string;
+  /** The row the cursor pointed at is gone; restart the listing without a cursor. */
+  reset?: boolean;
 };
 
 export type TanStackQueryQuerySummary = {
@@ -105,6 +108,7 @@ export type TanStackQueryListQueriesResult = TanStackQueryCacheSummary & {
 export type TanStackQueryGetQueryDetailsResult = {
   summary: TanStackQueryCacheSummary;
   query: TanStackQueryQuerySummary & {
+    /** Query data (or the sub-tree at `path`), cut to `maxDepth` / `maxValueLength`. */
     data: TanStackQueryAgentSafeValue;
     error: TanStackQueryAgentSafeValue;
     observers: Array<{
@@ -112,6 +116,10 @@ export type TanStackQueryGetQueryDetailsResult = {
       options: TanStackQueryObserverOptionsSummary | null;
     }>;
   };
+  /** The `path` a value was narrowed to, when one was given. */
+  path?: string;
+  /** Whether any value in `data` or `error` was cut. */
+  truncated: boolean;
 };
 
 export type TanStackQueryActionResult = Awaited<
@@ -160,6 +168,10 @@ export type TanStackQueryGetMutationDetailsResult = {
     failureReason: TanStackQueryAgentSafeValue;
     options: TanStackQueryMutationOptionsSummary;
   };
+  /** The `path` a value was narrowed to, when one was given. */
+  path?: string;
+  /** Whether any of `variables`, `data`, `error`, `context` or `failureReason` was cut. */
+  truncated: boolean;
 };
 
 export type TanStackQueryGetCacheSummaryArgs = undefined;
@@ -169,7 +181,8 @@ export type TanStackQueryGetOnlineStatusResult = { online: boolean };
 export type TanStackQuerySetOnlineStatusArgs = TanStackQueryAgentOnlineStatusInput;
 export type TanStackQuerySetOnlineStatusResult = { online: boolean };
 export type TanStackQueryListQueriesArgs = TanStackQueryAgentPaginationInput;
-export type TanStackQueryGetQueryDetailsArgs = TanStackQueryAgentQueryHashInput;
+export type TanStackQueryBoundedValueArgs = BoundedValueArgs;
+export type TanStackQueryGetQueryDetailsArgs = TanStackQueryAgentQueryHashInput & BoundedValueArgs;
 export type TanStackQueryRefetchQueryArgs = TanStackQueryAgentQueryHashInput;
 export type TanStackQuerySetQueryLoadingArgs = TanStackQueryAgentQueryToggleInput;
 export type TanStackQuerySetQueryErrorArgs = TanStackQueryAgentQueryToggleInput;
@@ -179,7 +192,8 @@ export type TanStackQueryRemoveQueryArgs = TanStackQueryAgentQueryHashInput;
 export type TanStackQueryClearQueryCacheArgs = undefined;
 export type TanStackQueryClearQueryCacheResult = TanStackQueryActionResult;
 export type TanStackQueryListMutationsArgs = TanStackQueryAgentPaginationInput;
-export type TanStackQueryGetMutationDetailsArgs = TanStackQueryAgentMutationIdInput;
+export type TanStackQueryGetMutationDetailsArgs = TanStackQueryAgentMutationIdInput &
+  BoundedValueArgs;
 export type TanStackQueryClearMutationCacheArgs = undefined;
 export type TanStackQueryClearMutationCacheResult = TanStackQueryActionResult;
 
@@ -204,7 +218,21 @@ const paginationProperties = {
   },
   cursor: {
     type: 'string',
-    description: 'Opaque pagination cursor from a previous list call.',
+    description:
+      'Opaque cursor from a previous page; the next page starts after the last row returned.',
+  },
+} satisfies Record<string, JSONSchema7>;
+
+const boundedValueProperties = {
+  maxDepth: {
+    type: 'integer',
+    description:
+      'Levels of nesting expanded below each returned value. Deeper objects and arrays collapse to "[object(N keys)]" / "[array(N)]". Defaults to 4, max 64.',
+  },
+  maxValueLength: {
+    type: 'integer',
+    description:
+      'Truncate string values longer than this, marking the cut with "[+N chars]". Defaults to 512.',
   },
 } satisfies Record<string, JSONSchema7>;
 
@@ -271,7 +299,8 @@ export const tanstackQueryToolDefinitions = {
         'hasData',
         'hasError',
       ],
-      defaultFields: ['queryHash', 'queryKey', 'status', 'fetchStatus', 'hasError'],
+      defaultFields: ['queryHash', 'status', 'fetchStatus', 'hasError'],
+      meta: ['total'],
     },
   }),
   getQueryDetails: defineAgentToolContract<
@@ -279,10 +308,19 @@ export const tanstackQueryToolDefinitions = {
     TanStackQueryGetQueryDetailsResult
   >({
     name: 'get-query-details',
-    description: 'Return a JSON-safe TanStack Query query snapshot and observer summary.',
+    description:
+      'Return a JSON-safe TanStack Query query snapshot and observer summary. data and error are cut to maxDepth levels and maxValueLength characters per string; use path to read a deeper sub-tree.',
     inputSchema: {
       type: 'object',
-      properties: queryActionProperties,
+      properties: {
+        ...queryActionProperties,
+        path: {
+          type: 'string',
+          description:
+            'Dot path starting with "data" or "error" selecting the sub-tree to return, for example "data.items.0".',
+        },
+        ...boundedValueProperties,
+      },
       required: ['queryHash'],
     },
   }),
@@ -393,6 +431,7 @@ export const tanstackQueryToolDefinitions = {
         'hasError',
       ],
       defaultFields: ['mutationId', 'mutationKey', 'status', 'hasError'],
+      meta: ['total'],
     },
   }),
   getMutationDetails: defineAgentToolContract<
@@ -400,10 +439,19 @@ export const tanstackQueryToolDefinitions = {
     TanStackQueryGetMutationDetailsResult
   >({
     name: 'get-mutation-details',
-    description: 'Return a JSON-safe TanStack Query mutation snapshot for a mutationId.',
+    description:
+      'Return a JSON-safe TanStack Query mutation snapshot for a mutationId. variables, data, error, context and failureReason are cut to maxDepth levels and maxValueLength characters per string; use path to read a deeper sub-tree.',
     inputSchema: {
       type: 'object',
-      properties: mutationActionProperties,
+      properties: {
+        ...mutationActionProperties,
+        path: {
+          type: 'string',
+          description:
+            'Dot path starting with "variables", "data", "error", "context" or "failureReason" selecting the sub-tree to return, for example "variables.id".',
+        },
+        ...boundedValueProperties,
+      },
       required: ['mutationId'],
     },
   }),

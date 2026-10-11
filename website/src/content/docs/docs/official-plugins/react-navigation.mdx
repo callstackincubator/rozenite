@@ -62,6 +62,8 @@ Once configured, "React Navigation" appears in your React Native DevTools sideba
 
 ## Agent Integration
 
-This plugin exposes agent tools under the `@rozenite/react-navigation-plugin` domain: `navigate` and `go-back` for routine navigation, plus lower-level tools (`get-root-state`, `get-focused-route`, `list-actions`, `reset-root`, `open-link`, `dispatch-action`) for anything `navigate`/`go-back` can't do.
+This plugin exposes agent tools under the `@rozenite/react-navigation-plugin` domain: `navigate` and `go-back` for routine navigation, plus lower-level tools (`get-root-state`, `get-focused-route`, `list-actions`, `get-action-details`, `reset-root`, `open-link`, `dispatch-action`) for anything `navigate`/`go-back` can't do.
+
+`list-actions` pages through the action history with short rows (id, timestamp, action type and target route). The navigation state after an action and the stack that dispatched it come from `get-action-details`, or from `list-actions` with `include: ["state", "origin"]`.
 
 **Next**: Learn about [Plugin Development](/docs/plugin-development/plugin-development), or explore other [Official Plugins](/docs/official-plugins/overview).
