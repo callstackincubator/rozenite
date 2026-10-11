@@ -15,18 +15,29 @@ A Rozenite plugin for React Navigation debugging and inspection in React Native 
 
 ## Tools
 
-- `get-root-state` -> `{}`
-- `get-focused-route` -> `{}`
-- `list-actions` -> `{}` | `{"offset":0,"limit":100}`
-- `navigate` -> `{"name":"<routeName>"}` | `{"name":"<routeName>","params":{"id":1}}`
-- `go-back` -> `{}` | `{"count":2}`
-- `open-link` -> `{"href":"myapp://route"}`
-- `dispatch-action` -> `{"action":{"type":"NAVIGATE","payload":{"name":"Home"}}}`
-- `reset-root` -> `{"state":{...}}`
+```
+npx rozenite agent react-navigation get-root-state
+npx rozenite agent react-navigation get-focused-route
+npx rozenite agent react-navigation list-actions
+npx rozenite agent react-navigation get-action-details --id 12
+npx rozenite agent react-navigation navigate --name Profile
+npx rozenite agent react-navigation navigate --name Profile --params '{"id":1}'
+npx rozenite agent react-navigation go-back
+npx rozenite agent react-navigation go-back --count 2
+npx rozenite agent react-navigation open-link --href myapp://route
+npx rozenite agent react-navigation dispatch-action --action '{"type":"NAVIGATE","payload":{"name":"Home"}}'
+npx rozenite agent react-navigation reset-root --state '{...}'
+```
+
+## Action History
+
+`list-actions` returns the newest 20 recorded actions per page (`--limit` up to 100), with `total` alongside. Rows show `id`, `timestamp`, `type` and `routeName`, the route the action targeted (from the action payload, else the route focused after it). When more actions exist the output ends with a `next` command; run it to continue. Paging resumes after the last action returned; if that action left the history, the page comes back empty with `reset: true`: list again without `--cursor`.
+
+The navigation state after each action and the stack that dispatched it are large, so rows leave them out. Read them for one action with `get-action-details --id <id>`, or for a whole page with `list-actions --include state,origin`.
 
 ## Minimal Flow
 
-`get-focused-route` or `get-root-state` -> optional `list-actions` -> `navigate` / `go-back`.
+`get-focused-route` or `get-root-state` -> optional `list-actions` -> `get-action-details` -> `navigate` / `go-back`.
 
 Fallback:
 `dispatch-action` or `reset-root` only when high-level navigation calls are not enough.
