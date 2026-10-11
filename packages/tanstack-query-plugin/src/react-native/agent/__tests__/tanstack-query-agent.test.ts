@@ -322,6 +322,58 @@ describe('tanstack query agent controller', () => {
     unsubscribe();
   });
 
+  it('defaults list-queries to columns that do not repeat the query key', () => {
+    expect(tanstackQueryToolDefinitions.listQueries.pagination?.defaultFields).toEqual([
+      'queryHash',
+      'status',
+      'fetchStatus',
+      'hasError',
+    ]);
+    expect(tanstackQueryToolDefinitions.listQueries.pagination?.fields).toContain('queryKey');
+  });
+
+  it('bounds query and mutation detail values and selects a path', async () => {
+    const queryClient = createQueryClient();
+    const controller = createTanStackQueryAgentController(queryClient);
+    queryClient.setQueryData(['big'], {
+      items: [{ title: 'x'.repeat(600), nested: { a: { b: { c: 1 } } } }],
+    });
+    const queryHash = queryClient.getQueryCache().find({ queryKey: ['big'] })!.queryHash;
+
+    const details = controller.getQueryDetails({ queryHash });
+    expect(details.truncated).toBe(true);
+    expect(details.query.data).toEqual({
+      items: [{ title: `${'x'.repeat(512)}[+88 chars]`, nested: { a: '[object(1 keys)]' } }],
+    });
+
+    expect(
+      controller.getQueryDetails({ queryHash, path: 'data.items.0.nested', maxDepth: 10 }),
+    ).toMatchObject({
+      path: 'data.items.0.nested',
+      truncated: false,
+      query: { data: { a: { b: { c: 1 } } } },
+    });
+    expect(() => controller.getQueryDetails({ queryHash, path: 'items' })).toThrow(
+      '"path" must start with "data", "error".',
+    );
+    expect(() => controller.getQueryDetails({ queryHash, path: 'data.missing' })).toThrow(
+      'Path "data.missing" does not exist.',
+    );
+
+    const mutation = createMutation(queryClient, { variables: { id: 7, note: 'long note' } });
+    expect(
+      controller.getMutationDetails({
+        mutationId: mutation.mutationId,
+        path: 'variables.note',
+        maxValueLength: 4,
+      }),
+    ).toMatchObject({
+      path: 'variables.note',
+      truncated: true,
+      mutation: { variables: 'long[+5 chars]' },
+    });
+  });
+
   it('validates unknown query hashes', () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);
