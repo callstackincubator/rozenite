@@ -192,6 +192,52 @@ const createMockDatabases = (): MockDatabase[] => {
         ],
       },
       {
+        // A composite primary key: both columns identify the row.
+        name: 'order_items',
+        type: 'table',
+        sql: 'CREATE TABLE order_items (order_id INTEGER NOT NULL REFERENCES orders(id), product_sku TEXT NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, note TEXT, PRIMARY KEY (order_id, product_sku))',
+        columns: [
+          { name: 'order_id', type: 'INTEGER', notNull: true, pk: 1 },
+          { name: 'product_sku', type: 'TEXT', notNull: true, pk: 2 },
+          { name: 'quantity', type: 'INTEGER', notNull: true, defaultValue: '1' },
+          { name: 'note', type: 'TEXT' },
+        ],
+        foreignKeys: [{ from: 'order_id', table: 'orders', to: 'id' }],
+        indexes: [
+          {
+            name: 'sqlite_autoindex_order_items_1',
+            unique: true,
+            origin: 'pk',
+            columns: ['order_id', 'product_sku'],
+          },
+        ],
+        rows: Array.from({ length: 12 }, (_, index) => ({
+          order_id: 1000 + Math.floor(index / 3),
+          product_sku: `SKU-${String(100 + index)}`,
+          quantity: 1 + (index % 4),
+          note: index % 5 === 0 ? 'gift wrap' : null,
+        })),
+      },
+      {
+        // WITHOUT ROWID: no rowid to fall back on, so rows are addressed by their primary key.
+        name: 'tags',
+        type: 'table',
+        sql: 'CREATE TABLE tags (name TEXT PRIMARY KEY, color TEXT) WITHOUT ROWID',
+        columns: [
+          { name: 'name', type: 'TEXT', pk: 1 },
+          { name: 'color', type: 'TEXT' },
+        ],
+        foreignKeys: [],
+        indexes: [
+          { name: 'sqlite_autoindex_tags_1', unique: true, origin: 'pk', columns: ['name'] },
+        ],
+        rows: [
+          { name: 'beta', color: '#3b82f6' },
+          { name: 'vip', color: null },
+          { name: 'standard', color: '#9ca3af' },
+        ],
+      },
+      {
         name: 'audit_log',
         type: 'table',
         sql: 'CREATE TABLE audit_log (id INTEGER PRIMARY KEY, action TEXT NOT NULL, at TEXT NOT NULL)',
@@ -285,7 +331,9 @@ const createMockDatabases = (): MockDatabase[] => {
     ],
   };
 
-  return [appDatabase, analyticsDatabase];
+  const databases = [appDatabase, analyticsDatabase];
+  databases.forEach((database) => database.entities.forEach(assignRowIds));
+  return databases;
 };
 
 // --- A tiny SQL engine, just enough for the panel ---------------------------------------------
@@ -294,10 +342,37 @@ const IDENTIFIER = '(?:"(?:[^"]|"")+"|\\w+)';
 const unquote = (identifier: string) =>
   identifier.startsWith('"') ? identifier.slice(1, -1).replace(/""/g, '"') : identifier;
 
-const getRowId = (entity: Entity, row: Row, index: number): Value => {
-  const pk = entity.columns.find((column) => column.pk === 1 && entity.columns.length > 0);
-  return pk && pk.type === 'INTEGER' ? row[pk.name] : index + 1;
+// A row keeps its rowid for life, like SQLite's: deleting a row never renumbers the others.
+const rowIds = new WeakMap<Row, number>();
+const nextRowIds = new WeakMap<Entity, number>();
+
+const assignRowIds = (entity: Entity) => {
+  for (const row of entity.rows) {
+    if (!rowIds.has(row)) {
+      const next = nextRowIds.get(entity) ?? 1;
+      rowIds.set(row, next);
+      nextRowIds.set(entity, next + 1);
+    }
+  }
 };
+
+// A single INTEGER primary key is the rowid; anything else gets a stable, assigned one.
+const getRowId = (entity: Entity, row: Row): Value => {
+  const primaryKeys = entity.columns.filter((column) => column.pk);
+  const [only] = primaryKeys;
+  return primaryKeys.length === 1 && only.type === 'INTEGER'
+    ? row[only.name]
+    : (rowIds.get(row) ?? 0);
+};
+
+// The panel binds blobs as `{ __rozeniteSqliteBinary: true, data }`; the device decodes them.
+const decodeParam = (value: unknown): Value =>
+  value !== null &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  (value as { __rozeniteSqliteBinary?: boolean }).__rozeniteSqliteBinary === true
+    ? ((value as { data: number[] }).data ?? [])
+    : (value as Value);
 
 const resolveEntity = (database: MockDatabase, reference: string) => {
   const parts = reference.match(new RegExp(IDENTIFIER, 'g')) ?? [];
@@ -411,7 +486,7 @@ const runSelect = (database: MockDatabase, sql: string, params: Value[]) => {
   const entity = resolveEntity(database, reference);
   const entityRows = getEntityRows(database, entity);
   let rows = filterRows(
-    entityRows.map((row, index) => ({ ...row, __rowid: getRowId(entity, row, index) })),
+    entityRows.map((row) => ({ ...row, __rowid: getRowId(entity, row) })),
     where,
     params,
   );
@@ -579,9 +654,9 @@ const runMutation = (database: MockDatabase, sql: string, params: Value[]) => {
     const entity = resolveEntity(database, del[1]);
     const doomed = new Set(
       filterRows(
-        entity.rows.map((row, index) => ({
+        entity.rows.map((row) => ({
           ...row,
-          rowid: getRowId(entity, row, index),
+          rowid: getRowId(entity, row),
           __row: row as unknown as Value,
         })),
         del[2],
@@ -608,9 +683,9 @@ const runMutation = (database: MockDatabase, sql: string, params: Value[]) => {
     const values = params.slice(0, assignments.length);
     const matches = new Set(
       filterRows(
-        entity.rows.map((row, index) => ({
+        entity.rows.map((row) => ({
           ...row,
-          rowid: getRowId(entity, row, index),
+          rowid: getRowId(entity, row),
           __row: row as unknown as Value,
         })),
         update[3],
@@ -754,7 +829,11 @@ const mockDeviceFlow = {
         send('sqlite:query:result', {
           requestId,
           databaseId,
-          result: runStatement(findDatabase(databaseId), sql, Array.isArray(params) ? params : []),
+          result: runStatement(
+            findDatabase(databaseId),
+            sql,
+            Array.isArray(params) ? params.map(decodeParam) : [],
+          ),
         });
       } catch (error) {
         send('sqlite:query:result', { requestId, databaseId, error: toMessage(error) });
