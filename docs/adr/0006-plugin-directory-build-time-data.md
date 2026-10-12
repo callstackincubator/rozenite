@@ -29,10 +29,12 @@ line that said which repository was in use.
 The database was never needed for load. A build makes one request per listed
 package (24 today) and one per distinct GitHub repository (11 today).
 
-- npm publishes no rate limit for registry reads. Responses are served from
-  Cloudflare's cache (`cache-control: public, max-age=300`).
-  `/<package>/latest` returns only the latest manifest: about 3 KB, against
-  135 KB for the full document the site fetched before.
+- npm publishes no rate limit for registry reads. `/<package>/latest` returns
+  only the latest manifest: about 3 KB, against 135 KB for the full document
+  the site fetched before. Requests for unscoped packages are served from
+  Cloudflare's cache (`cache-control: public, max-age=300`); requests for
+  scoped packages (`%40scope%2F…`) are not cached (`cf-cache-status:
+  DYNAMIC`) and always reach the registry.
 - GitHub allows 60 unauthenticated requests per hour per IP. GitHub-hosted
   runners share IPs, so that budget is often already spent. The Actions
   `GITHUB_TOKEN` allows 1,000 requests per hour per repository.
@@ -59,21 +61,32 @@ repository then cached that 0 for a week.
    has a 10-second timeout. A 429 or 5xx response is retried once, after
    `Retry-After` (capped at 10 seconds) or one second.
 
-3. **GitHub requests use the job's `GITHUB_TOKEN` when it is present.** The
-   deploy workflow passes `GITHUB_TOKEN: ${{ github.token }}` only to the step
-   that runs `vercel build`. `turbo.json` lists it in `passThroughEnv` on
+3. **GitHub requests use the job's token when it is present, under the name
+   `PLUGIN_DIRECTORY_GITHUB_TOKEN`.** The deploy workflow passes
+   `PLUGIN_DIRECTORY_GITHUB_TOKEN: ${{ github.token }}` only to the step that
+   runs `vercel build`. `turbo.json` lists it in `passThroughEnv` on
    `@rozenite/docs#build` alone, so no other Turborepo task sees it. It is not
-   in `env`, because the token changes every run and would make every build a
-   cache miss. Without a token (local builds, CI) requests go out
-   unauthenticated.
+   named `GITHUB_TOKEN` because Turborepo always passes every `GITHUB_*`
+   variable to every task, whatever `passThroughEnv` says. `release.yml` sets
+   a write-scoped `GITHUB_TOKEN` on the job that runs `turbo run build`
+   (which includes `@rozenite/docs#build`), and that token must never be sent
+   to `api.github.com` from here. Without a token (local builds, CI) requests
+   go out unauthenticated.
 
 4. **The deploy fails instead of shipping wrong data.** The deploy workflow
    sets `PLUGIN_DIRECTORY_STRICT=true`, declared in `passThroughEnv` next to
    the token. In strict mode the build fails when an official (`@rozenite/*`)
    plugin cannot be loaded, or when any request fails for a reason other than
-   404. A third-party package or repository that returns 404 is still listed,
-   without the missing data, and logged. Without the flag (local and CI
-   builds) every failure is logged and the card is shown without that data.
+   a third-party package or repository being gone. A third-party request that
+   returns 404, 410 or 451 is still listed, without the missing data, and
+   logged. Any other failure (401, 403, 429, 5xx, a network error, a timeout
+   or an unusable response) is systemic and fails the build. Without the flag
+   (local and CI builds) every failure is logged and the card is shown without
+   that data. A 429, a 5xx, or a 403 that carries `Retry-After` is retried
+   once, and a 403 or 429 that GitHub marks as rate limiting says so in the
+   error. The deploy log shows the build output of `@rozenite/docs`
+   (`--output-logs=new-only` in `vercel.json`), so the warnings are visible,
+   and on GitHub Actions they are emitted as `::warning::` annotations.
 
 5. **Missing data is not shown.** A card with no version, or no star count,
    leaves that element out. It never shows `v0.0.0` or 0 stars in its place.
@@ -83,9 +96,13 @@ repository then cached that 0 for a week.
    `https://www.npmjs.com/package/<name>`, where `<name>` is a valid npm
    package name. `githubUrl` must be an `https://github.com/<owner>/<repo>`
    URL, optionally followed by a path. Any other entry fails the build, strict
-   or not. `plugin-directory.json` becomes a Turborepo input of
-   `@rozenite/docs#build`. A pull request that edits only the directory then
-   rebuilds the site in CI, and a stale cache can no longer hide an edit.
+   or not. `@rozenite/docs#build` is not cached (`cache: false` in
+   `turbo.json`), because its output depends on live npm and GitHub data that
+   is not a task input, and a cached degraded build must not satisfy a strict
+   one. CI runs `pnpm --filter @rozenite/docs run validate:plugin-directory`,
+   which validates the file offline with the same code. A pull request that
+   edits only the root `plugin-directory.json` builds no package, so this step
+   is what checks it.
 
 ## Security considerations
 
@@ -93,7 +110,8 @@ repository then cached that 0 for a week.
   build` step: the `installCommand` (`pnpm install`, which runs only the
   install scripts allowlisted in `allowBuilds`) and the
   `@rozenite/docs#build` task. Turborepo's strict env mode keeps it from every
-  other task, including the Storybook and package builds. The token lasts only
+  other task, including the Storybook and package builds. That holds because
+  it is not named `GITHUB_*`; a `GITHUB_TOKEN` would reach every task. The token lasts only
   as long as the job. The `release.yml` caller limits it to `contents: read`
   on a public repository, so a stolen token reads only what is already
   public. The same job already holds `VERCEL_TOKEN` and the Vercel production
@@ -113,8 +131,10 @@ repository then cached that 0 for a week.
     `https://github.com/…` and `https://www.npmjs.com/…`, never `javascript:`.
   - Astro escapes descriptions when it renders them.
 - **Damage a third party can do.** A third party who unpublishes a package or
-  deletes a repository makes that card lose its data. That card is all they
-  can affect: they cannot fail the deploy or change any other card.
+  deletes a repository (404, 410 or 451) makes that card lose its data. That
+  card is all they can affect. A third party cannot make the deploy fail by
+  removing their own package, but a systemic error such as a rate limit or an
+  outage fails it for everyone, and re-running the workflow is the fix.
 - **Fewer secrets.** Removing Neon takes `DATABASE_URL`, a credential that
   could write to the database, out of the build.
 

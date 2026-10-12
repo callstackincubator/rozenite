@@ -35,6 +35,22 @@ const getRetryDelay = (retryAfter: string | null): number => {
   return Math.min(Number(retryAfter.trim()) * 1000, MAX_RETRY_DELAY_MS);
 };
 
+// A network failure, with the underlying error code (ENOTFOUND, ECONNRESET, ...) when there is one.
+const describeNetworkError = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return 'unknown error';
+  }
+  const code = (error.cause as { code?: unknown } | undefined)?.code;
+  const detail = `${error.name}: ${error.message}`;
+  return typeof code === 'string' ? `${detail} [${code}]` : detail;
+};
+
+// GitHub signals rate limiting with a 403 or 429 that carries `x-ratelimit-remaining: 0` or
+// `retry-after`. Only the interpretation is reported, never the header values.
+const isRateLimited = (response: Response): boolean =>
+  (response.status === 403 || response.status === 429) &&
+  (response.headers.get('x-ratelimit-remaining') === '0' || response.headers.has('retry-after'));
+
 const request = async (url: string, headers: Record<string, string>): Promise<unknown> => {
   for (let attempt = 1; ; attempt++) {
     const canRetry = attempt === 1;
@@ -47,8 +63,7 @@ const request = async (url: string, headers: Record<string, string>): Promise<un
         await sleep(DEFAULT_RETRY_DELAY_MS);
         continue;
       }
-      const reason = error instanceof Error ? `${error.name}: ${error.message}` : 'unknown error';
-      throw new HttpError(`GET ${url} failed (${reason})`, url);
+      throw new HttpError(`GET ${url} failed (${describeNetworkError(error)})`, url);
     }
 
     if (response.ok) {
@@ -62,12 +77,22 @@ const request = async (url: string, headers: Record<string, string>): Promise<un
     // Release the connection; the body of an error response is not used.
     await response.body?.cancel().catch(() => undefined);
 
-    if (canRetry && (response.status === 429 || response.status >= 500)) {
+    const retryable =
+      response.status === 429 ||
+      response.status >= 500 ||
+      (response.status === 403 && response.headers.has('retry-after'));
+
+    if (canRetry && retryable) {
       await sleep(getRetryDelay(response.headers.get('retry-after')));
       continue;
     }
 
-    throw new HttpError(`GET ${url} failed with status ${response.status}`, url, response.status);
+    const limited = isRateLimited(response) ? ', rate limited' : '';
+    throw new HttpError(
+      `GET ${url} failed with status ${response.status}${limited}`,
+      url,
+      response.status,
+    );
   }
 };
 

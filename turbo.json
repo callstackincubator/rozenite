@@ -40,24 +40,30 @@
     // here makes it cache on its own inputs, so a docs-only change restores it
     // instead of rebuilding it.
     //
-    // The plugin directory page reads ../plugin-directory.json and the npm and
-    // GitHub APIs at build time. The file is outside the package, so it is
-    // listed as an input. Strict env mode strips every variable not declared
-    // here, which is how the directory once shipped mock data without failing:
-    // GITHUB_TOKEN (raises the GitHub rate limit) and PLUGIN_DIRECTORY_STRICT
-    // (fails the build instead of degrading) are passed through, not hashed,
-    // because the token changes on every run and would make every build a miss.
+    // The plugin directory page reads npm and GitHub while the site builds, so
+    // this task is never cached: its output depends on live data that is not a
+    // task input, and a cached degraded build must not satisfy a strict one.
+    // Strict env mode strips every variable not declared here, which is how the
+    // directory once shipped mock data without failing, so the two variables it
+    // reads are passed through (not hashed). The token is not named
+    // GITHUB_TOKEN: Turborepo passes every GITHUB_* variable to every task, and
+    // release.yml sets a write-scoped GITHUB_TOKEN for the job that builds this
+    // site.
     "@rozenite/docs#build": {
       "dependsOn": ["^build", "ui-storybook#build-storybook"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/plugin-directory.json",
-        "!README.md",
-        "!CHANGELOG.md"
-      ],
-      "passThroughEnv": ["GITHUB_TOKEN", "PLUGIN_DIRECTORY_STRICT"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
       "outputs": ["dist/**", "build/**"],
-      "outputLogs": "errors-only"
+      "outputLogs": "errors-only",
+      "cache": false,
+      "passThroughEnv": ["PLUGIN_DIRECTORY_GITHUB_TOKEN", "PLUGIN_DIRECTORY_STRICT"]
+    },
+    // The docs tests cover pure validation code and need neither the site build
+    // (uncached, and it calls npm and GitHub) nor any other package's output.
+    "@rozenite/docs#test": {
+      "dependsOn": [],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     },
     "ui-storybook#build-storybook": {
       "dependsOn": ["^build"],
