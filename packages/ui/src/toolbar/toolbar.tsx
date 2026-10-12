@@ -2,11 +2,12 @@ import { Toolbar as ToolbarPrimitive } from '@base-ui/react/toolbar';
 import { cn } from '../utils/cn';
 import { Separator, type SeparatorProps } from '../separator/separator';
 import type { Size } from '../tokens/size';
+import { monoLabel } from '../utils/mono-label';
 
 const toolbarButtonSize = {
-  sm: 'h-6 px-2 text-xs [&_svg]:size-3.5',
-  md: 'h-8 px-3 text-sm [&_svg]:size-4',
-  lg: 'h-10 px-4 text-base [&_svg]:size-5',
+  sm: 'h-6 px-2 text-[11px] [&_svg]:size-3.5',
+  md: 'h-8 px-3 text-xs [&_svg]:size-4',
+  lg: 'h-10 px-4 text-xs [&_svg]:size-5',
 } as const satisfies Record<Size, string>;
 
 export type ToolbarProps = ToolbarPrimitive.Root.Props;
@@ -34,8 +35,9 @@ function ToolbarButton({ className, size = 'sm', ...props }: ToolbarButtonProps)
     <ToolbarPrimitive.Button
       data-slot="toolbar-button"
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md font-medium text-foreground',
-        'hover:bg-accent hover:text-accent-foreground',
+        'inline-flex items-center justify-center gap-1.5 rounded-md text-muted-foreground transition-colors duration-[120ms]',
+        monoLabel,
+        'hover:bg-accent hover:text-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'aria-disabled:pointer-events-none aria-disabled:opacity-50',
         toolbarButtonSize[size],

@@ -46,7 +46,7 @@ export function IconButton({
       'aria-label': label,
       'data-slot': 'icon-button',
       className: cn(
-        'relative inline-flex shrink-0 items-center justify-center rounded-md transition-colors',
+        'relative inline-flex shrink-0 items-center justify-center rounded-md transition-colors duration-[120ms]',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'disabled:pointer-events-none disabled:opacity-50',
         '[&_svg]:pointer-events-none [&_svg]:shrink-0',

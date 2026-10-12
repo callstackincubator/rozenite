@@ -21,6 +21,7 @@
   },
   "files": [
     "dist",
+    "fonts",
     "src",
     "styles.css"
   ],

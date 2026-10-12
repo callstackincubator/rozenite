@@ -4,14 +4,17 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 import { textTone } from '../tokens/tone-variants';
 import type { Tone } from '../tokens/tone';
+import { monoLabel } from '../utils/mono-label';
 
 export const textVariants = cva('text-foreground', {
   variants: {
     variant: {
-      title: 'text-base font-semibold',
-      heading: 'text-sm font-semibold',
+      title: 'text-base font-medium tracking-[-0.01em]',
+      heading: 'text-sm font-medium',
       body: 'text-sm font-normal',
       caption: 'text-xs text-muted-foreground',
+      /** Metadata and section labels: uppercase mono in `faint`. Never for sentences. */
+      label: cn('text-[11px] text-faint', monoLabel),
       code: 'font-mono text-xs',
       numeric: 'font-mono text-xs tabular-nums',
     },
@@ -52,11 +55,11 @@ const headingLevelTag = {
 } as const satisfies Record<number, ElementType>;
 
 const headingLevelClass = {
-  1: 'text-lg font-bold',
-  2: 'text-base font-semibold',
-  3: 'text-sm font-semibold',
+  1: 'text-lg font-medium tracking-[-0.02em]',
+  2: 'text-base font-medium tracking-[-0.01em]',
+  3: 'text-sm font-medium',
   4: 'text-sm font-medium',
-  5: 'text-xs font-semibold',
+  5: 'text-xs font-medium',
   6: 'text-xs font-medium',
 } as const satisfies Record<1 | 2 | 3 | 4 | 5 | 6, string>;
 

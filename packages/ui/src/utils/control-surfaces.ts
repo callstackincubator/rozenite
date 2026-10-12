@@ -3,9 +3,9 @@ import { cn } from './cn';
 import type { Size } from '../tokens/size';
 
 const fieldSurfaceBase = cn(
-  'w-full rounded-md border border-input bg-transparent text-foreground shadow-xs transition-colors',
-  'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-  'placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+  'w-full rounded-md border border-input bg-muted text-foreground transition-colors duration-[120ms]',
+  'outline-none hover:border-faint focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+  'placeholder:text-faint disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
 );
 
 /**
@@ -45,7 +45,7 @@ export const textareaSurface = cva(fieldSurfaceBase, {
 /** The shared popup surface for select and combobox dropdowns. */
 export const popoverSurface = cva(
   cn(
-    'max-h-64 min-w-[--anchor-width] overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md',
+    'max-h-64 min-w-[--anchor-width] overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground',
     'origin-(--transform-origin) transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
   ),
 );

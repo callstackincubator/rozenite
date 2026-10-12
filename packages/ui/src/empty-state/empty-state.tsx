@@ -37,7 +37,7 @@ export function EmptyState({
       ),
       children: (
         <>
-          {Icon && <Icon className="h-8 w-8 text-muted-foreground" />}
+          {Icon && <Icon className="h-6 w-6 text-faint" />}
           <p className="text-sm font-medium text-foreground">{title}</p>
           {description && <p className="max-w-sm text-sm text-muted-foreground">{description}</p>}
           {action}

@@ -3,12 +3,14 @@ import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 import { surfaceTone } from '../tokens/tone-variants';
+import { monoLabel } from '../utils/mono-label';
 import type { Tone } from '../tokens/tone';
 
 /** Shape and size only — color comes from `surfaceTone`, crossed with `tone`. */
 export const buttonVariants = cva(
   cn(
-    'relative inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors',
+    'relative inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md transition-colors duration-[120ms]',
+    monoLabel,
     'outline-none focus-visible:ring-2 focus-visible:ring-ring',
     'disabled:pointer-events-none disabled:opacity-50',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
@@ -16,9 +18,9 @@ export const buttonVariants = cva(
   {
     variants: {
       size: {
-        sm: 'h-6 px-2 text-xs [&_svg]:size-3.5',
-        md: 'h-8 px-3 [&_svg]:size-4',
-        lg: 'h-10 px-4 [&_svg]:size-5',
+        sm: 'h-6 px-2 text-[11px] [&_svg]:size-3.5',
+        md: 'h-8 px-3 text-xs [&_svg]:size-4',
+        lg: 'h-10 px-4 text-xs [&_svg]:size-5',
       },
     },
     defaultVariants: {

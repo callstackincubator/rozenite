@@ -14,10 +14,13 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-faint: var(--faint);
+  --color-surface: var(--surface);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-danger: var(--danger);
@@ -33,6 +36,7 @@
   --color-info-foreground: var(--info-foreground);
   --color-info-soft: var(--info-soft);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
@@ -43,94 +47,146 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
 }
 
+/*
+ * Fonts shared with rozenite.dev (docs/DESIGN.md, "Type"): Switzer for UI text, Geist Mono for
+ * everything that labels. Switzer by Jérémie Blanc, ITF Free Font License; Geist Mono, SIL Open
+ * Font License 1.1. Self-hosted so panels make no requests to font services.
+ */
+@font-face {
+  font-family: 'Switzer';
+  src: url('./fonts/Switzer-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Switzer';
+  src: url('./fonts/Switzer-Medium.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./fonts/GeistMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./fonts/GeistMono-Medium.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * The rozenite.dev look: near-black, one crimson-rose accent, neutral greys, square corners,
+ * 1px hairlines, no shadows. Greys are the website's alpha whites flattened onto the background,
+ * so they stay predictable on top of each other. Status colours exist only here, never on the
+ * website, and are kept clear of the accent's hue so an error never reads as "brand".
+ */
 :root {
   /* Square is by design, not a bug — see the Storybook tokens page. The
      --radius-{sm,md,lg,xl} scale below stays wired so `rounded-*` remains a
      live re-theming seam even while --radius is 0. */
   --radius: 0;
   --background: #ffffff;
-  --foreground: #201f24;
+  --foreground: #0a0a0a;
   --card: #ffffff;
-  --card-foreground: #201f24;
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
-  --popover-foreground: #201f24;
-  --primary: #8232ff;
+  --popover-foreground: #0a0a0a;
+  /* Light mode uses the deeper crimson: the bright accent is too pale for text on white. */
+  --primary: #c2143f;
+  --primary-hover: #a3102f;
   --primary-foreground: #ffffff;
-  --secondary: #f9f8fd;
-  --secondary-foreground: #201f24;
-  --muted: #f9f8fd;
-  --muted-foreground: #838289;
-  --accent: #8232ff29;
-  --accent-foreground: #201f24;
-  --danger: #fa7171;
-  --danger-foreground: #201f24;
+  --secondary: #efefee;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f6f6f5;
+  --muted-foreground: #5e5e5e;
+  --faint: #6b6b6b;
+  --surface: #f9f9f8;
+  --accent: #0000000a;
+  --accent-foreground: #0a0a0a;
+  --danger: #b13b0b;
+  --danger-foreground: #ffffff;
   --danger-soft: color-mix(in srgb, var(--danger) 10%, transparent);
-  --success: #15803d;
+  --success: #136f35;
   --success-foreground: #ffffff;
-  --success-soft: #16a34a1f;
-  --warning: #b45309;
+  --success-soft: color-mix(in srgb, var(--success) 10%, transparent);
+  --warning: #8f5a06;
   --warning-foreground: #ffffff;
-  --warning-soft: #d977061f;
+  --warning-soft: color-mix(in srgb, var(--warning) 10%, transparent);
   --info: #1d4ed8;
   --info-foreground: #ffffff;
-  --info-soft: #2563eb1f;
-  --border: #cfced5;
-  --input: #cfced5;
-  --ring: #8232ff;
+  --info-soft: color-mix(in srgb, var(--info) 10%, transparent);
+  --border: #e6e6e6;
+  --border-strong: #d1d1d1;
+  --input: #d1d1d1;
+  --ring: #c2143f;
   --sidebar: #ffffff;
-  --sidebar-foreground: #201f24;
-  --sidebar-primary: #8232ff;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #c2143f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #8232ff29;
-  --sidebar-accent-foreground: #201f24;
-  --sidebar-border: #cfced5;
-  --sidebar-ring: #8232ff;
+  --sidebar-accent: #f4f4f3;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: #e6e6e6;
+  --sidebar-ring: #c2143f;
 }
 
 .dark {
-  --background: #201f24;
+  --background: #0a0a0a;
   --foreground: #ffffff;
-  --card: #201f24;
+  --card: #0a0a0a;
   --card-foreground: #ffffff;
-  --popover: #2b2a2f;
+  --popover: #111111;
   --popover-foreground: #ffffff;
-  --primary: #8232ff;
-  --primary-foreground: #ffffff;
-  --secondary: #2b2a2f;
+  --primary: #ff4f7b;
+  --primary-hover: #ff9fb2;
+  /* Anything filled with the accent carries dark text. */
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a1a1a;
   --secondary-foreground: #ffffff;
-  --muted: #2b2a2f;
-  --muted-foreground: #cfced5;
-  --accent: #8232ff33;
+  --muted: #161616;
+  --muted-foreground: #a3a3a3;
+  --faint: #858585;
+  --surface: #111111;
+  --accent: #ffffff0d;
   --accent-foreground: #ffffff;
-  --danger: #fa7171;
-  --danger-foreground: #201f24;
-  --danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
+  --danger: #ff7a50;
+  --danger-foreground: #0a0a0a;
+  --danger-soft: color-mix(in srgb, var(--danger) 14%, transparent);
   --success: #4ade80;
-  --success-foreground: #201f24;
-  --success-soft: #22c55e33;
+  --success-foreground: #0a0a0a;
+  --success-soft: color-mix(in srgb, var(--success) 14%, transparent);
   --warning: #fbbf24;
-  --warning-foreground: #201f24;
-  --warning-soft: #f59e0b33;
+  --warning-foreground: #0a0a0a;
+  --warning-soft: color-mix(in srgb, var(--warning) 14%, transparent);
   --info: #60a5fa;
-  --info-foreground: #201f24;
-  --info-soft: #3b82f633;
-  --border: #424145;
-  --input: #424145;
-  --ring: #8232ff;
-  --sidebar: #201f24;
+  --info-foreground: #0a0a0a;
+  --info-soft: color-mix(in srgb, var(--info) 14%, transparent);
+  --border: #1f1f1f;
+  --border-strong: #313131;
+  --input: #313131;
+  --ring: #ff4f7b;
+  --sidebar: #0a0a0a;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #8232ff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #8232ff33;
+  --sidebar-primary: #ff4f7b;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #111111;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #424145;
-  --sidebar-ring: #8232ff;
+  --sidebar-border: #1f1f1f;
+  --sidebar-ring: #ff4f7b;
 }
 
 @layer base {
@@ -138,10 +194,14 @@
     @apply border-border outline-ring/50;
   }
 
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-family:
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -156,14 +216,14 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: var(--border);
+    background-color: var(--border-strong);
     border-radius: var(--radius-lg);
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--muted-foreground);
+    background-color: var(--faint);
   }
 
   ::-webkit-scrollbar-corner {

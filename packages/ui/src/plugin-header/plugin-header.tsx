@@ -33,7 +33,7 @@ function PluginHeaderTitle({ className, render, ref, ...props }: PluginHeaderTit
     ref,
     props: {
       'data-slot': 'plugin-header-title',
-      className: cn('text-sm font-semibold text-foreground', className),
+      className: cn('text-[15px] font-medium tracking-[-0.01em] text-foreground', className),
       ...props,
     },
   });
@@ -102,7 +102,7 @@ function PluginHeaderThemeSwitcher({
       onClick: toggleTheme,
       className: cn(
         'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground',
-        'hover:bg-accent hover:text-accent-foreground',
+        'hover:bg-accent hover:text-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'transition-colors',
         className,

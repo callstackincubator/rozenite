@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { cn } from '../utils/cn';
 import { SortIcon } from '../utils/sort-icon';
+import { monoLabel } from '../utils/mono-label';
 
 declare module '@tanstack/react-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- required by the RowData constraint of TableMeta
@@ -97,14 +98,14 @@ export function DataTable<TRow>({
                       : undefined
                   }
                   colSpan={header.colSpan}
-                  className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"
+                  className={cn('h-8 px-3 text-left text-[11px] text-faint', monoLabel)}
                   scope="col"
                 >
                   {header.isPlaceholder ? null : canSort ? (
                     <button
                       type="button"
                       onClick={header.column.getToggleSortingHandler()}
-                      className="inline-flex items-center gap-1 hover:text-foreground"
+                      className="inline-flex items-center gap-1 uppercase transition-colors duration-[120ms] hover:text-foreground"
                     >
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       <SortIcon direction={sortDirection} />
@@ -121,7 +122,7 @@ export function DataTable<TRow>({
       <tbody data-slot="data-table-body">
         {loading ? (
           <tr>
-            <td colSpan={columnCount} className="h-16 text-center text-xs text-muted-foreground">
+            <td colSpan={columnCount} className="h-16 text-center text-xs text-faint">
               Loading…
             </td>
           </tr>
@@ -138,7 +139,7 @@ export function DataTable<TRow>({
               onClick={onRowClick ? () => onRowClick(row.original) : undefined}
               className={cn(
                 'border-b border-border last:border-0',
-                onRowClick && 'cursor-pointer hover:bg-accent/50',
+                onRowClick && 'cursor-pointer hover:bg-accent',
               )}
             >
               {row.getVisibleCells().map((cell) => (
