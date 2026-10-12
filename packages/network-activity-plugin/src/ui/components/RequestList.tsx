@@ -146,9 +146,9 @@ const COLUMN_SIZES = {
   name: 160,
   status: 84,
   method: 88,
-  domain: 100,
-  size: 76,
-  time: 76,
+  domain: 120,
+  size: 72,
+  time: 72,
 };
 const FILL_COLUMN_ID = 'name';
 

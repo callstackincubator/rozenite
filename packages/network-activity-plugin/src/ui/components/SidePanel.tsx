@@ -59,28 +59,52 @@ const ScrollableTabsList = ({ children }: { children: ReactNode }) => {
               : 'none',
       );
     };
-    const observer = new ResizeObserver(update);
+    // base-ui scrolls the selected tab into view while the pane is still being sized, which can
+    // leave the bar scrolled with the selected tab half hidden. Once the bar has its real width,
+    // and whenever it is resized, bring the selected tab back into view.
+    const revealSelectedTab = () => {
+      list
+        .querySelector<HTMLElement>('[aria-selected="true"]')
+        ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    };
+    const observer = new ResizeObserver(() => {
+      revealSelectedTab();
+      update();
+    });
 
+    // Selecting a tab that is cut off scrolls it into view too.
+    const selectionObserver = new MutationObserver(revealSelectedTab);
+
+    revealSelectedTab();
     update();
     list.addEventListener('scroll', update, { passive: true });
     observer.observe(list);
+    selectionObserver.observe(list, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-selected'],
+    });
 
     return () => {
       list.removeEventListener('scroll', update);
       observer.disconnect();
+      selectionObserver.disconnect();
     };
   }, []);
 
   return (
-    <Tabs.List
-      ref={listRef}
-      className={cn(
-        'relative w-full shrink-0 overflow-x-auto border-0 border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-        TAB_BAR_FADE_CLASS_NAMES[overflow],
-      )}
-    >
-      {children}
-    </Tabs.List>
+    // The hairline sits on a wrapper so the fade does not take it along.
+    <div className="shrink-0 border-b border-border">
+      <Tabs.List
+        ref={listRef}
+        className={cn(
+          'relative w-full overflow-x-auto border-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          TAB_BAR_FADE_CLASS_NAMES[overflow],
+        )}
+      >
+        {children}
+      </Tabs.List>
+    </div>
   );
 };
 
