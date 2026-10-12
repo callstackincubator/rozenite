@@ -644,6 +644,28 @@ const webSocketFixtures = [
   },
 ];
 
+// Enough traffic on the busy streams that the message tables scroll. The panel keeps the latest
+// 32 messages of a connection, so these are what its tables show.
+for (let index = 0; index < 70; index += 1) {
+  const at = 10500 + index * 45;
+  sseFixture.messages.push({
+    type: index % 9 === 0 ? 'heartbeat' : 'price',
+    data:
+      index % 9 === 0
+        ? 'ping'
+        : json({ sku: `sku_${1001 + (index % 6)}`, amount: 100 + index, tick: index }),
+    at,
+  });
+  webSocketFixtures[0].messages.push({
+    direction: index % 4 === 0 ? 'sent' : 'received',
+    data:
+      index % 4 === 0
+        ? json({ type: 'ack', seq: index })
+        : json({ type: 'inventory.update', sku: `sku_${1001 + (index % 6)}`, stock: 40 - index }),
+    at,
+  });
+}
+
 const buildPngBase64 = () => {
   const canvas = document.createElement('canvas');
   canvas.width = 160;
@@ -858,6 +880,58 @@ const runNetworkFixtures = async ({ send, onMessage, waitForMessage, signal }: D
   return { requests: httpFixtures.length + 1, webSockets: webSocketFixtures.length + 1 };
 };
 
+// A burst of requests, for measuring how the panel copes with a long session. The device keeps
+// sending while the panel renders, so the requests go out in batches.
+const runBurst = async ({ send, signal }: DevFlowContext) => {
+  const total = 600;
+  const batch = 50;
+  const start = Date.now() - 120000;
+
+  for (let first = 0; first < total; first += batch) {
+    for (let index = first; index < Math.min(first + batch, total); index += 1) {
+      const requestId = `burst-${index}`;
+      const url = `${API}/v2/items/${index}?page=${index % 7}&sort=name`;
+      const sentAt = start + index * 200;
+
+      send('request-sent', {
+        requestId,
+        timestamp: sentAt,
+        type: 'Fetch',
+        initiator: { type: 'other' },
+        request: { url, method: 'GET', headers: { Accept: 'application/json' } },
+      });
+      send('response-received', {
+        requestId,
+        timestamp: sentAt + 40,
+        type: 'Fetch',
+        response: {
+          url,
+          status: index % 17 === 0 ? 500 : 200,
+          statusText: 'OK',
+          headers: { 'content-type': 'application/json' },
+          contentType: 'application/json',
+          size: 128,
+          responseTime: sentAt + 40,
+        },
+      });
+      send('request-completed', {
+        requestId,
+        timestamp: sentAt + 90,
+        duration: 90,
+        size: 128,
+        ttfb: 40,
+      });
+    }
+
+    if (signal.aborted) {
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  return { requests: total };
+};
+
 export default {
   integrations: ['react-native'],
   panels: [
@@ -884,6 +958,10 @@ export default {
         name: 'Populate Network Activity',
         autoRun: true,
         run: runNetworkFixtures,
+      },
+      {
+        name: 'Burst 600 requests',
+        run: runBurst,
       },
     ],
   },
