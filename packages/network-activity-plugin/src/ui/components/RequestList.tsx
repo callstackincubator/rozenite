@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { createColumnHelper } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
+import { createColumnHelper, type ColumnSizingState } from '@tanstack/react-table';
 import {
   Badge,
   EmptyState,
@@ -144,6 +144,8 @@ const columnHelper = createColumnHelper<RequestRow>();
 const columns: DataTableColumn<RequestRow>[] = [
   columnHelper.accessor('timestamp', {
     header: 'Start Time',
+    size: 124,
+    minSize: 116,
     cell: ({ row }) => (
       <>
         {row.original.isSelected && <span data-row-selected hidden />}
@@ -156,6 +158,8 @@ const columns: DataTableColumn<RequestRow>[] = [
   }),
   columnHelper.accessor('name', {
     header: 'Name',
+    size: 156,
+    minSize: 96,
     cell: ({ row, getValue }) => {
       const sourceLabel = getSourceLabel(row.original.source);
 
@@ -183,6 +187,9 @@ const columns: DataTableColumn<RequestRow>[] = [
   }),
   columnHelper.accessor('status', {
     header: 'Status',
+    size: 84,
+    minSize: 84,
+    maxSize: 160,
     cell: ({ getValue }) => (
       <Text variant="numeric" className={getStatusTextClassName(getValue())}>
         {getValue()}
@@ -192,11 +199,16 @@ const columns: DataTableColumn<RequestRow>[] = [
   }),
   columnHelper.accessor('method', {
     header: 'Method',
+    size: 88,
+    minSize: 88,
+    maxSize: 160,
     cell: ({ getValue }) => <Text variant="code">{getValue()}</Text>,
     sortingFn: 'alphanumeric',
   }),
   columnHelper.accessor('domain', {
     header: 'Domain',
+    size: 116,
+    minSize: 80,
     cell: ({ getValue }) => (
       <Text variant="code" className="block truncate text-muted-foreground">
         {getValue()}
@@ -207,6 +219,9 @@ const columns: DataTableColumn<RequestRow>[] = [
   columnHelper.accessor((request) => request.sizeBytes ?? -1, {
     id: 'size',
     header: 'Size',
+    size: 76,
+    minSize: 72,
+    maxSize: 160,
     cell: ({ row }) => (
       <Text variant="numeric" className="whitespace-nowrap text-muted-foreground">
         {row.original.size}
@@ -217,6 +232,9 @@ const columns: DataTableColumn<RequestRow>[] = [
   columnHelper.accessor('durationMs', {
     id: 'time',
     header: 'Time',
+    size: 76,
+    minSize: 72,
+    maxSize: 160,
     cell: ({ row }) => (
       <Text variant="numeric" className="whitespace-nowrap text-muted-foreground">
         {row.original.time}
@@ -245,6 +263,9 @@ export const RequestList = ({
   const selectedRequestId = useSelectedRequestId();
   const overrides = useOverrides();
   const clientUISettings = useClientUISettings();
+  // Column widths live here, not in the table: the list stays mounted while the side panel opens
+  // and closes, so a width set once holds for the whole session.
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
 
   const requests = useMemo(() => {
     return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
@@ -273,6 +294,7 @@ export const RequestList = ({
         columns={columns}
         getRowId={(request) => request.id}
         getRowTextValue={(request) => `${request.method} ${request.name}`}
+        columnResizing={{ sizing: columnSizing, onSizingChange: setColumnSizing }}
         onRowClick={onRequestSelect}
         renderEmptyState={() => (
           <EmptyState

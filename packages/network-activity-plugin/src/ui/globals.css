@@ -1,39 +1,13 @@
 @import '@rozenite/ui/styles.css';
 
 /*
- * The request list is a `VirtualizedDataTable`, which has no row selection and no per-column
- * widths of its own. A cell renders a `data-row-selected` marker for the selected request and
- * the row picks up the selected fill and the accent bar from it; the widths are set per column
- * on a fixed-layout table so the name column takes whatever is left.
+ * The request list is a `VirtualizedDataTable`, which has no row selection of its own. A cell
+ * renders a `data-row-selected` marker for the selected request and the row picks up the selected
+ * fill and the accent bar from it. The rows are denser than the table's default, for a list that
+ * is read in bulk.
  */
-.network-request-table {
-  table-layout: fixed;
-  /* Below this the pane scrolls sideways instead of squeezing the name column away. */
-  min-width: 43rem;
-}
-
-/* A denser row than the table's default, for a list that is read in bulk. */
 .network-request-table td {
   padding-block: 0.25rem;
-}
-
-.network-request-table th:nth-child(1) {
-  width: 7.5rem;
-}
-.network-request-table th:nth-child(3) {
-  width: 4.25rem;
-}
-.network-request-table th:nth-child(4) {
-  width: 4.75rem;
-}
-.network-request-table th:nth-child(5) {
-  width: 7.5rem;
-}
-.network-request-table th:nth-child(6) {
-  width: 4.5rem;
-}
-.network-request-table th:nth-child(7) {
-  width: 4.5rem;
 }
 
 /* The message tables in the side panel: fixed columns around a data column that truncates. */
