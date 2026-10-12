@@ -29,18 +29,25 @@
     `__tests__`, `*.test.*`, `vitest.setup.ts`, `vite.config.ts`,
     `tsconfig*.json` or lint config.
   - `README`, `LICENSE` and `package.json` are always included; `CHANGELOG.md`
-    is not, so list it.
+    is not, so list it in every package that has one (the plugin template
+    has none).
 - Keep `development` out of what is published. A `development` condition in
   `exports` points at TypeScript source and exists for this workspace only
   (`customConditions` in `tsconfig.base.json` and the plugin tsconfigs, and the
-  playground's webpack `conditionNames`). Consumers' bundlers also
-  turn it on in dev mode (webpack, Rspack and Vite do), so a published
-  `development` target that is missing, or that is TypeScript under
-  `node_modules`, breaks their dev builds. When a package has one, repeat
-  `exports` under `publishConfig.exports` without it; `pnpm pack` and
-  `pnpm publish` apply that override. Do not ship `src` or `sdk.ts` to
-  satisfy it. `rozenite build` does not add a `development` condition to the
-  `./sdk` export it manages, and keeps one you wrote yourself.
+  playground's webpack `conditionNames`). Consumers' bundlers also turn it on
+  in dev mode (webpack, Rspack and Vite do), so a published `development`
+  target that is missing, or that is TypeScript under `node_modules`, breaks
+  their dev builds. The `beforePacking` hook in the root `.pnpmfile.cjs`
+  removes the condition from every package's `exports` for `pnpm pack` and
+  `pnpm publish`, so there is nothing to configure per package; edit the file
+  and run `pnpm install` (it updates `pnpmfileChecksum` in the lockfile) if the
+  rule has to change. Do not ship `src` or `sdk.ts` to satisfy it, and do not
+  add `development` to a plugin's `./sdk` export: `rozenite build` manages that
+  entry, drops the `./sdk.ts` value it used to write, and keeps a different
+  `development` value an author wrote. Authors outside this workspace who keep
+  one have to hide it themselves, for example with `publishConfig.exports`
+  (pnpm only); `rozenite build` keeps the managed entries of an existing
+  `publishConfig.exports` in step.
 - Every publishable package owns a `package-contents` test (see
   `src/__tests__/package-contents.test.ts`) that packs the built package and
   checks it with `inspectPackedPackage` from `@rozenite/test-utils/packaging`:

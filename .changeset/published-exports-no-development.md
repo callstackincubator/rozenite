@@ -23,5 +23,9 @@ Fix dev-mode bundles (Re.Pack, webpack, Rspack and Vite) failing to resolve
 that publish an `exports` map: it carried a `development` condition pointing at
 TypeScript source that was not in the package. The published packages no
 longer have that condition, so these tools pick the built output in every mode.
+
 `rozenite build` also stops adding a `development` condition to a plugin's
-`./sdk` export.
+`./sdk` export and removes the `./sdk.ts` one that earlier versions wrote; a
+`development` condition you wrote yourself (any other value) is kept. If your
+`package.json` has a `publishConfig.exports`, `rozenite build` now keeps its
+managed entries (`.`, `./sdk`, `./metro`) in step with `exports`.
