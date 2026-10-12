@@ -53,6 +53,54 @@ describe('wrapFetch', () => {
     expect(begin?.args[0]).toMatchObject({ source: 'expo', type: 'Fetch' });
   });
 
+  it('records the body of a whatwg-fetch Request passed as the first argument', async () => {
+    // React Native's global `Request` is the whatwg-fetch polyfill, which keeps
+    // the body in `_bodyInit`. `ky` v2 always calls `fetch(request, options)`.
+    class WhatwgRequestStub {
+      url: string;
+      method: string;
+      headers: Headers;
+      signal: AbortSignal;
+      _bodyInit: BodyInit | null | undefined;
+      _noBody: boolean;
+
+      constructor(url: string, init: RequestInit = {}) {
+        this.url = url;
+        this.method = (init.method ?? 'GET').toUpperCase();
+        this.headers = new Headers(init.headers);
+        this.signal = new AbortController().signal;
+        this._bodyInit = init.body;
+        this._noBody = init.body == null;
+      }
+    }
+    vi.stubGlobal('Request', WhatwgRequestStub);
+
+    try {
+      const { recorder, calls } = createFakeRecorder();
+      const { fn } = wrapFetch(
+        async () => jsonResponse('{"ok":true}'),
+        () => recorder,
+      );
+
+      await fn(
+        new Request('https://example.com/api', {
+          method: 'POST',
+          body: JSON.stringify({ a: 1 }),
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const begin = calls.find((c) => c.method === 'begin');
+      expect(begin?.args[0]).toMatchObject({
+        method: 'POST',
+        postData: { type: 'text', value: '{"a":1}' },
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('records nothing for a call whose synchronous phase sent an XHR', async () => {
     const { recorder, calls } = createFakeRecorder();
     const original = vi.fn(async () => {

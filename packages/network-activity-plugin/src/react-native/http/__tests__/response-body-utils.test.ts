@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   BINARY_CAPTURE_SIZE_CAP,
   captureResponseBodyFromBytes,
@@ -69,6 +69,66 @@ describe('normalizeFetchRequest', () => {
       headers: { 'x-original': 'two', 'x-extra': 'three' },
       postData: undefined,
       signal: expect.any(AbortSignal),
+    });
+  });
+
+  describe('with a whatwg-fetch Request', () => {
+    // React Native's global `Request` is the whatwg-fetch polyfill, which keeps
+    // the body in `_bodyInit` instead of exposing it as `request.body`.
+    class WhatwgRequestStub {
+      url: string;
+      method: string;
+      headers: Headers;
+      signal: AbortSignal;
+      _bodyInit: BodyInit | null | undefined;
+      _noBody: boolean;
+
+      constructor(url: string, init: RequestInit = {}) {
+        this.url = url;
+        this.method = (init.method ?? 'GET').toUpperCase();
+        this.headers = new Headers(init.headers);
+        this.signal = new AbortController().signal;
+        this._bodyInit = init.body;
+        this._noBody = init.body == null;
+      }
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('captures the body of a Request instance', () => {
+      vi.stubGlobal('Request', WhatwgRequestStub);
+      const request = new Request('https://example.com/items', {
+        method: 'POST',
+        body: JSON.stringify({ a: 1 }),
+        headers: { 'content-type': 'application/json' },
+      });
+
+      expect(normalizeFetchRequest(request).postData).toEqual({
+        type: 'text',
+        value: '{"a":1}',
+      });
+    });
+
+    it('prefers init.body over the Request body', () => {
+      vi.stubGlobal('Request', WhatwgRequestStub);
+      const request = new Request('https://example.com/items', {
+        method: 'POST',
+        body: 'from-request',
+      });
+
+      expect(normalizeFetchRequest(request, { body: 'from-init' }).postData).toEqual({
+        type: 'text',
+        value: 'from-init',
+      });
+    });
+
+    it('leaves postData undefined for a Request without a body', () => {
+      vi.stubGlobal('Request', WhatwgRequestStub);
+      const request = new Request('https://example.com/items');
+
+      expect(normalizeFetchRequest(request).postData).toBeUndefined();
     });
   });
 

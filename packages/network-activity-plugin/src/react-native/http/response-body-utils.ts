@@ -145,6 +145,13 @@ const normalizeFetchBody = (body?: BodyInit | null): RequestPostData => {
   return getRequestBody(body as RequestPostData);
 };
 
+// React Native's global `Request` is the whatwg-fetch polyfill, which keeps
+// the body in `_bodyInit` instead of exposing it as `request.body`.
+type PolyfilledRequest = Request & { _bodyInit?: BodyInit | null; _noBody?: boolean };
+
+const getRequestInstanceBody = (request: PolyfilledRequest | null) =>
+  request?._noBody === true ? undefined : request?._bodyInit;
+
 export const normalizeFetchRequest = (
   input: FetchInput,
   init: RequestInit = {},
@@ -165,7 +172,7 @@ export const normalizeFetchRequest = (
       'GET'
     ).toUpperCase() as HttpMethod,
     headers,
-    postData: normalizeFetchBody(init.body ?? requestLike?.body),
+    postData: normalizeFetchBody(init.body ?? requestLike?.body ?? getRequestInstanceBody(request)),
     signal: init.signal ?? request?.signal ?? requestLike?.signal ?? undefined,
   };
 };
