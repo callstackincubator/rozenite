@@ -14,7 +14,7 @@ export const textVariants = /* @__PURE__ */ cva('text-foreground', {
       body: 'text-sm font-normal',
       caption: 'text-xs text-muted-foreground',
       /** Metadata and section labels: uppercase mono in `faint`. Never for sentences. */
-      label: cn('text-[11px] text-faint', monoLabel),
+      label: /* @__PURE__ */ cn('text-[11px] text-faint', monoLabel),
       code: 'font-mono text-xs',
       numeric: 'font-mono text-xs tabular-nums',
     },

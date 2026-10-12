@@ -8,7 +8,7 @@ import type { Tone } from '../tokens/tone';
 
 /** Shape and size only — color comes from `surfaceTone`, crossed with `tone`. */
 export const buttonVariants = /* @__PURE__ */ cva(
-  cn(
+  /* @__PURE__ */ cn(
     'relative inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md transition-colors duration-[120ms]',
     monoLabel,
     'outline-none focus-visible:ring-2 focus-visible:ring-ring',
