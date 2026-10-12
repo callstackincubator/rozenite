@@ -20,7 +20,9 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -48,6 +50,7 @@
     "@rozenite/lynx": "workspace:*"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "vitest": "^4.0.18"
   },
   "engines": {

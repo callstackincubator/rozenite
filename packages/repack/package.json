@@ -21,7 +21,8 @@
   },
   "files": [
     "dist",
-    "templates"
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@callstack/repack": "^5.2",
+    "@rozenite/test-utils": "workspace:*",
     "@types/semver": "^7.7.0"
   },
   "peerDependencies": {

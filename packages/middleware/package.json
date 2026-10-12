@@ -20,7 +20,9 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -57,6 +59,7 @@
   },
   "devDependencies": {
     "@react-native/dev-middleware": "~0.76.0",
+    "@rozenite/test-utils": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
     "@types/semver": "^7.7.0",

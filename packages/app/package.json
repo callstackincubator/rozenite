@@ -19,7 +19,9 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "publishConfig": {
@@ -41,6 +43,7 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/react": "^16.1.0",
     "@types/react": "catalog:",

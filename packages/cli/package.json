@@ -24,6 +24,8 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
     "docs",
     "skills",
     "template",
@@ -52,6 +54,7 @@
     "validate-npm-package-name": "^6.0.1"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/validate-npm-package-name": "^4.0.2"
   },

@@ -11,6 +11,11 @@
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
+  "files": [
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -42,6 +47,7 @@
     "test": "vitest --run --passWithNoTests"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "metro-config": "*",
     "typescript": "^5.7.3",
     "vite": "catalog:",

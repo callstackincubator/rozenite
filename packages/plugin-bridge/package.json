@@ -20,7 +20,11 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
+    "!dist/**/__tests__",
+    "!dist/**/*.test.*"
   ],
   "type": "module",
   "sideEffects": false,
@@ -46,7 +50,9 @@
   "dependencies": {
     "tslib": "^2.3.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@rozenite/test-utils": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=17"
   },

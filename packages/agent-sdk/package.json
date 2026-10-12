@@ -19,7 +19,9 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -55,6 +57,7 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@vitest/coverage-v8": "3.2.4"
   },
   "engines": {

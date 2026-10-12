@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "<%- description %>",
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "scripts": {
     "build": "rozenite build",

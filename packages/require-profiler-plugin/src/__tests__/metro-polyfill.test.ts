@@ -32,15 +32,12 @@ describe('Metro polyfill', () => {
   });
 
   it('ships the polyfill in the published package', () => {
-    // No `files` field, so `src` is published; the entry point resolves the
-    // polyfill relative to the package root at runtime.
+    // `files` is an allowlist, so the polyfill has to be listed by name: the
+    // entry point resolves it relative to the package root at runtime.
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(PACKAGE_ROOT, 'package.json'), 'utf8'),
     ) as { files?: string[] };
 
-    expect(packageJson.files).toBeUndefined();
-
-    const npmIgnore = fs.readFileSync(path.join(PACKAGE_ROOT, '.npmignore'), 'utf8');
-    expect(npmIgnore.split('\n').map((line) => line.trim())).not.toContain('src');
+    expect(packageJson.files).toContain('src/metro/setup.js');
   });
 });

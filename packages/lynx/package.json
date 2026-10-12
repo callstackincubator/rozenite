@@ -21,7 +21,11 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
+    "!dist/**/__tests__",
+    "!dist/**/*.test.*"
   ],
   "type": "module",
   "main": "./dist/index.cjs",
@@ -58,6 +62,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@rsbuild/core": "2.1.10",
     "@types/express": "^5.0.3",
     "@types/ws": "^8.18.1",

@@ -25,7 +25,8 @@
   "files": [
     "bin",
     "src",
-    "assets"
+    "assets",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "publishConfig": {
@@ -36,6 +37,9 @@
   },
   "dependencies": {
     "electron": "^44.4.2"
+  },
+  "devDependencies": {
+    "@rozenite/test-utils": "workspace:*"
   },
   "engines": {
     "node": ">=22.12.0"

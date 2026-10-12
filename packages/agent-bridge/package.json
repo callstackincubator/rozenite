@@ -19,7 +19,9 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "commonjs",
   "main": "./dist/react-native.js",
@@ -46,6 +48,9 @@
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
     "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@rozenite/test-utils": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=17"

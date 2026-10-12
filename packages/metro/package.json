@@ -21,7 +21,8 @@
   },
   "files": [
     "dist",
-    "templates"
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "@react-native/metro-config": "~0.86.0",
+    "@rozenite/test-utils": "workspace:*",
     "vitest": "^4.0.18"
   },
   "engines": {

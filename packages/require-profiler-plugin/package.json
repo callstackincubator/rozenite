@@ -11,6 +11,12 @@
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
+  "files": [
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
+    "src/metro/setup.js"
+  ],
   "type": "module",
   "main": "./dist/react-native/cjs/react-native.js",
   "module": "./dist/react-native/react-native.js",
