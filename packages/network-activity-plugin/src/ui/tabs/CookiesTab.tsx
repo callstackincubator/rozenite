@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollArea } from '../components/ScrollArea';
+import { Text } from '@rozenite/ui';
+import { TabContent } from '../components/TabContent';
 import { Section } from '../components/Section';
 import { CookieCard } from '../components/CookieCard';
 import {
@@ -28,47 +29,33 @@ export const CookiesTab = ({ selectedRequest }: CookiesTabProps) => {
 
   if (!hasRequestCookies && !hasResponseCookies) {
     return (
-      <ScrollArea className="h-full w-full">
-        <div className="p-4">
-          <div className="text-sm text-gray-400">No cookies for this request</div>
-        </div>
-      </ScrollArea>
+      <TabContent>
+        <Text variant="caption">No cookies for this request</Text>
+      </TabContent>
     );
   }
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div className="p-4">
-        <div className="space-y-6">
-          {hasRequestCookies && (
-            <Section title={`Request Cookies (${requestCookies.length})`}>
-              <div className="space-y-2">
-                {requestCookies.map((cookie, index) => (
-                  <CookieCard
-                    key={`request-${index}`}
-                    cookie={cookie}
-                    keyClassName="text-blue-400"
-                  />
-                ))}
-              </div>
-            </Section>
-          )}
+    <TabContent className="gap-6">
+      {hasRequestCookies && (
+        <Section title={`Request Cookies (${requestCookies.length})`}>
+          <div className="flex flex-col gap-2">
+            {requestCookies.map((cookie, index) => (
+              <CookieCard key={`request-${index}`} cookie={cookie} />
+            ))}
+          </div>
+        </Section>
+      )}
 
-          {hasResponseCookies && (
-            <Section title={`Response Cookies (${responseCookies.length})`}>
-              <div className="space-y-2">
-                {responseCookies.map((cookie, index) => (
-                  <CookieCard
-                    key={`response-${index}`}
-                    cookie={cookie}
-                    keyClassName="text-green-400"
-                  />
-                ))}
-              </div>
-            </Section>
-          )}
-        </div>
-      </div>
-    </ScrollArea>
+      {hasResponseCookies && (
+        <Section title={`Response Cookies (${responseCookies.length})`}>
+          <div className="flex flex-col gap-2">
+            {responseCookies.map((cookie, index) => (
+              <CookieCard key={`response-${index}`} cookie={cookie} />
+            ))}
+          </div>
+        </Section>
+      )}
+    </TabContent>
   );
 };

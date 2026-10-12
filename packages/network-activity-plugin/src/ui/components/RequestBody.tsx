@@ -15,7 +15,7 @@ const getFormDataBinaryEntries = (
   return [
     {
       key,
-      value: <span className="text-blue-400">[binary]</span>,
+      value: <span className="text-muted-foreground">[binary]</span>,
     },
     ...getBinaryEntries(value).map((item) => ({
       ...item,
@@ -70,11 +70,11 @@ export const RequestBody = ({ data }: RequestBodyProps) => {
   }
 
   if (dataType === 'form-data') {
-    return <KeyValueGrid items={getFormDataEntries(value)} />;
+    return <KeyValueGrid variant="data" items={getFormDataEntries(value)} />;
   }
 
   if (dataType === 'binary') {
-    return <KeyValueGrid items={getBinaryEntries(value)} />;
+    return <KeyValueGrid variant="data" items={getBinaryEntries(value)} />;
   }
 
   return null;

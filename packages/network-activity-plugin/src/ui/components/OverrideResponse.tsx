@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react';
+import { Check, CircleSlash2 } from 'lucide-react';
+import { Button, DescriptionList, Input, Text } from '@rozenite/ui';
 import { HttpNetworkEntry } from '../state/model';
 import { Section } from '../components/Section';
 import { KeyValueGrid } from '../components/KeyValueGrid';
 import { useNetworkActivityActions } from '../state/hooks';
 import { CodeEditor } from '../components/CodeEditor';
 import { RequestOverride } from '../../shared/client';
-import { Button } from './Button';
-import { Check, CircleSlash2 } from 'lucide-react';
 
 export type OverrideResponseProps = {
   selectedRequest: HttpNetworkEntry;
@@ -46,7 +46,7 @@ export const OverrideResponse = ({
   };
 
   if (!responseBody || responseBody.data === null) {
-    return <div className="text-sm text-gray-400">No response body available for this request</div>;
+    return <Text variant="caption">No response body available for this request</Text>;
   }
 
   const { type } = responseBody;
@@ -55,24 +55,19 @@ export const OverrideResponse = ({
 
   const overrideActions = (
     <>
-      <Button
-        variant="ghost"
-        size="xs"
-        className="text-primary hover:text-primary-hover ms-2"
-        onClick={clearOverride}
-      >
-        <CircleSlash2 className="h-2 w-2" />
+      <Button tone="primary" variant="ghost" size="sm" onClick={clearOverride}>
+        <CircleSlash2 />
         Clear override
       </Button>
 
       <Button
+        tone="primary"
         variant="ghost"
-        size="xs"
-        className="text-primary hover:text-primary-hover"
+        size="sm"
         onClick={saveOverride}
         disabled={!hasChanges}
       >
-        <Check className="h-2 w-2" />
+        <Check />
         {hasChanges ? 'Save override' : 'Saved'}
       </Button>
     </>
@@ -81,28 +76,31 @@ export const OverrideResponse = ({
   if (savedOverride !== undefined) {
     return (
       <Section title="Response Body" collapsible={false} action={overrideActions}>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <KeyValueGrid
             items={[
               {
                 key: 'Content-Type',
                 value: type,
-                valueClassName: 'text-blue-400',
+                valueClassName: 'font-mono text-xs',
               },
             ]}
           />
 
-          <div className="grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm">
-            <span className={'text-gray-400 wrap-anywhere'}>Status Code</span>
-            <input
-              type="number"
-              value={editedStatus}
-              onChange={(e) => {
-                setEditedStatus(parseInt(e.target.value));
-              }}
-              className="max-w-24 font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-1 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
+          <DescriptionList>
+            <DescriptionList.Item label="Status Code">
+              <Input
+                size="sm"
+                type="number"
+                aria-label="Status Code"
+                value={editedStatus ?? ''}
+                onChange={(e) => {
+                  setEditedStatus(parseInt(e.target.value));
+                }}
+                className="w-24 font-mono"
+              />
+            </DescriptionList.Item>
+          </DescriptionList>
 
           <CodeEditor
             data={savedOverride?.body}

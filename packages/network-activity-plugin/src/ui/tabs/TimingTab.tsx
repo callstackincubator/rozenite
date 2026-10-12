@@ -1,5 +1,7 @@
-import { ScrollArea } from '../components/ScrollArea';
+import { DescriptionList, Separator, Text } from '@rozenite/ui';
+import { TabContent } from '../components/TabContent';
 import { HttpNetworkEntry } from '../state/model';
+import { formatTime, formatTimestamp } from '../utils/formatTiming';
 
 export type TimingTabProps = {
   selectedRequest: HttpNetworkEntry;
@@ -13,46 +15,27 @@ export const TimingTab = ({ selectedRequest }: TimingTabProps) => {
   const ttfb = selectedRequest.ttfb || 0;
   const duration = selectedRequest.duration || 0;
 
-  const formatTime = (time: number): string => {
-    if (time < 1) {
-      return `${Math.round(time * 1000)} μs`;
-    }
-    return `${time.toFixed(1)} ms`;
-  };
-
-  const formatTimestamp = (timestamp: number): string => {
-    return new Date(timestamp * 1000).toLocaleTimeString();
-  };
-
   return (
-    <ScrollArea className="h-full w-full">
-      <div className="p-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Start Time</span>
-              <span className="text-gray-300">{formatTimestamp(startTime)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Time To First Byte (TTFB)</span>
-              <span className="text-gray-300">{formatTime(ttfb)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">End Time</span>
-              <span className="text-gray-300">
-                {endTime ? formatTimestamp(endTime) : 'Pending'}
-              </span>
-            </div>
-          </div>
+    <TabContent className="gap-4">
+      <DescriptionList>
+        <DescriptionList.Item label="Start Time">
+          <Text variant="numeric">{formatTimestamp(startTime)}</Text>
+        </DescriptionList.Item>
+        <DescriptionList.Item label="Time To First Byte (TTFB)">
+          <Text variant="numeric">{formatTime(ttfb)}</Text>
+        </DescriptionList.Item>
+        <DescriptionList.Item label="End Time">
+          <Text variant="numeric">{endTime ? formatTimestamp(endTime) : 'Pending'}</Text>
+        </DescriptionList.Item>
+      </DescriptionList>
 
-          <div className="border-t border-gray-700 pt-4">
-            <div className="flex justify-between text-sm font-medium">
-              <span className="text-gray-300">Total Duration</span>
-              <span className="text-gray-100">{formatTime(duration)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </ScrollArea>
+      <Separator />
+
+      <DescriptionList>
+        <DescriptionList.Item label="Total Duration">
+          <Text variant="numeric">{formatTime(duration)}</Text>
+        </DescriptionList.Item>
+      </DescriptionList>
+    </TabContent>
   );
 };

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Toolbar } from '../components/Toolbar';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { PluginShell, Split } from '@rozenite/ui';
+import { RequestToolbar } from '../components/RequestToolbar';
 import { RequestList } from '../components/RequestList';
 import { SidePanel } from '../components/SidePanel';
-import { FilterBar } from '../components/FilterBar';
 import { NetworkTimeline } from '../components/NetworkTimeline';
 import { NetworkActivityDevToolsClient } from '../../shared/client';
 import {
@@ -16,6 +16,10 @@ import { createDefaultFilter } from '../state/filter';
 import type { FilterState } from '../state/filter';
 import { matchesRequestFilter } from '../utils/requestFilters';
 import { requestOverlapsTimelineRange, type TimelineRangeSelection } from '../utils/timelineModel';
+
+const LIST_PANE_ID = 'requests';
+const DETAILS_PANE_ID = 'details';
+const DEFAULT_DETAILS_SIZE = 50;
 
 export type InspectorViewProps = {
   client: NetworkActivityDevToolsClient;
@@ -67,28 +71,69 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
     };
   }, [client, clientManagement, actions, overrides]);
 
+  const hasActiveFilter = filteredRequests.length !== processedRequests.length;
+
+  const emptyState =
+    processedRequests.length === 0
+      ? undefined
+      : {
+          title: 'No matching requests',
+          description: timelineSelection
+            ? 'No requests in the selected time range. Clear the selection to see them again.'
+            : hasActiveFilter
+              ? 'No requests match the filters. Clear the filters to see every request.'
+              : undefined,
+        };
+
+  // The details pane mounts and unmounts with the selection, so its size is remembered here and
+  // used as the default the next time it opens.
+  const detailsSize = useRef(DEFAULT_DETAILS_SIZE);
+  const handleLayoutChanged = (layout: Record<string, number>) => {
+    if (layout[DETAILS_PANE_ID] !== undefined) {
+      detailsSize.current = layout[DETAILS_PANE_ID];
+    }
+  };
+
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
-      <Toolbar />
-      <FilterBar filter={filter} onFilterChange={setFilter} />
+    <PluginShell>
+      <RequestToolbar
+        filter={filter}
+        onFilterChange={setFilter}
+        visibleCount={visibleRequests.length}
+        totalCount={processedRequests.length}
+      />
 
-      <div className="flex flex-1 overflow-hidden">
-        <div
-          className={`flex flex-col ${
-            hasSelectedRequest ? 'w-1/2' : 'w-full'
-          } border-r border-gray-700 overflow-hidden`}
+      <PluginShell.Body className="overflow-hidden">
+        {/*
+          The request list always sits in the first pane of the same group, so opening and closing
+          the details pane never remounts it and its sort and scroll position survive.
+        */}
+        <Split
+          direction="horizontal"
+          autoSaveId="network-activity"
+          onLayoutChanged={handleLayoutChanged}
         >
-          <NetworkTimeline
-            requests={filteredRequests}
-            selection={timelineSelection}
-            filteredRequestCount={visibleRequests.length}
-            onSelectionChange={setTimelineSelection}
-          />
-          <RequestList requests={visibleRequests} />
-        </div>
-
-        {hasSelectedRequest && <SidePanel />}
-      </div>
-    </div>
+          <Split.Pane id={LIST_PANE_ID} minSize={25}>
+            <div className="flex h-full min-h-0 flex-col">
+              <NetworkTimeline
+                requests={filteredRequests}
+                selection={timelineSelection}
+                filteredRequestCount={visibleRequests.length}
+                onSelectionChange={setTimelineSelection}
+              />
+              <RequestList requests={visibleRequests} emptyState={emptyState} />
+            </div>
+          </Split.Pane>
+          {hasSelectedRequest && (
+            <>
+              <Split.Handle />
+              <Split.Pane id={DETAILS_PANE_ID} defaultSize={detailsSize.current} minSize={25}>
+                <SidePanel />
+              </Split.Pane>
+            </>
+          )}
+        </Split>
+      </PluginShell.Body>
+    </PluginShell>
   );
 };

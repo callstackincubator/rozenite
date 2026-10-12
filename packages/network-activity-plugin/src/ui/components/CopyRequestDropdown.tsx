@@ -1,16 +1,10 @@
 import { useCallback } from 'react';
 import { Copy, Check, ChevronDown } from 'lucide-react';
-import { Button } from './Button';
+import { Button, Menu } from '@rozenite/ui';
 import { generateFetchCall } from '../utils/generateFetchCall';
 import { generateCurlCommand } from '../utils/generateCurlCommand';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from './DropdownMenu';
 import { checkRequestBodyBinary } from '../utils/checkRequestBodyBinary';
 
 type NetworkEntry = HttpNetworkEntry | SSENetworkEntry;
@@ -66,27 +60,21 @@ export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="xs" className="border border-gray-700">
-          {isCopied ? <Check size={16} /> : <Copy size={16} />}
-          Copy as ...
-          <ChevronDown size={12} className="ml-1" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {filteredCopyOptions.map((option) => {
-          return (
-            <DropdownMenuItem
-              onClick={() => handleCopy(option)}
-              className="cursor-pointer"
-              key={option.id}
-            >
-              {option.label}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Menu>
+      <Menu.Trigger
+        render={<Button tone="neutral" variant="outline" size="sm" className="self-start" />}
+      >
+        {isCopied ? <Check /> : <Copy />}
+        Copy as ...
+        <ChevronDown className="ml-0.5 !size-3" />
+      </Menu.Trigger>
+      <Menu.Content align="start">
+        {filteredCopyOptions.map((option) => (
+          <Menu.Item onClick={() => handleCopy(option)} key={option.id}>
+            {option.label}
+          </Menu.Item>
+        ))}
+      </Menu.Content>
+    </Menu>
   );
 };

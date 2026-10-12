@@ -1,3 +1,4 @@
+import { ParseWarning } from './parse-warning';
 import { CodeBlock } from '../components/CodeBlock';
 import { JsonTree } from '../components/JsonTree';
 import { isJsonContentType } from '../../utils/getContentTypeMimeType';
@@ -18,9 +19,7 @@ export const jsonRenderer: ResponseRenderer = {
       return (
         <>
           <CodeBlock>{body}</CodeBlock>
-          <div className="text-xs text-gray-500 mt-1">
-            ⚠️ Failed to parse as JSON, showing as raw text
-          </div>
+          <ParseWarning>Failed to parse as JSON, showing as raw text</ParseWarning>
         </>
       );
     }

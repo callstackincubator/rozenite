@@ -22,7 +22,7 @@ export const binaryRenderer: ResponseRenderer = {
       return null;
     }
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         <MetadataCard body={body} ctx={ctx} />
         <HexView bytes={base64ToBytes(body.base64)} />
       </div>

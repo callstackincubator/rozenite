@@ -23,12 +23,12 @@ export const imageRenderer: ResponseRenderer = {
         <img
           src={dataUrl}
           alt="Response image"
-          className="max-w-full max-h-[400px] object-contain bg-gray-800 rounded-md border border-gray-700 p-2"
+          className="max-h-[400px] max-w-full border border-border bg-muted object-contain p-2"
         />
       );
     }
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         <MetadataCard body={body} ctx={ctx} />
         <HexView bytes={base64ToBytes(body.base64)} />
       </div>

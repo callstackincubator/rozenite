@@ -1,15 +1,13 @@
-import { Loader2 } from 'lucide-react';
+import { PluginShell, RozeniteLoader, Text } from '@rozenite/ui';
 
 export const LoadingView = () => {
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-12 w-12 text-primary animate-spin" />
-        <div className="text-center">
-          <h2 className="text-xl font-medium text-gray-200 mb-2">Loading Network Inspector</h2>
-          <p className="text-gray-400 text-sm">Initializing network monitoring...</p>
-        </div>
+    <PluginShell className="items-center justify-center gap-4">
+      <RozeniteLoader />
+      <div className="flex flex-col items-center gap-1 text-center">
+        <Text variant="heading">Loading Network Inspector</Text>
+        <Text variant="caption">Initializing network monitoring...</Text>
       </div>
-    </div>
+    </PluginShell>
   );
 };

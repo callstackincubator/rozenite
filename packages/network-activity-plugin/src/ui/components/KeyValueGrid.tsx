@@ -1,5 +1,5 @@
-import React, { Fragment } from 'react';
-import { cn } from '../utils/cn';
+import React from 'react';
+import { cn, DescriptionList, Text } from '@rozenite/ui';
 
 export type KeyValueItem = {
   key: string;
@@ -11,31 +11,59 @@ export type KeyValueItem = {
 export type KeyValueGridProps = {
   items?: KeyValueItem[];
   emptyMessage?: string;
+  /**
+   * `label` keys are field names set in the uppercase mono label style. `data` keys are
+   * case-sensitive names (headers, parameters), shown as typed in mono, with mono values.
+   * @default 'label'
+   */
+  variant?: 'label' | 'data';
   className?: string;
 };
 
-export const KeyValueGrid = ({ items = [], emptyMessage, className }: KeyValueGridProps) => {
-  const gridClassName = cn(
-    'grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm',
-    className,
-  );
-
+export const KeyValueGrid = ({
+  items = [],
+  emptyMessage,
+  variant = 'label',
+  className,
+}: KeyValueGridProps) => {
   if (items.length === 0) {
     return emptyMessage ? (
-      <div className={gridClassName}>
-        <span className="col-span-2 text-gray-500 italic">{emptyMessage}</span>
-      </div>
+      <Text variant="caption" className={cn('block italic', className)}>
+        {emptyMessage}
+      </Text>
     ) : null;
   }
 
+  const isData = variant === 'data';
+
   return (
-    <div className={gridClassName}>
+    <DescriptionList className={className}>
       {items.map((item, index) => (
-        <Fragment key={index}>
-          <span className={cn('text-gray-400 wrap-anywhere', item.keyClassName)}>{item.key}</span>
-          <span className={cn('wrap-anywhere', item.valueClassName)}>{item.value}</span>
-        </Fragment>
+        <DescriptionList.Item
+          key={index}
+          label={
+            <span
+              className={cn(
+                'wrap-anywhere',
+                isData && 'font-mono text-xs tracking-normal normal-case',
+                item.keyClassName,
+              )}
+            >
+              {item.key}
+            </span>
+          }
+        >
+          <span
+            className={cn(
+              'wrap-anywhere text-foreground',
+              isData && 'font-mono text-xs',
+              item.valueClassName,
+            )}
+          >
+            {item.value}
+          </span>
+        </DescriptionList.Item>
       ))}
-    </div>
+    </DescriptionList>
   );
 };

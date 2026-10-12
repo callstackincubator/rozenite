@@ -19,11 +19,13 @@ import type {
   TimelineTick,
 } from '../utils/timelineModel';
 
+// Bars read as: waiting for the first byte (bright), receiving (muted), still in flight
+// (info, the status tone for work in progress) and failed (danger).
 const REQUEST_TIMELINE_COLORS = {
   error: 'bg-danger',
-  primary: 'bg-gray-400',
-  active: 'bg-gray-500',
-  httpTtfb: 'bg-gray-200',
+  primary: 'bg-muted-foreground',
+  active: 'bg-info',
+  httpTtfb: 'bg-foreground',
 } as const;
 
 const getPrimaryBarClassName = (request: ProcessedRequest) => {
@@ -45,7 +47,7 @@ const GridLines = ({ ticks }: { ticks: TimelineTick[] }) => {
       {ticks.map((tick) => (
         <div
           key={`${tick.label}-${tick.offsetPercent}`}
-          className="absolute inset-y-0 border-l border-gray-700"
+          className="absolute inset-y-0 border-l border-border"
           style={{ left: `${tick.offsetPercent}%` }}
         />
       ))}
@@ -122,7 +124,7 @@ const TimelineTrack = ({
       {isSplitHttpBar ? (
         <div
           className={`absolute flex w-full overflow-hidden rounded-sm ${
-            isSelected ? 'ring-1 ring-primary ring-offset-1 ring-offset-gray-950' : ''
+            isSelected ? 'ring-1 ring-primary ring-offset-1 ring-offset-background' : ''
           }`}
           style={{
             top: barTop,
@@ -141,7 +143,7 @@ const TimelineTrack = ({
       ) : (
         <div
           className={`absolute w-full rounded-sm ${primaryBarClassName} ${
-            isSelected ? 'ring-1 ring-primary ring-offset-1 ring-offset-gray-950' : ''
+            isSelected ? 'ring-1 ring-primary ring-offset-1 ring-offset-background' : ''
           }`}
           style={{
             top: barTop,
@@ -323,10 +325,10 @@ export const NetworkTimeline = ({
   };
 
   return (
-    <div className="border-b border-gray-700 bg-gray-900 p-1.5">
+    <div className="border-b border-border bg-card p-1.5">
       <div
         ref={chartRef}
-        className="relative overflow-hidden border border-gray-700 bg-gray-950"
+        className="relative overflow-hidden border border-border bg-surface"
         style={{ height: timeline.chartHeight }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -335,14 +337,14 @@ export const NetworkTimeline = ({
         <GridLines ticks={timeline.ticks} />
 
         <div
-          className="pointer-events-none absolute inset-x-0 border-b border-gray-700"
+          className="pointer-events-none absolute inset-x-0 border-b border-border"
           style={{ top: TIMELINE_LAYOUT.rulerHeightPx }}
         />
 
         {timeline.ticks.map((tick) => (
           <div
             key={`${tick.label}-${tick.offsetPercent}`}
-            className="absolute top-1 whitespace-nowrap tabular-nums text-xs text-gray-200"
+            className="absolute top-1 font-mono text-[10px] whitespace-nowrap text-faint tabular-nums"
             style={getTickLabelStyle(tick)}
           >
             {tick.label}
@@ -374,13 +376,13 @@ export const NetworkTimeline = ({
         ))}
 
         {selection && (
-          <div className="absolute bottom-1 right-1 flex items-center gap-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
+          <div className="absolute right-1 bottom-1 flex items-center gap-1 border border-border-strong bg-popover px-1.5 py-0.5 text-[11px] text-muted-foreground">
             <span>{filteredRequestCount} in range</span>
             <button
               type="button"
               title="Clear timeline selection"
               aria-label="Clear timeline selection"
-              className="rounded p-0.5 text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+              className="p-0.5 text-muted-foreground transition-colors duration-[120ms] hover:bg-accent hover:text-foreground"
               onClick={() => onSelectionChange(null)}
             >
               <X className="h-3 w-3" />
@@ -389,7 +391,7 @@ export const NetworkTimeline = ({
         )}
 
         {timeline.hiddenRequestCount > 0 && (
-          <div className="absolute bottom-1 left-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
+          <div className="absolute bottom-1 left-1 border border-border-strong bg-popover px-1.5 py-0.5 text-[11px] text-muted-foreground">
             Showing latest {timeline.rows.length} of {timeline.totalRequestCount}
           </div>
         )}

@@ -1,3 +1,4 @@
+import { Text } from '@rozenite/ui';
 import type { ResponseRenderer } from './types';
 
 const formatBytes = (bytes: number): string => {
@@ -21,10 +22,6 @@ export const binaryTooLargeRenderer: ResponseRenderer = {
     if (typeof body !== 'object' || body === null || body.kind !== 'binary-too-large') {
       return null;
     }
-    return (
-      <div className="text-sm text-gray-400">
-        Response too large for preview ({formatBytes(body.size)})
-      </div>
-    );
+    return <Text variant="caption">Response too large for preview ({formatBytes(body.size)})</Text>;
   },
 };

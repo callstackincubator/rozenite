@@ -1,4 +1,5 @@
-import { ScrollArea } from '../components/ScrollArea';
+import { Text } from '@rozenite/ui';
+import { TabContent } from '../components/TabContent';
 import { HttpNetworkEntry, HttpRequestData, SSENetworkEntry } from '../state/model';
 import { KeyValueGrid } from '../components/KeyValueGrid';
 import { Section } from '../components/Section';
@@ -44,7 +45,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
 
     return (
       <Section title={`Query Parameters (${queryParams.length})`}>
-        <KeyValueGrid items={queryParams} />
+        <KeyValueGrid variant="data" items={queryParams} />
       </Section>
     );
   };
@@ -62,16 +63,12 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
   };
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div className="p-4 space-y-4">
-        {renderQueryParams()}
-        {renderRequestBody()}
-        {!hasQueryParams && !requestBody && (
-          <div className="text-sm text-gray-400">
-            No request body or query params for this request
-          </div>
-        )}
-      </div>
-    </ScrollArea>
+    <TabContent>
+      {renderQueryParams()}
+      {renderRequestBody()}
+      {!hasQueryParams && !requestBody && (
+        <Text variant="caption">No request body or query params for this request</Text>
+      )}
+    </TabContent>
   );
 };

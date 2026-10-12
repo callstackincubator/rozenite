@@ -28,7 +28,8 @@ export const htmlRenderer: ResponseRenderer = {
         title="HTML response preview"
         sandbox=""
         srcDoc={CSP_META + body}
-        className="w-full h-[500px] bg-white border border-gray-700 rounded-md"
+        // A page is previewed on white, as a browser would show it, whatever the panel theme.
+        className="h-[500px] w-full border border-border bg-white"
       />
     );
   },

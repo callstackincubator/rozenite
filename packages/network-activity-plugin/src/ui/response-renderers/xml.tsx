@@ -1,3 +1,4 @@
+import { ParseWarning } from './parse-warning';
 import { CodeBlock } from '../components/CodeBlock';
 import { XmlTree } from '../components/XmlTree';
 import { isXmlContentType } from '../../utils/getContentTypeMimeType';
@@ -26,9 +27,7 @@ export const xmlRenderer: ResponseRenderer = {
       return (
         <>
           <CodeBlock>{body}</CodeBlock>
-          <div className="text-xs text-gray-500 mt-1">
-            ⚠️ Failed to parse as XML, showing as raw text
-          </div>
+          <ParseWarning>Failed to parse as XML, showing as raw text</ParseWarning>
         </>
       );
     }
