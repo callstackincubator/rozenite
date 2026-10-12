@@ -182,7 +182,7 @@ const mocks = vi.hoisted(() => {
     createMemoryDomainService: vi.fn(() => services[2]),
     createNetworkDomainService: vi.fn(() => services[3]),
     extractConsoleMessage: vi.fn(() => null),
-    parseRozeniteBindingPayload: vi.fn(() => null),
+    parseRozeniteBindingCalled: vi.fn(() => null),
     wsInstances,
     resolveDebuggerOrigin,
     stallRuntimeEvaluationContaining: (expression: string) => {
@@ -252,8 +252,12 @@ vi.mock('../agent/runtime/console/extract.js', () => ({
   extractConsoleMessage: mocks.extractConsoleMessage,
 }));
 
-vi.mock('../agent/runtime/bindings.js', () => ({
-  parseRozeniteBindingPayload: mocks.parseRozeniteBindingPayload,
+// Only the frame parser is replaced (tests feed `{ bindingPayload }` stubs);
+// the rest of the protocol module (constants, expression builders, close
+// reason classification) stays real so the session emits genuine expressions.
+vi.mock('@rozenite/tools/protocol', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@rozenite/tools/protocol')>()),
+  parseRozeniteBindingCalled: mocks.parseRozeniteBindingCalled,
 }));
 
 vi.mock('../agent/debugger-origin.js', () => ({
@@ -371,7 +375,7 @@ const emitRozeniteBindingPayload = async (
   socket: InstanceType<typeof mocks.MockWebSocket>,
   message: Record<string, unknown>,
 ) => {
-  mocks.parseRozeniteBindingPayload.mockImplementation(
+  mocks.parseRozeniteBindingCalled.mockImplementation(
     ((rawMessage: Record<string, unknown>) =>
       (rawMessage.bindingPayload as
         | {
@@ -392,8 +396,8 @@ const emitRozeniteBindingPayload = async (
   );
   await flushMicrotasks();
 
-  mocks.parseRozeniteBindingPayload.mockReset();
-  mocks.parseRozeniteBindingPayload.mockReturnValue(null);
+  mocks.parseRozeniteBindingCalled.mockReset();
+  mocks.parseRozeniteBindingCalled.mockReturnValue(null);
 };
 
 describe('agent session', () => {

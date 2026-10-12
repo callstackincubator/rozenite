@@ -25,6 +25,11 @@
       "types": "./dist/integration.d.ts",
       "import": "./dist/integration.js",
       "require": "./dist/integration.cjs"
+    },
+    "./protocol": {
+      "types": "./dist/protocol.d.ts",
+      "import": "./dist/protocol.js",
+      "require": "./dist/protocol.cjs"
     }
   },
   "publishConfig": {
@@ -32,7 +37,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit && tsc -p tsconfig.protocol.json",
     "lint": "eslint .",
     "test": "vitest --run --passWithNoTests"
   },

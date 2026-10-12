@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "lib": ["es2022"],
+    "types": []
+  },
+  "include": ["src/protocol.ts", "protocol-globals.d.ts"]
+}

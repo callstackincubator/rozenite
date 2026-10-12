@@ -1,4 +1,19 @@
 import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
+import {
+  BOOTSTRAP_DEBOUNCE_MS,
+  DISPATCHER_INIT_MAX_ATTEMPTS,
+  DISPATCHER_INIT_RETRY_MS,
+  MAIN_EXECUTION_CONTEXT_NAME,
+  RECOVERY_MAX_ATTEMPTS,
+  RECOVERY_RETRY_DELAY_MS,
+  ROZENITE_DOMAIN,
+  buildBindingNameExpression,
+  buildDispatcherReadyExpression,
+  buildInitializeDomainExpression,
+  buildSendMessageExpression,
+  classifyCloseReason,
+  parseRozeniteBindingCalled,
+} from '@rozenite/tools/protocol';
 /**
  * Connects to a single device over its own CDP WebSocket and exposes it as
  * an opaque channel: a status the UI can render, and a place to send and
@@ -14,32 +29,16 @@ import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
  * bounded, UI-visible recovery that the long-running Node agent doesn't
  * need.
  */
-import { parseRozeniteBindingPayload } from './bindings';
 import { resolveFramework, type Framework } from '../framework';
 import { MetroUnreachableError, resolveMetroTarget } from './metro-target-resolution';
 import type { ParsedTarget } from './target-from-url';
 
-const RUNTIME_GLOBAL = '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__';
-const MAIN_EXECUTION_CONTEXT_NAME = 'main';
-const DISPATCHER_INIT_MAX_ATTEMPTS = 20;
-const DISPATCHER_INIT_RETRY_MS = 250;
-const RECOVERY_MAX_ATTEMPTS = 16;
-const RECOVERY_RETRY_DELAY_MS = 500;
-/** Mirrors `session.ts`'s `BOOTSTRAP_DELAY_MS`: coalesces a burst of
- * `executionContextCreated("main")` events into a single re-bootstrap. */
-const BOOTSTRAP_DEBOUNCE_MS = 500;
 /** A command the device never answers (a wedged JS thread) must not leave
  * `waitForDispatcher`/`getBindingName` awaiting forever. */
 const COMMAND_TIMEOUT_MS = 10_000;
 /** Bounds `sendQueue` so a long offline stretch can't accumulate an
  * unbounded backlog; oldest queued messages are dropped first. */
 const SEND_QUEUE_MAX_SIZE = 100;
-
-const RECOVERABLE_CLOSE_REASONS = ['[RECREATING_DEVICE]', '[PAGE_NOT_FOUND]', '[CONNECTION_LOST]'];
-// Something else took the device (e.g. React Native DevTools, another
-// Rozenite window). We cannot tell which, and it isn't ours to fix by
-// retrying, so this ends the connection rather than looping on it.
-const DEVTOOLS_TOOK_CONNECTION_REASON = '[NEW_DEBUGGER_OPENED]';
 
 export type DeviceState =
   | { status: 'connecting' }
@@ -106,30 +105,6 @@ type CDPEvaluateResult = {
 };
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Escapes every non-ASCII code unit as a `\uXXXX` escape sequence, so that the
- * JS source text handed to `Runtime.evaluate` is pure ASCII.
- *
- * Hermes compiles that source text from UTF-8 and fails on a raw astral-plane
- * code unit with `Invalid UTF-8 code point`, which loses the message without
- * any visible error. The escape sequence it produces is plain ASCII, and the
- * device's own parser turns it back into the original code unit, so the payload
- * the device reconstructs is byte-identical to the one the host serialized.
- *
- * This has to run on the output of the second `JSON.stringify`, never before
- * it: escaped earlier, `JSON.stringify` escapes the backslash instead and the
- * device receives `\uD83C` as six characters of text.
- *
- * Identical in all three hosts that speak this protocol (here, the embedded
- * bindings model in `@rozenite/runtime`, and the agent session in
- * `@rozenite/middleware`), like the dispatcher-wait poll below.
- */
-const toAsciiJsSource = (source: string): string =>
-  source.replace(
-    /[^\0-\x7F]/g,
-    (codeUnit) => `\\u${codeUnit.charCodeAt(0).toString(16).padStart(4, '0')}`,
-  );
 
 /** A detached `void sendCommand(...)` (queue flushing, fire-and-forget
  * sends) has nothing else attached to observe its rejection. Ported from
@@ -315,12 +290,9 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   };
 
   const sendDomainMessage = (socket: WebSocket, message: unknown): Promise<void> => {
-    const serializedMessage = JSON.stringify(message);
-    const escapedMessage = toAsciiJsSource(JSON.stringify(serializedMessage));
-
     return markPromiseAsHandled(
       sendCommand(socket, 'Runtime.evaluate', {
-        expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify('rozenite')}, ${escapedMessage})`,
+        expression: buildSendMessageExpression(ROZENITE_DOMAIN, message),
       })
         .then((response) => {
           // The device rejecting the source text is reported on the response,
@@ -365,7 +337,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       }
 
       const response = (await sendCommand(socket, 'Runtime.evaluate', {
-        expression: `globalThis.${RUNTIME_GLOBAL} != undefined`,
+        expression: buildDispatcherReadyExpression(),
         returnByValue: true,
       })) as CDPEvaluateResult;
 
@@ -388,7 +360,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
 
   const getBindingName = async (socket: WebSocket): Promise<string> => {
     const response = (await sendCommand(socket, 'Runtime.evaluate', {
-      expression: `${RUNTIME_GLOBAL}.BINDING_NAME`,
+      expression: buildBindingNameExpression(),
     })) as CDPEvaluateResult;
 
     if (response.exceptionDetails) {
@@ -466,7 +438,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     }
 
     await sendCommand(socket, 'Runtime.evaluate', {
-      expression: `void ${RUNTIME_GLOBAL}.initializeDomain(${JSON.stringify('rozenite')})`,
+      expression: buildInitializeDomainExpression(ROZENITE_DOMAIN),
     });
   };
 
@@ -603,8 +575,8 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       return;
     }
 
-    const bindingPayload = parseRozeniteBindingPayload(message);
-    if (bindingPayload && bindingPayload.domain === 'rozenite') {
+    const bindingPayload = parseRozeniteBindingCalled(message);
+    if (bindingPayload && bindingPayload.domain === ROZENITE_DOMAIN) {
       for (const listener of messageListeners) {
         listener(bindingPayload.message);
       }
@@ -811,13 +783,16 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       return;
     }
 
-    if (reason.includes(DEVTOOLS_TOOK_CONNECTION_REASON)) {
+    // Something else took the device (e.g. React Native DevTools, another
+    // Rozenite window). We cannot tell which, and it isn't ours to fix by
+    // retrying, so this ends the connection rather than looping on it.
+    const closeClass = classifyCloseReason(reason);
+    if (closeClass === 'taken-by-another-debugger') {
       setState('disconnected');
       return;
     }
 
-    const isRecoverable = RECOVERABLE_CLOSE_REASONS.some((candidate) => reason.includes(candidate));
-    if (isRecoverable) {
+    if (closeClass === 'recoverable') {
       // No-op if a loop for this epoch is already running (e.g. this close
       // fired for the socket that loop itself just opened).
       runConnectLoop(closedEpoch, true);

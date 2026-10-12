@@ -12,6 +12,7 @@
 import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 import { WebSocket, WebSocketServer } from 'ws';
+import { MAIN_EXECUTION_CONTEXT_NAME } from '@rozenite/tools/protocol';
 import {
   type BridgeCloseCause,
   getCloseReason,
@@ -105,7 +106,7 @@ const isExecutionContextsClearedMessage = (message: unknown): boolean =>
  */
 const SYNTHETIC_EXECUTION_CONTEXT_CREATED = {
   method: 'Runtime.executionContextCreated',
-  params: { context: { id: 1, name: 'main', origin: '', uniqueId: '1' } },
+  params: { context: { id: 1, name: MAIN_EXECUTION_CONTEXT_NAME, origin: '', uniqueId: '1' } },
 };
 
 export const createInspectorSocketRoute = (
