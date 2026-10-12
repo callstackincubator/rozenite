@@ -3,7 +3,7 @@
 ---
 
 `@rozenite/ui` now has the rozenite.dev look: a near-black theme with the
-crimson-rose accent (a deeper crimson in the light theme), Switzer and Geist
+crimson-rose accent (a deeper crimson in the light theme), Geist and Geist
 Mono bundled with the package, uppercase mono labels on buttons, tabs, badges
 and table headers, hairline tabs with an accent underline, an accent bar on
 the selected sidebar item, square switches and indicators, and no shadows.

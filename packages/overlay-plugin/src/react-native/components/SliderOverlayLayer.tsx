@@ -100,15 +100,21 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   dragHandleBar: {
-    width: 2,
+    // A 2px accent line inside a 1px dark outline (a border, not a shadow), so it still reads
+    // over screens that are red or pink.
+    width: 4,
     height: '100%',
     backgroundColor: '#ff4f7b',
+    borderWidth: 1,
+    borderColor: '#0a0a0a',
   },
   dragHandleThumb: {
     position: 'absolute',
     width: 40,
     height: 40,
     backgroundColor: '#ff4f7b',
+    borderWidth: 1,
+    borderColor: '#0a0a0a',
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',

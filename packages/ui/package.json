@@ -22,6 +22,7 @@
   "files": [
     "dist",
     "fonts",
+    "fonts.css",
     "src",
     "styles.css"
   ],
@@ -35,6 +36,7 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./fonts.css": "./fonts.css",
     "./styles.css": "./styles.css",
     "./package.json": "./package.json"
   },

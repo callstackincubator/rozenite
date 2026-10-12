@@ -90,6 +90,8 @@ narrowing to the base. As a 7×10 bitmap:
 
 - Fonts are free: Switzer (Fontshare, ITF Free Font License) and Geist Mono (OFL), both
   self-hosted as woff2 files in `website/src/fonts/`. No paid or proprietary fonts.
+  Switzer's licence covers our own site, not redistribution, so packages use Geist instead
+  (see [DevTools panel UI](#devtools-panel-ui)).
   Fallbacks: Arial; system monospace.
 - Headlines run two beats; the second is in the accent: "Plug-and-play panels *for React
   Native DevTools.*" No italics.
@@ -225,19 +227,28 @@ they stack. Every text pair meets 4.5:1 in both themes, chips included.
 chip (`soft`: a 14% / 10% tint), a square indicator or a mono label such as `ERR`; it never
 fills large areas, and the accent never means status.
 
-**Type.** Switzer for UI text and names, Geist Mono for data and labels, both bundled in
-`packages/ui/fonts/` (the website's own files, 57 kB). Sizes are smaller than the website's:
+**Type.** Geist for UI text and names, Geist Mono for data and labels. Both are SIL OFL and
+bundled in `packages/ui/fonts/` with their licence, declared in `packages/ui/fonts.css`, which
+`styles.css` imports and which a panel not built on `@rozenite/ui` imports as
+`@rozenite/ui/fonts.css`. Geist stands in for the website's Switzer, a neo-grotesk of the same
+kind: Switzer's ITF Free Font License allows self-hosting it on our own site but not
+redistributing the font files, which publishing them in an npm package would do. Never bundle
+Switzer in a package. The wordmark keeps Switzer as outlined artwork (`RozeniteLockup` in
+`packages/shell/src/Logo.tsx`, the Storybook logo), which the licence allows for logos. Sizes are smaller than the website's:
 
 | Role | Style |
 | --- | --- |
-| Panel title (`PluginHeader.Title`) | Switzer 500, 15px, -0.01em |
-| Headings, `Text` `title`/`heading` | Switzer 500, never bold |
-| Body, list items, field values | Switzer 400, 13–14px, `muted-foreground` when idle |
+| Panel title (`PluginHeader.Title`) | Geist 500, 15px, -0.01em |
+| Headings, `Text` `title`/`heading` | Geist 500, never bold |
+| Body, list items, field values | Geist 400, 13–14px, `muted-foreground` when idle |
 | Label (`Text variant="label"`, buttons, tabs, badges, table headers, group labels) | Geist Mono, uppercase, 0.08em, 10–12px, usually `faint` |
 | Data (`Text` `code`/`numeric`, table values, keys) | Geist Mono 12px, tabular numbers |
 
 Labels are mono; sentences, descriptions and empty-state copy never are. Plugin names stay
-in Switzer.
+in Geist.
+
+The mark and the `RozeniteLoader` built from it keep the bright accent `#ff4f7b` in both
+themes, as in [The mark](#the-mark).
 
 **Shape.** Square everywhere (`--radius: 0`, the `rounded-*` scale stays wired as a seam). No
 shadows, blur or gradients: popups, dialogs and toasts are separated by a `border-strong`
@@ -247,19 +258,25 @@ square thumb.
 **Components.**
 
 - **Buttons:** mono uppercase labels, `h-6`/`h-8`/`h-10`. Primary is the accent fill with
-  `primary-foreground` text; neutral solid is the dark button; outline has a `border-strong`
-  border; ghost is `muted-foreground` until hovered.
-- **Badges:** the website's chip. `soft` (the usual one) is a `muted` fill with the tone as
-  text; `solid` primary is the accent block, like the `ROZENITE` window tag.
+  `primary-foreground` text; neutral solid is the `secondary` fill (the website's dark button
+  in the dark theme, a light grey in the light one); outline has a `border-strong` border;
+  ghost is `muted-foreground` until hovered.
+- **Badges:** mono uppercase labels. `soft` is the website's chip, a `muted` fill with the
+  tone as text, for status and categories; `solid` primary (the default) is the accent block,
+  like the `ROZENITE` window tag. A badge that shows data rather than a label (a storage key,
+  a version, a URL) opts out of the uppercase with `normal-case tracking-normal`.
 - **Tabs:** hairline-divided mono cells in `faint`; the selected one is white on the hover
   wash with a 2px accent underline.
-- **Sidebar:** full-width rows, items in Switzer `muted-foreground`, the selected one on
+- **Sidebar:** full-width rows, items in Geist `muted-foreground`, the selected one on
   `surface` with a 2px accent bar on its left; mono group labels.
 - **Tables:** header row of `faint` mono uppercase labels, rows divided by `border`, hover on
-  the wash, selected row on `surface` with the accent bar.
+  the wash. A panel that selects rows draws the selected one on a fill distinct from the
+  hover wash, with the accent bar on its left; `DataTable` and `VirtualizedDataTable` have no
+  selection of their own.
 - **Fields:** `muted` fill, `input` border that brightens to `faint` on hover and to the accent
   on focus; placeholders in `faint`.
-- **Focus:** a 2px `ring` in the accent, square.
+- **Focus:** the accent `ring`, square: 2px on buttons, tabs and list items; on fields an
+  accent border plus a 1px ring.
 - **Motion:** 120ms colour transitions, as in [Motion](#motion).
 
 **Plugins.** A plugin panel styles itself through `@rozenite/ui` components and tokens. It
@@ -389,7 +406,8 @@ Both are generated from one page, `website/og/og.html`, with `pnpm --filter @roz
 
 ## Where it is implemented
 
-- Panel UI tokens, fonts and base styles: `packages/ui/styles.css`, `packages/ui/fonts/`;
+- Panel UI tokens, fonts and base styles: `packages/ui/styles.css`, `packages/ui/fonts.css`,
+  `packages/ui/fonts/`; the shell lockup in `packages/shell/src/Logo.tsx`;
   components in `packages/ui/src/`; the reference panel in
   `apps/ui-storybook/src/stories/DesignPreview.stories.tsx`
 

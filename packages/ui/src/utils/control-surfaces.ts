@@ -45,7 +45,7 @@ export const textareaSurface = cva(fieldSurfaceBase, {
 /** The shared popup surface for select and combobox dropdowns. */
 export const popoverSurface = cva(
   cn(
-    'max-h-64 min-w-[--anchor-width] overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground',
+    'max-h-64 min-w-(--anchor-width) overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground',
     'origin-(--transform-origin) transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
   ),
 );

@@ -86,7 +86,7 @@ export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDr
 
   return (
     <Modal state={overlay}>
-      <Modal.Backdrop variant="blur" isDismissable={!dropping} className="bg-black/60">
+      <Modal.Backdrop variant="opaque" isDismissable={!dropping} className="bg-black/60">
         <Modal.Container placement="center" size="md" scroll="inside">
           <Modal.Dialog
             aria-label={`${getModalTitle(target)} ${getModalSubtitle(target)}`}

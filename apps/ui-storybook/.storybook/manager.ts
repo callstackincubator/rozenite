@@ -48,7 +48,7 @@ addons.setConfig({
     colorSecondary: palette.accent,
 
     // Fonts are declared in main.ts (managerHead) and served from packages/ui/fonts.
-    fontBase: "'Switzer', Arial, sans-serif",
+    fontBase: "'Geist', Arial, sans-serif",
     fontCode: "'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace",
 
     appBg: palette.surface,

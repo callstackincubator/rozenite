@@ -22,7 +22,7 @@ export const CellDetailDrawer = ({ value, title, isOpen, onClose }: CellDetailDr
 
   return (
     <Modal state={overlay}>
-      <Modal.Backdrop variant="blur" isDismissable className="bg-black/60">
+      <Modal.Backdrop variant="opaque" isDismissable className="bg-black/60">
         <Modal.Container placement="center" size="lg" scroll="inside">
           <Modal.Dialog
             aria-label={title}

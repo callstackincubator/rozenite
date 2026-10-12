@@ -21,7 +21,8 @@ changing how anything looks; it has the token table, type roles and component ru
   (`violet-500`, `gray-400`), no new tokens without adding them to both themes and to the
   table in `docs/DESIGN.md`.
 - Anything that labels (button, tab, badge, table header, group label, metadata) uses
-  `monoLabel` from `src/utils/mono-label.ts` plus a size. Sentences never do.
+  `monoLabel` from `src/utils/mono-label.ts` plus a size. Sentences never do, and neither
+  does case-sensitive data (keys, versions, URLs): opt out with `normal-case tracking-normal`.
 - Square corners, 1px hairlines, no shadows, no gradients, no blur. Indicators are squares.
 - The accent is for the primary action, the selected item and live state. Status uses the
   `success`, `warning`, `danger` and `info` tones, never `primary`.

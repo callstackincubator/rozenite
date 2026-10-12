@@ -304,8 +304,10 @@ export const RequestList = ({ requests: filteredRequests }: RequestListProps) =>
           {table.getRowModel().rows.map((row) => (
             <tr
               key={row.id}
-              className={`text-sm hover:bg-gray-800 cursor-pointer border-b border-gray-800 ${
-                selectedRequestId === row.original.id ? 'bg-surface' : ''
+              className={`text-sm cursor-pointer border-b border-gray-700 ${
+                selectedRequestId === row.original.id
+                  ? 'bg-gray-700 [&>td:first-child]:shadow-[inset_2px_0_0_hsl(var(--primary))]'
+                  : 'hover:bg-gray-800'
               }`}
               onClick={() => onRequestSelect(row.original.id)}
             >

@@ -45,7 +45,7 @@ const GridLines = ({ ticks }: { ticks: TimelineTick[] }) => {
       {ticks.map((tick) => (
         <div
           key={`${tick.label}-${tick.offsetPercent}`}
-          className="absolute inset-y-0 border-l border-gray-800"
+          className="absolute inset-y-0 border-l border-gray-700"
           style={{ left: `${tick.offsetPercent}%` }}
         />
       ))}
@@ -326,7 +326,7 @@ export const NetworkTimeline = ({
     <div className="border-b border-gray-700 bg-gray-900 p-1.5">
       <div
         ref={chartRef}
-        className="relative overflow-hidden border border-gray-800 bg-gray-950"
+        className="relative overflow-hidden border border-gray-700 bg-gray-950"
         style={{ height: timeline.chartHeight }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -335,7 +335,7 @@ export const NetworkTimeline = ({
         <GridLines ticks={timeline.ticks} />
 
         <div
-          className="pointer-events-none absolute inset-x-0 border-b border-gray-800"
+          className="pointer-events-none absolute inset-x-0 border-b border-gray-700"
           style={{ top: TIMELINE_LAYOUT.rulerHeightPx }}
         />
 

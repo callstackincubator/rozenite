@@ -65,7 +65,11 @@ export function FieldDetailDialog({ open, onOpenChange, name, snapshot }: FieldD
               <DescriptionList.Item label="Error">
                 {error?.type || error?.message ? (
                   <div className="flex flex-col gap-1">
-                    {error.type && <Badge tone="neutral">{error.type}</Badge>}
+                    {error.type && (
+                      <Badge tone="neutral" className="normal-case tracking-normal">
+                        {error.type}
+                      </Badge>
+                    )}
                     {error.message && <span className="text-sm text-danger">{error.message}</span>}
                   </div>
                 ) : (

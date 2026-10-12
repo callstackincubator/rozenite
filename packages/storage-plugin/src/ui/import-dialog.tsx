@@ -167,7 +167,11 @@ const ResultBody = ({
         {state.failedKey && (
           <div className="text-xs text-muted-foreground">
             Failed at key:{' '}
-            <Badge tone="neutral" variant="outline" className="font-mono">
+            <Badge
+              tone="neutral"
+              variant="outline"
+              className="font-mono normal-case tracking-normal"
+            >
               {state.failedKey}
             </Badge>
           </div>

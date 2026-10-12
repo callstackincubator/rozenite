@@ -55,7 +55,7 @@ export const SqliteRowDeleteModal = ({
 
   return (
     <Modal state={overlay}>
-      <Modal.Backdrop variant="blur" isDismissable={!deleting} className="bg-black/60">
+      <Modal.Backdrop variant="opaque" isDismissable={!deleting} className="bg-black/60">
         <Modal.Container placement="center" size="md" scroll="inside">
           <Modal.Dialog
             aria-label={`Delete row ${rowNumber} from ${entityName}`}

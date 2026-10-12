@@ -96,11 +96,6 @@ export function PluginThemeProvider({ children }: PluginThemeProviderProps) {
   return <PluginThemeContext.Provider value={value}>{children}</PluginThemeContext.Provider>;
 }
 
-/** Like `usePluginTheme`, but `null` outside a `PluginShell` instead of throwing. */
-export function useOptionalPluginTheme(): PluginThemeContextValue | null {
-  return useContext(PluginThemeContext);
-}
-
 export function usePluginTheme(): PluginThemeContextValue {
   const context = useContext(PluginThemeContext);
 

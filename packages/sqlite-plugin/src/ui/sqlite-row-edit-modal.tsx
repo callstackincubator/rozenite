@@ -179,7 +179,7 @@ export const SqliteRowEditModal = ({
 
   return (
     <Modal state={overlay}>
-      <Modal.Backdrop variant="blur" isDismissable={!submitting} className="bg-black/60">
+      <Modal.Backdrop variant="opaque" isDismissable={!submitting} className="bg-black/60">
         <Modal.Container placement="center" size="lg" scroll="inside">
           <Modal.Dialog
             aria-label={`Edit row ${rowNumber} in ${entityName}`}

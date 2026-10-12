@@ -1,41 +1,9 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+/* Geist and Geist Mono, the panel UI fonts (docs/DESIGN.md, "DevTools panel UI"). */
+@import '@rozenite/ui/fonts.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-/*
- * Fonts shared with rozenite.dev and @rozenite/ui (docs/DESIGN.md, "Type"): Switzer for UI text,
- * Geist Mono for data and labels. This plugin does not depend on @rozenite/ui, so it points at
- * the font files that package ships; Vite bundles them into the plugin's own build output.
- */
-@font-face {
-  font-family: 'Switzer';
-  src: url('../../../ui/fonts/Switzer-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Switzer';
-  src: url('../../../ui/fonts/Switzer-Medium.woff2') format('woff2');
-  font-weight: 500 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('../../../ui/fonts/GeistMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('../../../ui/fonts/GeistMono-Medium.woff2') format('woff2');
-  font-weight: 500 700;
-  font-style: normal;
-  font-display: swap;
-}
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -82,7 +50,7 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
-  --font-sans: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -93,15 +61,25 @@
 /*
  * The panel's components are written against Tailwind's `gray-*` ramp (the plugin has always
  * been dark). Re-point that ramp at the Rozenite neutrals so those classes land on the new
- * palette without touching every component: 900/950 are the page, 800 the surface, 700 the
- * hairline, 600 the stronger hairline; 500 and 400 are the faint and muted text; 100 is text.
+ * palette without touching every component. The ramp is monotonic and each step keeps its
+ * old job:
+ *   950, 900  page background (#0a0a0a)
+ *   800       surfaces: popups, code blocks, headers (#111111, `surface`)
+ *   700       hairlines, hover wash on a surface, and the selected-row fill (#1f1f1f, `line`)
+ *   600       stronger hairlines, popup borders (#313131, `line-strong`)
+ *   500       faint text: placeholders, metadata (#858585, `faint`, 5.1:1 on 800)
+ *   400       muted text and idle icons (#a3a3a3, `muted-foreground`)
+ *   300       body and code text (#d4d4d4)
+ *   200       headings (#e5e5e5)
+ *   100, 50   primary text (#ffffff)
+ * A selected row is `gray-700` plus the accent bar; a hovered row is `gray-800`.
  */
 @theme {
   --color-gray-50: #ffffff;
   --color-gray-100: #ffffff;
   --color-gray-200: #e5e5e5;
-  --color-gray-300: #a3a3a3;
-  --color-gray-400: #858585;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
   --color-gray-500: #858585;
   --color-gray-600: #313131;
   --color-gray-700: #1f1f1f;

@@ -11,12 +11,12 @@ import { fileURLToPath } from 'url';
 function getAbsolutePath(value: string) {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
 }
-// The manager's fonts: the same Switzer and Geist Mono files the panels bundle (see staticDirs).
+// The manager's fonts: the same Geist and Geist Mono files the panels bundle (see staticDirs).
 const managerFonts = `<style>
 ${(
   [
-    ['Switzer', 'Switzer-Regular', '400'],
-    ['Switzer', 'Switzer-Medium', '500 700'],
+    ['Geist', 'Geist-Regular', '400'],
+    ['Geist', 'Geist-Medium', '500 700'],
     ['Geist Mono', 'GeistMono-Regular', '400'],
     ['Geist Mono', 'GeistMono-Medium', '500 700'],
   ] as const
@@ -44,7 +44,7 @@ const config: StorybookConfig = {
     getAbsolutePath('@storybook/addon-mcp'),
   ],
   framework: getAbsolutePath('@storybook/react-vite'),
-  // Switzer and Geist Mono ship with the UI package; the manager (Storybook's own chrome, which
+  // Geist and Geist Mono ship with the UI package; the manager (Storybook's own chrome, which
   // is themed in manager.ts) loads them from here instead of keeping a second copy.
   staticDirs: [{ from: '../../../packages/ui/fonts', to: '/fonts' }],
   // The docs site serves this build at /storybook. Vite's default relative

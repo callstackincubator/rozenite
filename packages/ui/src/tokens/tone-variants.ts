@@ -94,7 +94,7 @@ export const surfaceTone = cva('', {
     },
 
     { tone: 'primary', variant: 'solid', interactive: true, class: 'hover:bg-primary-hover' },
-    { tone: 'primary', variant: 'soft', interactive: true, class: 'hover:bg-border-strong' },
+    { tone: 'primary', variant: 'soft', interactive: true, class: 'hover:bg-secondary' },
     {
       tone: 'primary',
       variant: 'outline',

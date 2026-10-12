@@ -1,0 +1,37 @@
+/*
+ * The panel UI's fonts (docs/DESIGN.md, "DevTools panel UI"): Geist for UI text, Geist Mono for
+ * data and everything that labels. Bundled so panels make no requests to font services. Both
+ * are SIL Open Font License 1.1; the licence travels with the files in fonts/LICENSE-Geist.txt.
+ * The website's Switzer is not bundled: its licence does not allow redistributing the files.
+ *
+ * Split from styles.css so a consumer can import the faces on their own:
+ * `@import '@rozenite/ui/fonts.css';`
+ */
+@font-face {
+  font-family: 'Geist';
+  src: url('./fonts/Geist-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('./fonts/Geist-Medium.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./fonts/GeistMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./fonts/GeistMono-Medium.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}

@@ -138,25 +138,15 @@ export const SidePanel = () => {
     if (httpDetails) {
       return (
         <>
-          <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700">
-            Headers
-          </TabsTrigger>
-          <TabsTrigger value="request" className="data-[state=active]:bg-gray-700">
-            Request
-          </TabsTrigger>
-          <TabsTrigger value="response" className="data-[state=active]:bg-gray-700">
+          <TabsTrigger value="headers">Headers</TabsTrigger>
+          <TabsTrigger value="request">Request</TabsTrigger>
+          <TabsTrigger value="response">
             Response
             {hasResponseOverride && <span className="w-2 h-2 bg-primary ms-2 inline-block"></span>}
           </TabsTrigger>
-          <TabsTrigger value="cookies" className="data-[state=active]:bg-gray-700">
-            Cookies
-          </TabsTrigger>
-          <TabsTrigger value="initiator" className="data-[state=active]:bg-gray-700">
-            Initiator
-          </TabsTrigger>
-          <TabsTrigger value="timing" className="data-[state=active]:bg-gray-700">
-            Timing
-          </TabsTrigger>
+          <TabsTrigger value="cookies">Cookies</TabsTrigger>
+          <TabsTrigger value="initiator">Initiator</TabsTrigger>
+          <TabsTrigger value="timing">Timing</TabsTrigger>
         </>
       );
     }
@@ -164,27 +154,17 @@ export const SidePanel = () => {
     if (sseDetails) {
       return (
         <>
-          <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700">
-            Headers
-          </TabsTrigger>
-          <TabsTrigger value="request" className="data-[state=active]:bg-gray-700">
-            Request
-          </TabsTrigger>
-          <TabsTrigger value="messages" className="data-[state=active]:bg-gray-700">
-            Messages
-          </TabsTrigger>
-          <TabsTrigger value="initiator" className="data-[state=active]:bg-gray-700">
-            Initiator
-          </TabsTrigger>
+          <TabsTrigger value="headers">Headers</TabsTrigger>
+          <TabsTrigger value="request">Request</TabsTrigger>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
+          <TabsTrigger value="initiator">Initiator</TabsTrigger>
         </>
       );
     }
 
     return (
       <>
-        <TabsTrigger value="messages" className="data-[state=active]:bg-gray-700">
-          Messages
-        </TabsTrigger>
+        <TabsTrigger value="messages">Messages</TabsTrigger>
       </>
     );
   };
