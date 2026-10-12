@@ -72,8 +72,12 @@ const buildPackageContract = (targets: PluginTargets): PluginPackageContract | n
   }
 
   if (targets.hasSdkEntryPoint) {
+    // No `development` condition: it points at source, so a published plugin
+    // would need to ship `sdk.ts` and `src` just to keep the target from
+    // dangling, and bundlers that enable the condition in dev mode (webpack,
+    // Rspack, Vite) would then compile TypeScript out of `node_modules`.
+    // A package that wants it in its workspace keeps its own (see below).
     contract.exports['./sdk'] = {
-      development: './sdk.ts',
       types: './dist/sdk/sdk.d.ts',
       default: './dist/sdk/sdk.js',
     };
@@ -111,7 +115,17 @@ const mergeManagedExports = (
   }
 
   if (targets.hasSdkEntryPoint) {
-    mergedExports['./sdk'] = contract.exports['./sdk'];
+    const existingSdk = mergedExports['./sdk'];
+    const managedSdk = contract.exports['./sdk'];
+    const development =
+      existingSdk && typeof existingSdk === 'object' ? existingSdk.development : undefined;
+
+    // A workspace-only `development` condition that the author added is kept
+    // (and has to be stripped again with `publishConfig.exports`).
+    mergedExports['./sdk'] =
+      typeof development === 'string' && typeof managedSdk === 'object'
+        ? { development, ...managedSdk }
+        : managedSdk;
   } else {
     delete mergedExports['./sdk'];
   }

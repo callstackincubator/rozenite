@@ -131,7 +131,7 @@ describe('syncPluginPackageJSON', () => {
     });
   });
 
-  it('adds the managed sdk export when sdk.ts exists', async () => {
+  it('adds the managed sdk export without a development condition when sdk.ts exists', async () => {
     const projectRoot = await createTempDir();
 
     await writeJson(path.join(projectRoot, 'package.json'), {
@@ -158,7 +158,6 @@ describe('syncPluginPackageJSON', () => {
         require: './dist/react-native/cjs/react-native.js',
       },
       './sdk': {
-        development: './sdk.ts',
         types: './dist/sdk/sdk.d.ts',
         default: './dist/sdk/sdk.js',
       },

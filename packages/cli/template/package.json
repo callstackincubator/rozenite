@@ -4,12 +4,7 @@
   "description": "<%- description %>",
   "license": "MIT",
   "files": [
-    "dist",
-    "sdk.ts",
-    "src",
-    "!src/**/__tests__",
-    "!src/**/*.test.ts",
-    "!src/**/*.test.tsx"
+    "dist"
   ],
   "type": "module",
   "scripts": {
