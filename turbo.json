@@ -44,8 +44,10 @@
     // this task is never cached: its output depends on live data that is not a
     // task input, and a cached degraded build must not satisfy a strict one.
     // Strict env mode strips every variable not declared here, which is how the
-    // directory once shipped mock data without failing, so the two variables it
-    // reads are passed through (not hashed). The token is not named
+    // directory once shipped mock data without failing, so the variables it
+    // reads are passed through (not hashed). GITHUB_ACTIONS is listed although
+    // Turborepo already passes GITHUB_* through, so the deploy warnings do not
+    // depend on that default. The token is not named
     // GITHUB_TOKEN: Turborepo passes every GITHUB_* variable to every task, and
     // release.yml sets a write-scoped GITHUB_TOKEN for the job that builds this
     // site.
@@ -55,7 +57,11 @@
       "outputs": ["dist/**", "build/**"],
       "outputLogs": "errors-only",
       "cache": false,
-      "passThroughEnv": ["PLUGIN_DIRECTORY_GITHUB_TOKEN", "PLUGIN_DIRECTORY_STRICT"]
+      "passThroughEnv": [
+        "PLUGIN_DIRECTORY_GITHUB_TOKEN",
+        "PLUGIN_DIRECTORY_STRICT",
+        "GITHUB_ACTIONS"
+      ]
     },
     // The docs tests cover pure validation code and need neither the site build
     // (uncached, and it calls npm and GitHub) nor any other package's output.
