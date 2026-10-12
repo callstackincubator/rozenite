@@ -3,6 +3,14 @@
   "version": "0.0.1",
   "description": "<%- description %>",
   "license": "MIT",
+  "files": [
+    "dist",
+    "sdk.ts",
+    "src",
+    "!src/**/__tests__",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
   "type": "module",
   "scripts": {
     "build": "rozenite build",
