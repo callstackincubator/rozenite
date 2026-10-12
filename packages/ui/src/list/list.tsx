@@ -95,7 +95,7 @@ function ListItem({
 }
 
 /** A list of grouped, selectable items with optional leading and trailing content. */
-export const List = Object.assign(ListRoot, {
+export const List = /* @__PURE__ */ Object.assign(ListRoot, {
   Group: ListGroup,
   Item: ListItem,
 });

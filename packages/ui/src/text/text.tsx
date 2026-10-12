@@ -6,7 +6,7 @@ import { textTone } from '../tokens/tone-variants';
 import type { Tone } from '../tokens/tone';
 import { monoLabel } from '../utils/mono-label';
 
-export const textVariants = cva('text-foreground', {
+export const textVariants = /* @__PURE__ */ cva('text-foreground', {
   variants: {
     variant: {
       title: 'text-base font-medium tracking-[-0.01em]',

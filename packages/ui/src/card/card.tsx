@@ -11,7 +11,7 @@ type CardContextValue = {
   expandLabel: string;
 };
 
-const CardContext = createContext<CardContextValue | null>(null);
+const CardContext = /* @__PURE__ */ createContext<CardContextValue | null>(null);
 
 export type CardProps = ComponentProps<'div'> & {
   /** Whether `Card.Body` can be collapsed via a toggle in `Card.Header`. */
@@ -117,7 +117,7 @@ function CardBody({ className, ...props }: CardBodyProps) {
 }
 
 /** A bordered container for grouping related content, optionally collapsible. */
-export const Card = Object.assign(CardRoot, {
+export const Card = /* @__PURE__ */ Object.assign(CardRoot, {
   Header: CardHeader,
   Body: CardBody,
 });

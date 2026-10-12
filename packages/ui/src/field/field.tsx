@@ -68,7 +68,7 @@ function FieldError({ className, ...props }: FieldErrorProps) {
 }
 
 /** A labeled form field grouping control, description, and validation text. */
-export const Field = Object.assign(FieldRoot, {
+export const Field = /* @__PURE__ */ Object.assign(FieldRoot, {
   Label: FieldLabel,
   Control: FieldControl,
   Description: FieldDescription,

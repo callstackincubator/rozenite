@@ -91,7 +91,7 @@ function Toaster({
 }
 
 /** A provider for transient notifications that appear above the current view. */
-export const Toast = Object.assign(ToastProviderRoot, {
+export const Toast = /* @__PURE__ */ Object.assign(ToastProviderRoot, {
   /** @deprecated Use `Toast` directly — the root itself is now callable, like every other namespace in this package. Removed in a future minor. */
   Provider: ToastProviderRoot,
 });

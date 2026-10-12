@@ -245,6 +245,6 @@ function FlameGraphLegend({ className, ...props }: FlameGraphLegendProps) {
 }
 
 /** An interactive, zoomable flame graph for hierarchical profiling data. */
-export const FlameGraph = Object.assign(FlameGraphRoot, {
+export const FlameGraph = /* @__PURE__ */ Object.assign(FlameGraphRoot, {
   Legend: FlameGraphLegend,
 });

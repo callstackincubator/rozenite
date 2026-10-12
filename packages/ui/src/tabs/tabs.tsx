@@ -77,7 +77,7 @@ function TabsPanel({ className, ...props }: TabsPanelProps) {
 }
 
 /** A set of panels where one view is visible at a time. */
-export const Tabs = Object.assign(TabsRoot, {
+export const Tabs = /* @__PURE__ */ Object.assign(TabsRoot, {
   List: TabsList,
   Tab: TabsTab,
   Panel: TabsPanel,

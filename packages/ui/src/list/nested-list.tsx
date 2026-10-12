@@ -10,7 +10,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
 import type { Size } from '../tokens/size';
 
-const NestedListDepthContext = createContext(0);
+const NestedListDepthContext = /* @__PURE__ */ createContext(0);
 
 const INDENT_PER_DEPTH_PX = 16;
 const BASE_PADDING_PX = 8;
@@ -135,6 +135,6 @@ function NestedListItem({
  * Rows keep their natural width instead of truncating, so deep/long items overflow rather
  * than clip — wrap in `ScrollArea` to make that overflow scrollable.
  */
-export const NestedList = Object.assign(NestedListRoot, {
+export const NestedList = /* @__PURE__ */ Object.assign(NestedListRoot, {
   Item: NestedListItem,
 });

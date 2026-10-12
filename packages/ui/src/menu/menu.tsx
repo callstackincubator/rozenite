@@ -125,7 +125,7 @@ function MenuGroupLabel({ className, ...props }: MenuGroupLabelProps) {
 }
 
 /** A dropdown menu of actions, opened from a trigger. */
-export const Menu = Object.assign(MenuRoot, {
+export const Menu = /* @__PURE__ */ Object.assign(MenuRoot, {
   Trigger: MenuTrigger,
   Content: MenuContent,
   Item: MenuItem,

@@ -53,7 +53,7 @@ function AlertDescription({ className, ...props }: AlertDescriptionProps) {
 }
 
 /** A tone-aware strip for surfacing status, warnings, or errors inline. */
-export const Alert = Object.assign(AlertRoot, {
+export const Alert = /* @__PURE__ */ Object.assign(AlertRoot, {
   Title: AlertTitle,
   Description: AlertDescription,
 });
