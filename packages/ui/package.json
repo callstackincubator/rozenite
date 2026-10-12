@@ -22,6 +22,7 @@
   "files": [
     "dist",
     "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
     "fonts",
     "fonts.css",
     "src",

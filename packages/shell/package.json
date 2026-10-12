@@ -21,6 +21,7 @@
   "files": [
     "dist",
     "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
     "src",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx"

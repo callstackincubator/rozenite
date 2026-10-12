@@ -25,6 +25,7 @@
   "files": [
     "dist",
     "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
     "docs",
     "skills",
     "template",

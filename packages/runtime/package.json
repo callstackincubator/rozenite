@@ -21,7 +21,8 @@
   },
   "files": [
     "dist",
-    "!dist/**/*.tsbuildinfo"
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "exports": {

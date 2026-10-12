@@ -25,7 +25,8 @@
   "files": [
     "bin",
     "src",
-    "assets"
+    "assets",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "publishConfig": {

@@ -23,6 +23,7 @@
   "files": [
     "dist",
     "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md",
     "!dist/**/__tests__",
     "!dist/**/*.test.*"
   ],
