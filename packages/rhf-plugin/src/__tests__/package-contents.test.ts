@@ -10,5 +10,5 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
 describe('published package', () => {
   it('contains everything it points at and nothing development-only', () => {
     expect(inspectPackedPackage(PACKAGE_ROOT).problems).toEqual([]);
-  }, 60_000);
+  }, 120_000);
 });

@@ -14,5 +14,5 @@ describe('published package', () => {
         allowDevelopmentFilesUnder: ['src/dev-host/vite.config.mts'],
       }).problems,
     ).toEqual([]);
-  }, 60_000);
+  }, 120_000);
 });

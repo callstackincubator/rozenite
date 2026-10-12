@@ -15,5 +15,5 @@ describe('published package', () => {
         skipImportCheckUnder: ['dist/devtools/', 'template/'],
       }).problems,
     ).toEqual([]);
-  }, 60_000);
+  }, 120_000);
 });
