@@ -10,6 +10,13 @@ import {
 import { cn } from '../utils/cn';
 import { SortIcon } from '../utils/sort-icon';
 import { monoLabel } from '../utils/mono-label';
+import {
+  ColumnResizeHandle,
+  resizableCellClassName,
+  resizableTableStyle,
+  useColumnResizing,
+  type ColumnResizingProp,
+} from './column-resizing';
 
 declare module '@tanstack/react-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- required by the RowData constraint of TableMeta
@@ -39,6 +46,12 @@ export type DataTableProps<TRow> = {
    */
   onCellEdit?: (rowIndex: number, columnId: string, value: unknown) => void;
   getRowId?: (row: TRow, index: number) => string;
+  /**
+   * Opt in to draggable column borders. Columns start at 150px unless `defaultSize` or a
+   * column's own `size` says otherwise, and the table becomes exactly as wide as its columns.
+   * A column opts out with `enableResizing: false`.
+   */
+  columnResizing?: ColumnResizingProp;
 };
 
 /** A sortable table for displaying structured row data. */
@@ -52,17 +65,20 @@ export function DataTable<TRow>({
   onRowClick,
   onCellEdit,
   getRowId,
+  columnResizing,
 }: DataTableProps<TRow>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const resizing = useColumnResizing<TRow>(columnResizing);
 
   const table = useReactTable({
     data,
     columns,
-    state: { sorting },
+    state: { sorting, ...(resizing.enabled && resizing.state) },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId,
+    ...resizing.tableOptions,
     meta: {
       updateData: (rowIndex, columnId, value) => {
         onCellEdit?.(rowIndex, columnId, value);
@@ -77,6 +93,7 @@ export function DataTable<TRow>({
       aria-label={ariaLabel}
       data-slot="data-table"
       className={cn('w-full border-collapse text-sm', className)}
+      style={resizing.enabled ? resizableTableStyle(table.getTotalSize()) : undefined}
     >
       <thead data-slot="data-table-head">
         {table.getHeaderGroups().map((headerGroup) => (
@@ -98,7 +115,12 @@ export function DataTable<TRow>({
                       : undefined
                   }
                   colSpan={header.colSpan}
-                  className={cn('h-8 px-3 text-left text-[11px] text-faint', monoLabel)}
+                  className={cn(
+                    'h-8 px-3 text-left text-[11px] text-faint',
+                    monoLabel,
+                    resizing.enabled && 'relative overflow-hidden',
+                  )}
+                  style={resizing.enabled ? { width: header.getSize() } : undefined}
                   scope="col"
                 >
                   {header.isPlaceholder ? null : canSort ? (
@@ -113,6 +135,7 @@ export function DataTable<TRow>({
                   ) : (
                     flexRender(header.column.columnDef.header, header.getContext())
                   )}
+                  {resizing.enabled && <ColumnResizeHandle header={header} />}
                 </th>
               );
             })}
@@ -143,7 +166,14 @@ export function DataTable<TRow>({
               )}
             >
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-3 py-1.5 text-foreground">
+                <td
+                  key={cell.id}
+                  className={cn(
+                    'px-3 py-1.5 text-foreground',
+                    resizing.enabled && resizableCellClassName,
+                  )}
+                  style={resizing.enabled ? { width: cell.column.getSize() } : undefined}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

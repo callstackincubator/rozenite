@@ -1,7 +1,6 @@
-import { Modal, useOverlayState } from '@heroui/react';
+import { Alert, Button, Dialog, Input, Text } from '@rozenite/ui';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { SqliteModalCloseButton, sqliteSecondaryButtonClassName } from './sqlite-modal-controls';
 
 export type SqliteDropModalTarget =
   | {
@@ -27,10 +26,6 @@ type SqliteDropModalProps = {
   onConfirm: () => Promise<void>;
 };
 
-const toneButtonClassName =
-  'sqlite-button inline-flex items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium';
-const dangerButtonClassName = `${toneButtonClassName} sqlite-button-danger`;
-
 const getModalTitle = (target: SqliteDropModalTarget) =>
   target.kind === 'entity'
     ? `Drop ${target.entityType === 'view' ? 'View' : 'Table'}`
@@ -44,15 +39,11 @@ const getConfirmationLabel = (target: SqliteDropModalTarget) =>
     ? `${target.entityType === 'view' ? 'view' : 'table'} name`
     : 'database name';
 
+const Emphasis = ({ children }: { children: string }) => (
+  <span className="font-mono text-foreground">{children}</span>
+);
+
 export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDropModalProps) => {
-  const overlay = useOverlayState({
-    isOpen,
-    onOpenChange: (open: boolean) => {
-      if (!open) {
-        onClose();
-      }
-    },
-  });
   const [dropping, setDropping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmationInput, setConfirmationInput] = useState('');
@@ -85,107 +76,95 @@ export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDr
   };
 
   return (
-    <Modal state={overlay}>
-      <Modal.Backdrop variant="opaque" isDismissable={!dropping} className="bg-black/60">
-        <Modal.Container placement="center" size="md" scroll="inside">
-          <Modal.Dialog
-            aria-label={`${getModalTitle(target)} ${getModalSubtitle(target)}`}
-            className="w-full max-w-xl overflow-hidden border border-[var(--sqlite-line-strong)] bg-[var(--sqlite-surface)] p-0 text-white"
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !dropping) {
+          onClose();
+        }
+      }}
+    >
+      <Dialog.Content
+        className="max-w-xl"
+        aria-label={`${getModalTitle(target)} ${getModalSubtitle(target)}`}
+        showCloseButton={!dropping}
+      >
+        <Dialog.Header>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-danger" aria-hidden="true" />
+            <Dialog.Title>{getModalTitle(target)}</Dialog.Title>
+          </div>
+          <Dialog.Description className="font-mono text-xs">
+            {getModalSubtitle(target)}
+          </Dialog.Description>
+        </Dialog.Header>
+
+        <div className="flex flex-col gap-4">
+          {target.kind === 'database' ? (
+            <p className="text-sm text-muted-foreground">
+              This drops every table and view in <Emphasis>{target.databaseName}</Emphasis> —{' '}
+              {target.tableCount} table
+              {target.tableCount === 1 ? '' : 's'} and {target.viewCount} view
+              {target.viewCount === 1 ? '' : 's'}, along with all their rows, indexes and triggers.
+              The database file itself is not deleted; it is left empty. This cannot be undone.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This permanently drops <Emphasis>{target.qualifiedName}</Emphasis> and everything it
+              owns — rows, indexes and triggers. This cannot be undone.
+            </p>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <Text variant="label">SQL to be executed</Text>
+            <pre className="max-h-40 overflow-auto border border-border bg-muted px-3 py-2 font-mono text-xs leading-5 text-foreground">
+              {target.sql}
+            </pre>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Text
+              variant="caption"
+              render={<label htmlFor="sqlite-drop-confirmation-input" />}
+              className="text-sm"
+            >
+              Type the {getConfirmationLabel(target)}{' '}
+              <Emphasis>{target.confirmationValue}</Emphasis> to confirm
+            </Text>
+            <Input
+              id="sqlite-drop-confirmation-input"
+              name="dropConfirmation"
+              autoComplete="off"
+              spellCheck={false}
+              className="font-mono"
+              value={confirmationInput}
+              onChange={(event) => setConfirmationInput(event.target.value)}
+              disabled={dropping}
+            />
+          </div>
+
+          {error ? (
+            <Alert tone="danger" aria-live="polite">
+              <Alert.Title>Drop Failed</Alert.Title>
+              <Alert.Description>{error}</Alert.Description>
+            </Alert>
+          ) : null}
+        </div>
+
+        <Dialog.Footer>
+          <Button tone="neutral" variant="outline" onClick={onClose} disabled={dropping}>
+            Cancel
+          </Button>
+          <Button
+            tone="danger"
+            onClick={() => void handleConfirm()}
+            disabled={dropping || !isConfirmed}
           >
-            <div className="flex items-center justify-between gap-4 border-b border-[var(--sqlite-line)] px-5 py-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-none bg-[var(--sqlite-danger-soft)] text-[var(--sqlite-danger)]">
-                  <AlertTriangle aria-hidden="true" className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-medium text-white">{getModalTitle(target)}</h2>
-                  <p className="mt-1 text-sm text-[var(--sqlite-muted)]">
-                    {getModalSubtitle(target)}
-                  </p>
-                </div>
-              </div>
-              <SqliteModalCloseButton onClose={onClose} disabled={dropping} />
-            </div>
-
-            <Modal.Body className="space-y-0 p-0">
-              <div className="space-y-5 px-5 py-5">
-                {target.kind === 'database' ? (
-                  <p className="text-sm leading-6 text-[var(--sqlite-muted)]">
-                    This drops every table and view in{' '}
-                    <span className="font-medium text-white">{target.databaseName}</span> —{' '}
-                    {target.tableCount} table
-                    {target.tableCount === 1 ? '' : 's'} and {target.viewCount} view
-                    {target.viewCount === 1 ? '' : 's'}, along with all their rows, indexes and
-                    triggers. The database file itself is not deleted; it is left empty. This cannot
-                    be undone.
-                  </p>
-                ) : (
-                  <p className="text-sm leading-6 text-[var(--sqlite-muted)]">
-                    This permanently drops{' '}
-                    <span className="font-medium text-white">{target.qualifiedName}</span> and
-                    everything it owns — rows, indexes and triggers. This cannot be undone.
-                  </p>
-                )}
-
-                <div className="space-y-2">
-                  <p className="sqlite-helper-text">SQL to be executed</p>
-                  <pre className="max-h-40 overflow-auto rounded-none border border-[var(--sqlite-line)] bg-black/30 px-3 py-2 text-xs leading-5 text-[var(--sqlite-text)]">
-                    {target.sql}
-                  </pre>
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="sqlite-drop-confirmation-input" className="sqlite-helper-text">
-                    Type the {getConfirmationLabel(target)}{' '}
-                    <span className="font-medium text-white">{target.confirmationValue}</span> to
-                    confirm
-                  </label>
-                  <input
-                    id="sqlite-drop-confirmation-input"
-                    type="text"
-                    name="dropConfirmation"
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="sqlite-input"
-                    value={confirmationInput}
-                    onChange={(event) => setConfirmationInput(event.target.value)}
-                    disabled={dropping}
-                  />
-                </div>
-
-                {error ? (
-                  <div className="sqlite-inline-error" aria-live="polite">
-                    <div>
-                      <p className="font-medium text-[var(--sqlite-danger)]">Drop Failed</p>
-                      <p className="mt-1 text-sm text-[var(--sqlite-danger)]">{error}</p>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="flex items-center justify-end gap-3 border-t border-[var(--sqlite-line)] px-5 py-5">
-                <button
-                  type="button"
-                  className={sqliteSecondaryButtonClassName}
-                  onClick={onClose}
-                  disabled={dropping}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className={dangerButtonClassName}
-                  onClick={() => void handleConfirm()}
-                  disabled={dropping || !isConfirmed}
-                >
-                  <Trash2 aria-hidden="true" className="h-4 w-4" />
-                  {dropping ? 'Dropping…' : getModalTitle(target)}
-                </button>
-              </div>
-            </Modal.Body>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+            <Trash2 aria-hidden="true" />
+            {dropping ? 'Dropping…' : getModalTitle(target)}
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog>
   );
 };

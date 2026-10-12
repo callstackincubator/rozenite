@@ -1,29 +1,5 @@
-import { JSONTree } from 'react-json-tree';
-import type { SqliteQueryMetadata, SqliteQueryResult, SqliteScriptResult } from '../shared/types';
+import type { SqliteQueryResult, SqliteScriptResult } from '../shared/types';
 import { truncateText } from './utils';
-
-const jsonTreeTheme = {
-  base00: 'transparent',
-  base01: '#1f1f1f',
-  base02: '#313131',
-  base03: '#858585',
-  base04: '#a3a3a3',
-  base05: '#d4d4d4',
-  base06: '#ffffff',
-  base07: '#ffffff',
-  base08: '#ff7a50',
-  base09: '#fbbf24',
-  base0A: '#fbbf24',
-  base0B: '#4ade80',
-  base0C: '#22d3ee',
-  base0D: '#a3a3a3',
-  base0E: '#60a5fa',
-  base0F: '#ff7a50',
-};
-
-export const isStructuredValue = (value: unknown): value is Record<string, unknown> | unknown[] => {
-  return Array.isArray(value) || (!!value && typeof value === 'object');
-};
 
 export const getValueKind = (value: unknown) => {
   if (value === null) {
@@ -79,42 +55,6 @@ export const getValuePreview = (value: unknown, maxLength = 120) => {
   }
 
   return truncateText(stringifyValue(value).replace(/\s+/g, ' '), maxLength);
-};
-
-export const getMetadataBadgeClassName = (metadata: SqliteQueryMetadata) => {
-  if (
-    metadata.statementType === 'select' ||
-    metadata.statementType === 'pragma' ||
-    metadata.statementType === 'with' ||
-    metadata.statementType === 'explain'
-  ) {
-    return 'sqlite-badge sqlite-badge-success';
-  }
-
-  if (
-    metadata.statementType === 'insert' ||
-    metadata.statementType === 'update' ||
-    metadata.statementType === 'delete'
-  ) {
-    return 'sqlite-badge sqlite-badge-warning';
-  }
-
-  return 'sqlite-badge sqlite-badge-neutral';
-};
-
-export const renderStructuredValue = (value: unknown) => {
-  if (!isStructuredValue(value)) {
-    return null;
-  }
-
-  return (
-    <JSONTree
-      data={value}
-      theme={jsonTreeTheme}
-      invertTheme={false}
-      shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
-    />
-  );
 };
 
 export const getResultSummary = (result: SqliteQueryResult | null) => {
