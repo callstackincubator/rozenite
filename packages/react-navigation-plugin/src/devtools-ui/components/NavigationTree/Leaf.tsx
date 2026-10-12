@@ -21,8 +21,8 @@ export const Leaf = ({
           e.stopPropagation();
         }}
       >
-        <span className={`text-gray-100 ${isSelectedTab ? 'underline' : ''}`}>{title}</span>
-        {subtitle ? <span className="text-gray-100">{subtitle}</span> : null}
+        <span className={`text-foreground ${isSelectedTab ? 'underline' : ''}`}>{title}</span>
+        {subtitle ? <span className="text-foreground">{subtitle}</span> : null}
       </button>
     </div>
   );

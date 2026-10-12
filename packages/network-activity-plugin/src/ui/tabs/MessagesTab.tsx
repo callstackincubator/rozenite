@@ -203,7 +203,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
               <h4 className="text-sm font-medium text-gray-300">Message Details</h4>
               <button
                 onClick={() => setSelectedMessageId(null)}
-                className="text-gray-400 hover:text-blue-400 text-sm"
+                className="text-gray-400 hover:text-gray-100 text-sm"
               >
                 Close
               </button>

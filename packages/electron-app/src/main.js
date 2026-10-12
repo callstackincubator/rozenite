@@ -15,8 +15,8 @@ const iconPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../ass
 // packages/app/index.html), so hardcoding one would give light-mode users a
 // dark window canvas and, on Windows/Linux, a permanently dark caption strip.
 const CHROME_COLORS = {
-  dark: { background: '#201f24', symbol: '#ffffff' },
-  light: { background: '#ffffff', symbol: '#201f24' },
+  dark: { background: '#0a0a0a', symbol: '#ffffff' },
+  light: { background: '#ffffff', symbol: '#0a0a0a' },
 };
 // Height of `Sidebar.Header` (Tailwind's `h-12`, see `Shell.tsx`) — used
 // as-is for the Windows/Linux overlay, whose window controls sit at the

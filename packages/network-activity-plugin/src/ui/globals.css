@@ -3,6 +3,40 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Fonts shared with rozenite.dev and @rozenite/ui (docs/DESIGN.md, "Type"): Switzer for UI text,
+ * Geist Mono for data and labels. This plugin does not depend on @rozenite/ui, so it points at
+ * the font files that package ships; Vite bundles them into the plugin's own build output.
+ */
+@font-face {
+  font-family: 'Switzer';
+  src: url('../../../ui/fonts/Switzer-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Switzer';
+  src: url('../../../ui/fonts/Switzer-Medium.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('../../../ui/fonts/GeistMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('../../../ui/fonts/GeistMono-Medium.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -12,15 +46,27 @@
   --color-popover-foreground: hsl(var(--popover-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-faint: hsl(var(--faint));
+  --color-surface: hsl(var(--surface));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-danger: hsl(var(--danger));
+  --color-danger-foreground: hsl(var(--danger-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
   --color-border: hsl(var(--border));
+  --color-border-strong: hsl(var(--border-strong));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --color-chart-1: hsl(var(--chart-1));
@@ -36,9 +82,32 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --font-sans: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/*
+ * The panel's components are written against Tailwind's `gray-*` ramp (the plugin has always
+ * been dark). Re-point that ramp at the Rozenite neutrals so those classes land on the new
+ * palette without touching every component: 900/950 are the page, 800 the surface, 700 the
+ * hairline, 600 the stronger hairline; 500 and 400 are the faint and muted text; 100 is text.
+ */
+@theme {
+  --color-gray-50: #ffffff;
+  --color-gray-100: #ffffff;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #a3a3a3;
+  --color-gray-400: #858585;
+  --color-gray-500: #858585;
+  --color-gray-600: #313131;
+  --color-gray-700: #1f1f1f;
+  --color-gray-800: #111111;
+  --color-gray-900: #0a0a0a;
+  --color-gray-950: #0a0a0a;
 }
 
 @layer utilities {
@@ -51,75 +120,110 @@
   }
 }
 
+/*
+ * The rozenite.dev look: near-black, one crimson-rose accent, neutral greys, square corners,
+ * 1px hairlines, no shadows. Values are HSL triplets (this plugin's `hsl(var(--x))` format) of
+ * the tokens in packages/ui/styles.css; keep the two in step.
+ */
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+  /*
+   * This panel has always rendered dark (its components use the dark `gray-*` ramp above and
+   * nothing toggles `.dark` in its document), so the dark values are the defaults. `.light`
+   * carries the light theme for when the panel moves onto the theme switcher.
+   */
+  :root,
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 0 0% 3.92%; /* #0a0a0a */
+    --foreground: 0 0% 100%; /* #ffffff */
+    --card: 0 0% 3.92%; /* #0a0a0a */
+    --card-foreground: 0 0% 100%; /* #ffffff */
+    --popover: 0 0% 6.67%; /* #111111 */
+    --popover-foreground: 0 0% 100%; /* #ffffff */
+    --primary: 345 100% 65.49%; /* #ff4f7b */
+    --primary-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --primary-hover: 348.13 100% 81.18%; /* #ff9fb2 */
+    --secondary: 0 0% 10.2%; /* #1a1a1a */
+    --secondary-foreground: 0 0% 100%; /* #ffffff */
+    --muted: 0 0% 8.63%; /* #161616 */
+    --muted-foreground: 0 0% 63.92%; /* #a3a3a3 */
+    --faint: 0 0% 52.16%; /* #858585 */
+    --surface: 0 0% 6.67%; /* #111111 */
+    --accent: 0 0% 8.63%; /* #161616 */
+    --accent-foreground: 0 0% 100%; /* #ffffff */
+    --destructive: 14.4 100% 65.69%; /* #ff7a50 */
+    --destructive-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --success: 141.89 69.16% 58.04%; /* #4ade80 */
+    --success-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --warning: 43.26 96.41% 56.27%; /* #fbbf24 */
+    --warning-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --danger: 14.4 100% 65.69%; /* #ff7a50 */
+    --danger-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --info: 213.12 93.9% 67.84%; /* #60a5fa */
+    --info-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --border: 0 0% 12.16%; /* #1f1f1f */
+    --border-strong: 0 0% 19.22%; /* #313131 */
+    --input: 0 0% 19.22%; /* #313131 */
+    --ring: 345 100% 65.49%; /* #ff4f7b */
+    --chart-1: 213.12 93.9% 67.84%; /* #60a5fa */
+    --chart-2: 141.89 69.16% 58.04%; /* #4ade80 */
+    --chart-3: 43.26 96.41% 56.27%; /* #fbbf24 */
+    --chart-4: 14.4 100% 65.69%; /* #ff7a50 */
+    --chart-5: 0 0% 63.92%; /* #a3a3a3 */
+    --sidebar-background: 0 0% 3.92%; /* #0a0a0a */
+    --sidebar-foreground: 0 0% 100%; /* #ffffff */
+    --sidebar-primary: 345 100% 65.49%; /* #ff4f7b */
+    --sidebar-primary-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --sidebar-accent: 0 0% 6.67%; /* #111111 */
+    --sidebar-accent-foreground: 0 0% 100%; /* #ffffff */
+    --sidebar-border: 0 0% 12.16%; /* #1f1f1f */
+    --sidebar-ring: 345 100% 65.49%; /* #ff4f7b */
+    --radius: 0;
+  }
+  .light {
+    --background: 0 0% 100%; /* #ffffff */
+    --foreground: 0 0% 3.92%; /* #0a0a0a */
+    --card: 0 0% 100%; /* #ffffff */
+    --card-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --popover: 0 0% 100%; /* #ffffff */
+    --popover-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --primary: 345.17 81.31% 41.96%; /* #c2143f */
+    --primary-foreground: 0 0% 100%; /* #ffffff */
+    --primary-hover: 347.35 82.12% 35.1%; /* #a3102f */
+    --secondary: 60 3.03% 93.53%; /* #efefee */
+    --secondary-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --muted: 60 5.26% 96.27%; /* #f6f6f5 */
+    --muted-foreground: 0 0% 36.86%; /* #5e5e5e */
+    --faint: 0 0% 41.96%; /* #6b6b6b */
+    --surface: 60 7.69% 97.45%; /* #f9f9f8 */
+    --accent: 0 0% 96.08%; /* #f5f5f5 */
+    --accent-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --destructive: 17.35 88.3% 36.86%; /* #b13b0b */
+    --destructive-foreground: 0 0% 100%; /* #ffffff */
+    --success: 142.17 70.77% 25.49%; /* #136f35 */
+    --success-foreground: 0 0% 100%; /* #ffffff */
+    --warning: 36.79 91.95% 29.22%; /* #8f5a06 */
+    --warning-foreground: 0 0% 100%; /* #ffffff */
+    --danger: 17.35 88.3% 36.86%; /* #b13b0b */
+    --danger-foreground: 0 0% 100%; /* #ffffff */
+    --info: 224.28 76.33% 48.04%; /* #1d4ed8 */
+    --info-foreground: 0 0% 100%; /* #ffffff */
+    --border: 0 0% 90.2%; /* #e6e6e6 */
+    --border-strong: 0 0% 81.96%; /* #d1d1d1 */
+    --input: 0 0% 81.96%; /* #d1d1d1 */
+    --ring: 345.17 81.31% 41.96%; /* #c2143f */
+    --chart-1: 224.28 76.33% 48.04%; /* #1d4ed8 */
+    --chart-2: 142.17 70.77% 25.49%; /* #136f35 */
+    --chart-3: 36.79 91.95% 29.22%; /* #8f5a06 */
+    --chart-4: 17.35 88.3% 36.86%; /* #b13b0b */
+    --chart-5: 0 0% 36.86%; /* #5e5e5e */
+    --sidebar-background: 0 0% 100%; /* #ffffff */
+    --sidebar-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --sidebar-primary: 345.17 81.31% 41.96%; /* #c2143f */
+    --sidebar-primary-foreground: 0 0% 100%; /* #ffffff */
+    --sidebar-accent: 60 4.35% 95.49%; /* #f4f4f3 */
+    --sidebar-accent-foreground: 0 0% 3.92%; /* #0a0a0a */
+    --sidebar-border: 0 0% 90.2%; /* #e6e6e6 */
+    --sidebar-ring: 345.17 81.31% 41.96%; /* #c2143f */
   }
 }
 
@@ -129,5 +233,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 }

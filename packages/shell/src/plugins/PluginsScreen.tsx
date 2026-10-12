@@ -25,7 +25,7 @@ export function PluginsScreen({
       <ScrollArea className="h-full">
         <div className="flex flex-col gap-4 p-4">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-lg font-semibold">Plugins</h1>
+            <h1 className="text-lg font-medium">Plugins</h1>
             <span className="text-sm text-muted-foreground">{plugins.length} installed</span>
           </div>
           {/* The cog's dot covers runtime updates too, and the footer link is

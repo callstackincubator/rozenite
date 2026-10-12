@@ -25,15 +25,13 @@ export function injectUpdateBanner(
 		align-items: center;
 		gap: 12px;
 		padding: 10px 16px;
-		background: rgba(26, 26, 26, 0.95);
-		border: 1px solid rgba(61, 61, 61, 0.8);
-		border-radius: 12px;
-		box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+		background: #111111;
+		border: 1px solid #313131;
+		border-radius: 0;
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
 		font-size: 13px;
-		color: #e6e6e6;
+		color: #ffffff;
 		-webkit-font-smoothing: antialiased;
-		backdrop-filter: blur(8px);
 	`;
 
   const logoImg = document.createElement('img');
@@ -44,7 +42,8 @@ export function injectUpdateBanner(
 		height: 32px;
 		flex-shrink: 0;
 		object-fit: cover;
-		border-radius: 50%;
+		border-radius: 0;
+		image-rendering: pixelated;
 	`;
 
   const text = document.createElement('span');
@@ -60,22 +59,25 @@ export function injectUpdateBanner(
 		display: inline-flex;
 		align-items: center;
 		padding: 6px 12px;
-		font-size: 12px;
-		font-weight: 600;
-		color: #fff;
-		background: #8232FF;
+		font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #0a0a0a;
+		background: #ff4f7b;
 		border: none;
-		border-radius: 12px;
+		border-radius: 0;
 		cursor: pointer;
 		text-decoration: none;
-		transition: background 150ms ease;
+		transition: background 120ms ease;
 		white-space: nowrap;
 	`;
   downloadBtn.addEventListener('mouseenter', () => {
-    downloadBtn.style.background = '#9a5aff';
+    downloadBtn.style.background = '#ff9fb2';
   });
   downloadBtn.addEventListener('mouseleave', () => {
-    downloadBtn.style.background = '#8232FF';
+    downloadBtn.style.background = '#ff4f7b';
   });
 
   const dismissBtn = document.createElement('button');
@@ -84,7 +86,7 @@ export function injectUpdateBanner(
   dismissBtn.style.cssText = `
 		background: none;
 		border: none;
-		color: #8a8a8a;
+		color: #a3a3a3;
 		cursor: pointer;
 		font-size: 20px;
 		line-height: 1;
@@ -93,10 +95,10 @@ export function injectUpdateBanner(
 		flex-shrink: 0;
 	`;
   dismissBtn.addEventListener('mouseenter', () => {
-    dismissBtn.style.color = '#e6e6e6';
+    dismissBtn.style.color = '#ffffff';
   });
   dismissBtn.addEventListener('mouseleave', () => {
-    dismissBtn.style.color = '#8a8a8a';
+    dismissBtn.style.color = '#a3a3a3';
   });
 
   panel.append(logoImg, text, downloadBtn, dismissBtn);

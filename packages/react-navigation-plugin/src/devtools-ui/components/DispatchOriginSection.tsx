@@ -9,7 +9,7 @@ export type DispatchOriginSectionProps = {
 
 const Spinner = () => (
   <svg
-    className="h-4 w-4 animate-spin text-gray-400"
+    className="h-4 w-4 animate-spin text-muted-foreground"
     fill="none"
     viewBox="0 0 24 24"
     aria-hidden="true"
@@ -22,7 +22,7 @@ const Spinner = () => (
 const Headline = ({ origin }: { origin: ActionOrigin }) => {
   if (origin.symbolicationStatus === 'pending') {
     return (
-      <div className="flex items-center gap-2 text-gray-300">
+      <div className="flex items-center gap-2 text-muted-foreground">
         <Spinner />
         <span>Resolving origin from Metro…</span>
       </div>
@@ -30,34 +30,34 @@ const Headline = ({ origin }: { origin: ActionOrigin }) => {
   }
   if (origin.symbolicationStatus === 'unavailable') {
     return (
-      <div className="text-gray-400">
+      <div className="text-muted-foreground">
         Stack trace symbolication is unavailable (production build or Metro disconnected).
       </div>
     );
   }
   if (origin.symbolicationStatus === 'failed') {
     return (
-      <div className="text-gray-300">
+      <div className="text-muted-foreground">
         <div>Could not source-map the stack via Metro.</div>
         {origin.symbolicationError && (
-          <div className="mt-1 text-xs text-gray-500">{origin.symbolicationError}</div>
+          <div className="mt-1 text-xs text-faint">{origin.symbolicationError}</div>
         )}
       </div>
     );
   }
   if (origin.confidence === 'none') {
-    return <div className="text-orange-400">Could not resolve dispatch origin.</div>;
+    return <div className="text-warning">Could not resolve dispatch origin.</div>;
   }
   const location = formatFrameLocation(origin.originFrame);
   const fn = origin.originFrame?.functionName ?? '<anonymous>';
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="text-gray-100">
-        Dispatched from <code className="font-mono text-blue-300">{fn}</code> in{' '}
-        <code className="font-mono text-blue-300">{location ?? 'unknown location'}</code>
+      <div className="text-foreground">
+        Dispatched from <code className="font-mono text-info">{fn}</code> in{' '}
+        <code className="font-mono text-info">{location ?? 'unknown location'}</code>
       </div>
       {origin.confidence === 'low' && (
-        <span className="rounded border border-yellow-700 bg-yellow-900/40 px-2 py-0.5 text-xs text-yellow-300">
+        <span className="rounded-sm border border-warning/40 bg-warning-soft px-2 py-0.5 text-xs text-warning">
           low confidence
         </span>
       )}
@@ -69,7 +69,7 @@ const CodeFrame = ({ origin }: { origin: ActionOrigin }) => {
   if (!origin.codeFrame) return null;
   return (
     <pre
-      className="mt-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-gray-300"
+      className="mt-3 overflow-x-auto rounded-sm bg-surface p-2 font-mono text-xs text-muted-foreground"
       data-testid="dispatch-origin-code-frame"
     >
       {origin.codeFrame.content}
@@ -84,16 +84,14 @@ const StackFrame = ({ frame, isOrigin }: { frame: ActionStackFrame; isOrigin: bo
   return (
     <li
       className={`flex flex-wrap items-baseline gap-x-2 rounded-sm px-2 py-0.5 ${
-        isOrigin ? 'border-l-2 border-blue-500 bg-gray-900' : ''
-      } ${cls === 'library' ? 'text-gray-500' : 'text-gray-300'}`}
+        isOrigin ? 'border-l-2 border-primary bg-surface' : ''
+      } ${cls === 'library' ? 'text-faint' : 'text-muted-foreground'}`}
     >
       <span className="font-mono">{location ?? frame.generatedUrl ?? '(no location)'}</span>
-      <span className="text-gray-500">—</span>
+      <span className="text-faint">—</span>
       <span className="font-mono">{fn}</span>
       {cls === 'library' && (
-        <span className="rounded border border-gray-700 px-1 text-[10px] text-gray-500">
-          library
-        </span>
+        <span className="rounded-sm border border-border px-1 text-[10px] text-faint">library</span>
       )}
     </li>
   );
@@ -108,8 +106,8 @@ export const DispatchOriginSection = ({ origin }: DispatchOriginSectionProps) =>
   if (!origin) {
     return (
       <section className="mb-6">
-        <h3 className="mb-3 text-base font-bold text-gray-100">Dispatch Origin</h3>
-        <div className="rounded border border-gray-700 bg-gray-800 p-3 text-sm text-gray-400">
+        <h3 className="mb-3 text-base font-medium text-foreground">Dispatch Origin</h3>
+        <div className="rounded-sm border border-border bg-muted p-3 text-sm text-muted-foreground">
           No stack trace captured for this action.
         </div>
       </section>
@@ -129,18 +127,18 @@ export const DispatchOriginSection = ({ origin }: DispatchOriginSectionProps) =>
   return (
     <section className="mb-6">
       <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-bold text-gray-100">Dispatch Origin</h3>
+        <h3 className="text-base font-medium text-foreground">Dispatch Origin</h3>
         <button
           type="button"
           onClick={copyRaw}
-          className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300 transition-colors hover:bg-gray-700"
+          className="rounded-sm border border-border bg-muted px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent"
           title="Copy raw stack"
         >
           {copied ? 'Copied' : 'Copy raw'}
         </button>
       </header>
 
-      <div className="rounded border border-gray-700 bg-gray-800 p-3 text-sm">
+      <div className="rounded-sm border border-border bg-muted p-3 text-sm">
         <Headline origin={origin} />
         {origin.symbolicationStatus === 'complete' && <CodeFrame origin={origin} />}
 
@@ -149,7 +147,7 @@ export const DispatchOriginSection = ({ origin }: DispatchOriginSectionProps) =>
             <button
               type="button"
               onClick={() => setIsStackExpanded((prev) => !prev)}
-              className="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-gray-200"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
               aria-expanded={isStackExpanded}
             >
               <span>{isStackExpanded ? '▾' : '▸'}</span>

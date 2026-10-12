@@ -146,9 +146,9 @@ const XmlCDataNode = ({ cdata, depth }: XmlCDataNodeProps) => {
     <div style={{ paddingLeft: depth === 0 ? 0 : `1rem` }}>
       <JsonTreeCopyableItem getCopyableValue={() => value}>
         <span>
-          <span className="text-purple-400">&lt;![CDATA[</span>
+          <span className="text-gray-400">&lt;![CDATA[</span>
           <span className="text-gray-200 whitespace-pre-wrap">{value}</span>
-          <span className="text-purple-400">]]&gt;</span>
+          <span className="text-gray-400">]]&gt;</span>
         </span>
       </JsonTreeCopyableItem>
     </div>

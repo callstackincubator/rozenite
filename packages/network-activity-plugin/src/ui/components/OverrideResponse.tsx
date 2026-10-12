@@ -58,7 +58,7 @@ export const OverrideResponse = ({
       <Button
         variant="ghost"
         size="xs"
-        className="text-violet-300 hover:text-violet-300 ms-2"
+        className="text-primary hover:text-primary-hover ms-2"
         onClick={clearOverride}
       >
         <CircleSlash2 className="h-2 w-2" />
@@ -68,7 +68,7 @@ export const OverrideResponse = ({
       <Button
         variant="ghost"
         size="xs"
-        className="text-violet-300 hover:text-violet-300"
+        className="text-primary hover:text-primary-hover"
         onClick={saveOverride}
         disabled={!hasChanges}
       >
@@ -100,7 +100,7 @@ export const OverrideResponse = ({
               onChange={(e) => {
                 setEditedStatus(parseInt(e.target.value));
               }}
-              className="max-w-24 font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-1 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere ring-offset-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="max-w-24 font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-1 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
 

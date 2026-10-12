@@ -192,9 +192,7 @@ const columns = [
       <div className="flex-1 min-w-0 truncate" title={row.original.path}>
         {getValue()}
 
-        {row.original.hasOverride && (
-          <span className="w-2 h-2 rounded-full bg-violet-300 ms-2 inline-block"></span>
-        )}
+        {row.original.hasOverride && <span className="w-2 h-2 bg-primary ms-2 inline-block"></span>}
 
         {getSourceLabel(row.original.source) && (
           <span className="ml-2 rounded border border-gray-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-400">
@@ -307,7 +305,7 @@ export const RequestList = ({ requests: filteredRequests }: RequestListProps) =>
             <tr
               key={row.id}
               className={`text-sm hover:bg-gray-800 cursor-pointer border-b border-gray-800 ${
-                selectedRequestId === row.original.id ? 'bg-blue-900/30' : ''
+                selectedRequestId === row.original.id ? 'bg-surface' : ''
               }`}
               onClick={() => onRequestSelect(row.original.id)}
             >

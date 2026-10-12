@@ -50,7 +50,7 @@ const columns = [
   }),
   columnHelper.accessor('type', {
     header: 'Type',
-    cell: ({ getValue }) => <div className="text-purple-400 font-medium">{getValue()}</div>,
+    cell: ({ getValue }) => <div className="text-info font-medium">{getValue()}</div>,
     size: 100,
   }),
   columnHelper.accessor('data', {
@@ -169,7 +169,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
               <h4 className="text-sm font-medium text-gray-300">Message Details</h4>
               <button
                 onClick={() => setSelectedMessage(null)}
-                className="text-gray-400 hover:text-blue-400 text-sm"
+                className="text-gray-400 hover:text-gray-100 text-sm"
               >
                 Close
               </button>
@@ -178,7 +178,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-400">Type: </span>
-                  <span className="text-purple-400">{selectedMessage.type}</span>
+                  <span className="text-info">{selectedMessage.type}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Timestamp: </span>

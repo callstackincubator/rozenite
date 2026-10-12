@@ -3,7 +3,14 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: rgb(42, 47, 58);
+  /* Shown until the embedded redux-devtools app (which paints its own theme) mounts. */
+  background: #0a0a0a;
   margin: 0;
   padding: 0;
+}
+
+@media (prefers-color-scheme: light) {
+  .app {
+    background: #ffffff;
+  }
 }

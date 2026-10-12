@@ -1,6 +1,9 @@
 const colorMap: Record<string, NavigationTreeColors> = {};
 let currentIndex = 0;
 
+// Categorical hues for the navigator tree. Violet, purple, fuchsia, pink and rose are left out:
+// violet is Rozenite's retired brand colour and the pinks sit next to the new accent, so neither
+// should read as a data category (docs/DESIGN.md, "DevTools panel UI").
 export const colorList = [
   'red',
   'orange',
@@ -13,12 +16,6 @@ export const colorList = [
   'cyan',
   'sky',
   'blue',
-  'indigo',
-  'violet',
-  'purple',
-  'fuchsia',
-  'pink',
-  'rose',
 ] as const;
 
 type NavigationTreeColors = (typeof colorList)[number];

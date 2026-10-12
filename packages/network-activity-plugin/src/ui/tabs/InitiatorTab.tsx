@@ -64,7 +64,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
             key: 'Source map',
             value: status,
             valueClassName:
-              initiator.symbolicationStatus === 'failed' ? 'text-red-300' : 'text-gray-300',
+              initiator.symbolicationStatus === 'failed' ? 'text-danger' : 'text-gray-300',
           },
         ]
       : []),
@@ -190,7 +190,7 @@ export const InitiatorTab = ({ selectedRequest }: InitiatorTabProps) => {
         )}
 
         {initiator?.symbolicationError && (
-          <div className="rounded-md border border-red-900/70 bg-red-950/30 p-3 text-sm text-red-200">
+          <div className="rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
             {initiator.symbolicationError}
           </div>
         )}

@@ -436,7 +436,7 @@ export default function ControlsPanel() {
             <Split.Handle />
             <Split.Pane>
               <section className="h-full overflow-auto p-6">
-                <h1 className="text-base font-semibold text-foreground">{selectedSection.title}</h1>
+                <h1 className="text-base font-medium text-foreground">{selectedSection.title}</h1>
                 {selectedSection.description ? (
                   <p className="mt-1 text-sm text-muted-foreground">
                     {selectedSection.description}

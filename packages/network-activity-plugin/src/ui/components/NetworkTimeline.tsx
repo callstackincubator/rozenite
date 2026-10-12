@@ -20,7 +20,7 @@ import type {
 } from '../utils/timelineModel';
 
 const REQUEST_TIMELINE_COLORS = {
-  error: 'bg-red-400',
+  error: 'bg-danger',
   primary: 'bg-gray-400',
   active: 'bg-gray-500',
   httpTtfb: 'bg-gray-200',
@@ -122,7 +122,7 @@ const TimelineTrack = ({
       {isSplitHttpBar ? (
         <div
           className={`absolute flex w-full overflow-hidden rounded-sm ${
-            isSelected ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950' : ''
+            isSelected ? 'ring-1 ring-primary ring-offset-1 ring-offset-gray-950' : ''
           }`}
           style={{
             top: barTop,
@@ -141,7 +141,7 @@ const TimelineTrack = ({
       ) : (
         <div
           className={`absolute w-full rounded-sm ${primaryBarClassName} ${
-            isSelected ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950' : ''
+            isSelected ? 'ring-1 ring-primary ring-offset-1 ring-offset-gray-950' : ''
           }`}
           style={{
             top: barTop,
@@ -351,14 +351,14 @@ export const NetworkTimeline = ({
 
         {selection && (
           <div
-            className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/10"
+            className="pointer-events-none absolute bottom-0 border-x border-primary/70 bg-primary/10"
             style={getSelectionStyle(selection, timeline)}
           />
         )}
 
         {draftSelection && (
           <div
-            className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/15"
+            className="pointer-events-none absolute bottom-0 border-x border-primary/70 bg-primary/15"
             style={getDraftSelectionStyle(draftSelection)}
           />
         )}

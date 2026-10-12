@@ -6,7 +6,7 @@ export const LoadingView = () => {
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-12 w-12 text-blue-400 animate-spin" />
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-200 mb-2">Loading Network Inspector</h2>
+          <h2 className="text-xl font-medium text-gray-200 mb-2">Loading Network Inspector</h2>
           <p className="text-gray-400 text-sm">Initializing network monitoring...</p>
         </div>
       </div>

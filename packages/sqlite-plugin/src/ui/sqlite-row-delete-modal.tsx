@@ -12,8 +12,8 @@ type SqliteRowDeleteModalProps = {
 };
 
 const toneButtonClassName =
-  'sqlite-button inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium';
-const dangerButtonClassName = `${toneButtonClassName} border border-rose-400/30 bg-rose-500/16 text-rose-50 hover:bg-rose-500/24`;
+  'sqlite-button inline-flex items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium';
+const dangerButtonClassName = `${toneButtonClassName} sqlite-button-danger`;
 
 export const SqliteRowDeleteModal = ({
   isOpen,
@@ -55,24 +55,20 @@ export const SqliteRowDeleteModal = ({
 
   return (
     <Modal state={overlay}>
-      <Modal.Backdrop
-        variant="blur"
-        isDismissable={!deleting}
-        className="bg-[rgba(5,10,16,0.24)] backdrop-blur-[2px]"
-      >
+      <Modal.Backdrop variant="blur" isDismissable={!deleting} className="bg-black/60">
         <Modal.Container placement="center" size="md" scroll="inside">
           <Modal.Dialog
             aria-label={`Delete row ${rowNumber} from ${entityName}`}
-            className="w-full max-w-xl overflow-hidden border border-white/10 bg-[#0a121b] p-0 text-white shadow-[0_30px_90px_rgba(0,0,0,0.42)]"
+            className="w-full max-w-xl overflow-hidden border border-[var(--sqlite-line-strong)] bg-[var(--sqlite-surface)] p-0 text-white"
           >
-            <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-5">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--sqlite-line)] px-5 py-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/12 text-rose-200">
+                <div className="flex h-10 w-10 items-center justify-center rounded-none bg-[var(--sqlite-danger-soft)] text-[var(--sqlite-danger)]">
                   <AlertTriangle aria-hidden="true" className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Delete Row {rowNumber}</h2>
-                  <p className="mt-1 text-sm text-slate-400">{entityName}</p>
+                  <h2 className="text-lg font-medium text-white">Delete Row {rowNumber}</h2>
+                  <p className="mt-1 text-sm text-[var(--sqlite-muted)]">{entityName}</p>
                 </div>
               </div>
               <SqliteModalCloseButton onClose={onClose} disabled={deleting} />
@@ -80,7 +76,7 @@ export const SqliteRowDeleteModal = ({
 
             <Modal.Body className="space-y-0 p-0">
               <div className="space-y-5 px-5 py-5">
-                <p className="text-sm leading-6 text-slate-300">
+                <p className="text-sm leading-6 text-[var(--sqlite-muted)]">
                   This will permanently delete the selected row and immediately refetch the current
                   page.
                 </p>
@@ -88,14 +84,14 @@ export const SqliteRowDeleteModal = ({
                 {error ? (
                   <div className="sqlite-inline-error" aria-live="polite">
                     <div>
-                      <p className="font-medium text-rose-100">Delete Failed</p>
-                      <p className="mt-1 text-sm text-rose-100/90">{error}</p>
+                      <p className="font-medium text-[var(--sqlite-danger)]">Delete Failed</p>
+                      <p className="mt-1 text-sm text-[var(--sqlite-danger)]">{error}</p>
                     </div>
                   </div>
                 ) : null}
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-white/8 px-5 py-5">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--sqlite-line)] px-5 py-5">
                 <button
                   type="button"
                   className={sqliteSecondaryButtonClassName}

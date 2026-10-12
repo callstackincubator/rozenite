@@ -12,21 +12,21 @@ export const JsonTree = ({ data, shouldExpandNodeInitially = () => true }: JsonT
       data={data}
       theme={{
         base00: 'transparent',
-        base01: '#374151', // bg-gray-700
-        base02: '#4b5563', // bg-gray-600
-        base03: '#6b7280', // text-gray-500
-        base04: '#9ca3af', // text-gray-400
-        base05: '#d1d5db', // text-gray-300
-        base06: '#e5e7eb', // text-gray-200
-        base07: '#f9fafb', // text-gray-100
-        base08: '#ef4444', // text-red-500
-        base09: '#f59e0b', // text-yellow-500
-        base0A: '#10b981', // text-green-500
-        base0B: '#3b82f6', // text-blue-500
-        base0C: '#06b6d4', // text-cyan-500
-        base0D: '#8b5cf6', // text-purple-500
-        base0E: '#ec4899', // text-pink-500
-        base0F: '#f97316', // text-orange-500
+        base01: '#1f1f1f', // line
+        base02: '#313131', // line-strong
+        base03: '#858585', // faint
+        base04: '#a3a3a3', // muted
+        base05: '#d4d4d4', // text
+        base06: '#e5e5e5',
+        base07: '#ffffff',
+        base08: '#ff7a50', // danger
+        base09: '#fbbf24', // warning
+        base0A: '#4ade80', // success
+        base0B: '#60a5fa', // info
+        base0C: '#22d3ee', // cyan
+        base0D: '#a3a3a3', // keys: muted
+        base0E: '#d4d4d4',
+        base0F: '#ff7a50', // danger
       }}
       invertTheme={false}
       shouldExpandNodeInitially={shouldExpandNodeInitially}
