@@ -48,12 +48,13 @@ vi.mock('react-virtuoso', async () => {
           Table,
           { context },
           React.createElement('thead', null, fixedHeaderContent()),
-          React.createElement(
-            'tbody',
-            null,
-            visibleRows.length === 0
-              ? React.createElement(EmptyPlaceholder, { context })
-              : visibleRows.map((item: unknown, index: number) =>
+          // Like the real component, the empty placeholder sits straight inside the table.
+          visibleRows.length === 0
+            ? React.createElement(EmptyPlaceholder, { context })
+            : React.createElement(
+                'tbody',
+                null,
+                visibleRows.map((item: unknown, index: number) =>
                   React.createElement(
                     TableRow,
                     {
@@ -67,7 +68,7 @@ vi.mock('react-virtuoso', async () => {
                     itemContent(index, item),
                   ),
                 ),
-          ),
+              ),
         ),
       );
     },
@@ -179,5 +180,106 @@ describe('VirtualizedDataTable', () => {
 
     expect(loadingView.querySelector('tbody td')?.getAttribute('colspan')).toBe('2');
     expect(loadingView.textContent).toContain('Loading…');
+  });
+
+  it('wraps the empty placeholder in its own tbody so no row sits directly in the table', () => {
+    const view = renderTable({ data: [], emptyMessage: 'Nothing here' });
+    const table = view.querySelector('table');
+
+    expect(Array.from(table?.children ?? []).every((child) => child.tagName !== 'TR')).toBe(true);
+    expect(view.querySelector('table > tbody > tr > td')?.textContent).toBe('Nothing here');
+  });
+
+  it('leaves keys to controls inside an actionable row', () => {
+    const onRowClick = vi.fn();
+    const view = renderTable({
+      columns: [{ id: 'action', cell: () => <button type="button">Edit</button> }],
+      onRowClick,
+    });
+    const innerButton = view.querySelector<HTMLButtonElement>('tbody tr button');
+
+    act(() =>
+      innerButton?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })),
+    );
+    act(() =>
+      innerButton?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: ' ' })),
+    );
+    expect(onRowClick).not.toHaveBeenCalled();
+
+    act(() =>
+      view
+        .querySelector('tbody tr')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: ' ' })),
+    );
+    expect(onRowClick).toHaveBeenCalledOnce();
+  });
+
+  describe('column resizing', () => {
+    const resizableColumns: ColumnDef<TestRow>[] = [
+      { accessorKey: 'name', header: 'Name', size: 200 },
+      { accessorKey: 'detail', header: 'Detail', size: 120, enableResizing: false },
+    ];
+    const pressKey = (target: Element | null | undefined, key: string) =>
+      act(() => target?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key })));
+
+    it('renders no handles and no widths unless it is opted in', () => {
+      const view = renderTable();
+
+      expect(view.querySelector('[role="separator"]')).toBeNull();
+      expect(view.querySelector('table')?.style.tableLayout).toBe('');
+      expect(view.querySelector('th')?.style.width).toBe('');
+      expect(view.querySelector('td')?.className).toBe('px-3 py-1.5 text-foreground');
+    });
+
+    it('lays the table out at its columns width and renders a handle per resizable column', () => {
+      const view = renderTable({ columns: resizableColumns, columnResizing: true });
+      const table = view.querySelector('table');
+      const headers = view.querySelectorAll('th');
+      const separators = view.querySelectorAll('[role="separator"]');
+
+      expect(table?.style.tableLayout).toBe('fixed');
+      expect(table?.style.width).toBe('320px');
+      expect(table?.style.minWidth).toBe('320px');
+      expect(headers[0]?.style.width).toBe('200px');
+      expect(headers[1]?.style.width).toBe('120px');
+      expect(separators).toHaveLength(1);
+      expect(separators[0]?.getAttribute('aria-label')).toBe('Resize Name column');
+      expect(separators[0]?.getAttribute('aria-orientation')).toBe('vertical');
+    });
+
+    it('resizes with the arrow keys within min and max and resets on double click', () => {
+      const view = renderTable({
+        columns: resizableColumns,
+        columnResizing: { minSize: 190, maxSize: 210 },
+      });
+      const separator = () => view.querySelector('[role="separator"]');
+      const width = () => view.querySelector('th')?.style.width;
+
+      pressKey(separator(), 'ArrowRight');
+      expect(width()).toBe('210px');
+      pressKey(separator(), 'ArrowLeft');
+      pressKey(separator(), 'ArrowLeft');
+      expect(width()).toBe('190px');
+
+      act(() => separator()?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+      expect(width()).toBe('200px');
+    });
+
+    it('applies controlled sizing', () => {
+      const view = renderTable({
+        columns: resizableColumns,
+        columnResizing: { sizing: { name: 333 } },
+      });
+
+      expect(view.querySelector('th')?.style.width).toBe('333px');
+    });
+
+    it('gives body cells the column width and clips what overflows it', () => {
+      const view = renderTable({ columns: resizableColumns, columnResizing: true });
+      const cell = view.querySelector<HTMLElement>('tbody td');
+
+      expect(cell?.style.width).toBe('200px');
+      expect(cell?.className).toContain('overflow-hidden');
+    });
   });
 });

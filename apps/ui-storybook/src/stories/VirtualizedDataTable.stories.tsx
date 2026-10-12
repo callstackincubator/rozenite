@@ -32,3 +32,28 @@ export const Default: Story = {
     />
   ),
 };
+
+const resizableColumns: ColumnDef<Row>[] = [
+  { accessorKey: 'name', header: 'Name', size: 240 },
+  { accessorKey: 'status', header: 'Status', size: 160 },
+  { id: 'actions', header: 'Actions', size: 96, enableResizing: false, cell: () => '—' },
+];
+
+/** Use when a large table has columns whose values are longer than their default width.
+ * Drag a header's right edge, focus it and press the arrow keys, or double-click it to reset.
+ * Long values truncate at the column width.
+ * @summary Let people resize columns.
+ */
+export const ColumnResizing: Story = {
+  render: () => (
+    <VirtualizedDataTable<Row>
+      ariaLabel="Resizable requests"
+      columns={resizableColumns}
+      columnResizing={{ minSize: 80, maxSize: 480 }}
+      data={data}
+      getRowId={(row) => row.id}
+      getRowTextValue={(row) => row.name}
+      style={{ height: 320 }}
+    />
+  ),
+};

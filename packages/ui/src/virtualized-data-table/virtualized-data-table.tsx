@@ -20,6 +20,13 @@ import {
 import { cn } from '../utils/cn';
 import { SortIcon } from '../utils/sort-icon';
 import { monoLabel } from '../utils/mono-label';
+import {
+  ColumnResizeHandle,
+  resizableCellClassName,
+  resizableTableStyle,
+  useColumnResizing,
+  type ColumnResizingProp,
+} from '../data-table/column-resizing';
 
 const DEFAULT_TABLE_CLASSNAME = 'w-full border-collapse text-sm';
 const DEFAULT_SCROLL_CLASSNAME = 'h-full w-full overflow-auto';
@@ -49,6 +56,12 @@ export type VirtualizedDataTableProps<TData> = {
   /** Applied to Virtuoso's scroll container. */
   scrollClassName?: string;
   style?: CSSProperties;
+  /**
+   * Opt in to draggable column borders. Columns start at 150px unless `defaultSize` or a
+   * column's own `size` says otherwise, and the table becomes exactly as wide as its columns.
+   * A column opts out with `enableResizing: false`.
+   */
+  columnResizing?: ColumnResizingProp;
 };
 
 type VirtualizedTableContext<TData> = {
@@ -57,6 +70,8 @@ type VirtualizedTableContext<TData> = {
   emptyMessage: string;
   getRowTextValue?: (item: TData, index: number) => string;
   isLoading: boolean;
+  /** Set when columns are resizable: the table is laid out at exactly this width. */
+  resizableTotalSize: number | null;
   onRowClick?: (item: TData) => void;
   renderEmptyState?: () => ReactNode;
   tableClassName: string;
@@ -73,7 +88,15 @@ type TableRowComponentProps = ItemProps<unknown> & {
 };
 
 const VirtualizedTableElement = ({ children, context, style }: TableComponentProps) => (
-  <table aria-label={context.ariaLabel} className={context.tableClassName} style={style}>
+  <table
+    aria-label={context.ariaLabel}
+    className={context.tableClassName}
+    style={
+      context.resizableTotalSize === null
+        ? style
+        : { ...style, ...resizableTableStyle(context.resizableTotalSize) }
+    }
+  >
     {children}
   </table>
 );
@@ -87,7 +110,12 @@ const VirtualizedTableRow = ({ children, context, item, ...props }: TableRowComp
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
-    if (!isActionable || (event.key !== 'Enter' && event.key !== ' ')) {
+    // A control inside the row (a button, a field) owns its own keys.
+    if (
+      !isActionable ||
+      event.target !== event.currentTarget ||
+      (event.key !== 'Enter' && event.key !== ' ')
+    ) {
       return;
     }
 
@@ -113,17 +141,20 @@ const VirtualizedTableRow = ({ children, context, item, ...props }: TableRowComp
 };
 
 const VirtualizedEmptyState = ({ context }: { context: VirtualizedTableContext<unknown> }) => (
-  <tr>
-    <td colSpan={context.columnCount}>
-      {context.renderEmptyState?.() ?? (
-        <div className="flex min-h-56 w-full items-center justify-center px-4 py-10 text-center">
-          <span className="text-sm text-muted-foreground">
-            {context.isLoading ? 'Loading…' : context.emptyMessage}
-          </span>
-        </div>
-      )}
-    </td>
-  </tr>
+  // Virtuoso renders the placeholder straight inside the `<table>`, so it brings its own `<tbody>`.
+  <tbody>
+    <tr>
+      <td colSpan={context.columnCount}>
+        {context.renderEmptyState?.() ?? (
+          <div className="flex min-h-56 w-full items-center justify-center px-4 py-10 text-center">
+            <span className="text-sm text-muted-foreground">
+              {context.isLoading ? 'Loading…' : context.emptyMessage}
+            </span>
+          </div>
+        )}
+      </td>
+    </tr>
+  </tbody>
 );
 
 // Virtuoso requires component definitions to remain stable between renders.
@@ -153,7 +184,9 @@ export const VirtualizedDataTable = <TData,>({
   className,
   scrollClassName,
   style,
+  columnResizing,
 }: VirtualizedDataTableProps<TData>) => {
+  const resizing = useColumnResizing<TData>(columnResizing);
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
   const sorting = controlledSorting ?? uncontrolledSorting;
 
@@ -178,7 +211,8 @@ export const VirtualizedDataTable = <TData,>({
     getSortedRowModel: getSortedRowModel(),
     manualSorting,
     onSortingChange: handleSortingChange,
-    state: { sorting },
+    ...resizing.tableOptions,
+    state: { sorting, ...(resizing.enabled && { columnSizing: resizing.columnSizing }) },
   });
   const rows = table.getRowModel().rows;
   const context = useMemo<VirtualizedTableContext<TData>>(
@@ -188,6 +222,7 @@ export const VirtualizedDataTable = <TData,>({
       emptyMessage,
       getRowTextValue,
       isLoading: loading,
+      resizableTotalSize: resizing.enabled ? table.getTotalSize() : null,
       onRowClick,
       renderEmptyState,
       tableClassName: cn(DEFAULT_TABLE_CLASSNAME, className),
@@ -200,17 +235,22 @@ export const VirtualizedDataTable = <TData,>({
       loading,
       onRowClick,
       renderEmptyState,
+      resizing.enabled,
       table,
     ],
   );
   const itemContent = useCallback(
     (_index: number, row: Row<TData>) =>
       row.getVisibleCells().map((cell) => (
-        <td key={cell.id} className="px-3 py-1.5 text-foreground">
+        <td
+          key={cell.id}
+          className={cn('px-3 py-1.5 text-foreground', resizing.enabled && resizableCellClassName)}
+          style={resizing.enabled ? { width: cell.column.getSize() } : undefined}
+        >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       )),
-    [],
+    [resizing.enabled],
   );
   const fixedHeaderContent = useCallback(
     () =>
@@ -233,7 +273,12 @@ export const VirtualizedDataTable = <TData,>({
                     : undefined
                 }
                 colSpan={header.colSpan}
-                className={cn('h-8 px-3 text-left text-[11px] text-faint', monoLabel)}
+                className={cn(
+                  'h-8 px-3 text-left text-[11px] text-faint',
+                  monoLabel,
+                  resizing.enabled && 'relative overflow-hidden',
+                )}
+                style={resizing.enabled ? { width: header.getSize() } : undefined}
                 scope="col"
               >
                 {header.isPlaceholder ? null : canSort ? (
@@ -250,12 +295,13 @@ export const VirtualizedDataTable = <TData,>({
                 ) : (
                   flexRender(header.column.columnDef.header, header.getContext())
                 )}
+                {resizing.enabled && <ColumnResizeHandle header={header} />}
               </th>
             );
           })}
         </tr>
       )),
-    [table],
+    [resizing.enabled, table],
   );
   const computeItemKey = useCallback((_index: number, row: Row<TData>) => row.id, []);
 
