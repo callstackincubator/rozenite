@@ -58,8 +58,9 @@ repository then cached that 0 for a week.
    caller retries it. The fifteen official plugins share one repository and
    cause one GitHub request. `/plugin-directory` and `/plugin-directory/1`
    render the same page and cause no second round of requests. Each request
-   has a 10-second timeout. A 429 or 5xx response is retried once, after
-   `Retry-After` (capped at 10 seconds) or one second.
+   has a 10-second timeout. A 429, a 5xx, or a 403 that carries
+   `Retry-After` is retried once, after `Retry-After` (capped at 10 seconds)
+   or one second.
 
 3. **GitHub requests use the job's token when it is present, under the name
    `PLUGIN_DIRECTORY_GITHUB_TOKEN`.** The deploy workflow passes

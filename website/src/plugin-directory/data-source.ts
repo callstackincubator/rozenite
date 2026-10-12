@@ -34,6 +34,9 @@ const GONE_STATUSES = new Set([404, 410, 451]);
 // A strict build fails when an official plugin cannot be loaded, or when a request for any plugin
 // fails for a reason other than the third-party plugin being gone. Everything else degrades: the
 // card is shown without the data, and the failure is logged.
+// A failing URL is retried by every page that lists the plugin, so the same line would repeat.
+const reported = new Set<string>();
+
 const handleFailure = (packageName: string, isOfficial: boolean, error: unknown): void => {
   const status = error instanceof HttpError ? error.status : undefined;
 
@@ -44,7 +47,11 @@ const handleFailure = (packageName: string, isOfficial: boolean, error: unknown)
   const detail = error instanceof Error ? error.message : String(error);
   // On GitHub Actions the prefix turns the line into an annotation on the run.
   const annotation = process.env.GITHUB_ACTIONS === 'true' ? '::warning::' : '';
-  console.warn(`${annotation}[plugin-directory] ${packageName}: ${detail}`);
+  const line = `${annotation}[plugin-directory] ${packageName}: ${detail}`;
+  if (!reported.has(line)) {
+    reported.add(line);
+    console.warn(line);
+  }
 };
 
 const loadPlugin = async (reference: ValidatedPluginReference): Promise<RozenitePluginEntry> => {

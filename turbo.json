@@ -63,6 +63,12 @@
         "GITHUB_ACTIONS"
       ]
     },
+    // The site has no typecheck of its own, but the generic task would still
+    // pull in the uncached, networked site build above.
+    "@rozenite/docs#typecheck": {
+      "dependsOn": [],
+      "outputs": []
+    },
     // The docs tests cover pure validation code and need neither the site build
     // (uncached, and it calls npm and GitHub) nor any other package's output.
     "@rozenite/docs#test": {
