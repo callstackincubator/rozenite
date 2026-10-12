@@ -215,6 +215,8 @@ export const VirtualizedDataTable = <TData,>({
     state: { sorting, ...(resizing.enabled && { columnSizing: resizing.columnSizing }) },
   });
   const rows = table.getRowModel().rows;
+  // Read per render: `table` is a stable object, so the memo below would never see a resize.
+  const resizableTotalSize = resizing.enabled ? table.getTotalSize() : null;
   const context = useMemo<VirtualizedTableContext<TData>>(
     () => ({
       ariaLabel,
@@ -222,7 +224,7 @@ export const VirtualizedDataTable = <TData,>({
       emptyMessage,
       getRowTextValue,
       isLoading: loading,
-      resizableTotalSize: resizing.enabled ? table.getTotalSize() : null,
+      resizableTotalSize,
       onRowClick,
       renderEmptyState,
       tableClassName: cn(DEFAULT_TABLE_CLASSNAME, className),
@@ -235,7 +237,7 @@ export const VirtualizedDataTable = <TData,>({
       loading,
       onRowClick,
       renderEmptyState,
-      resizing.enabled,
+      resizableTotalSize,
       table,
     ],
   );
@@ -245,7 +247,6 @@ export const VirtualizedDataTable = <TData,>({
         <td
           key={cell.id}
           className={cn('px-3 py-1.5 text-foreground', resizing.enabled && resizableCellClassName)}
-          style={resizing.enabled ? { width: cell.column.getSize() } : undefined}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>

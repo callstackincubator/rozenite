@@ -102,6 +102,7 @@ import {
 } from './sqlite-explorer';
 import { StructurePane, type StructureSection, type StructureState } from './structure-pane';
 import { copyToClipboard, downloadTextFile, formatNumber, slugifyFileName } from './utils';
+import { handleWorkspaceShortcut } from './workspace-shortcuts';
 import { getResultSummary, getScriptResultSummary } from './value-utils';
 import './globals.css';
 
@@ -348,9 +349,9 @@ function SqlitePanelContent() {
     [entities, queryColumnCache, schemas, selectedDatabaseId],
   );
 
-  const filteredBrowseRows = useMemo(() => {
+  const filteredBrowse = useMemo(() => {
     if (!browseResult) {
-      return [];
+      return { rows: [], pageIndexes: [] };
     }
 
     const term = dataSearch.trim().toLowerCase();
@@ -358,18 +359,22 @@ function SqlitePanelContent() {
       (column) => column !== SQLITE_HIDDEN_ROWID_COLUMN_ID,
     );
 
-    if (!term) {
-      return browseResult.rows;
-    }
-
-    return browseResult.rows.filter((row) =>
+    // `pageIndexes` remembers each kept row's place on the page, so row numbers and the row
+    // dialogs keep counting from the page rather than from the filtered list.
+    const pageIndexes = browseResult.rows.flatMap((row, index) =>
+      !term ||
       searchableColumns.some((column) =>
         String(row[column] ?? '')
           .toLowerCase()
           .includes(term),
-      ),
+      )
+        ? [index]
+        : [],
     );
+
+    return { rows: pageIndexes.map((index) => browseResult.rows[index]), pageIndexes };
   }, [browseResult, dataSearch]);
+  const filteredBrowseRows = filteredBrowse.rows;
 
   const filteredBrowseResult = useMemo(() => {
     if (!browseResult) {
@@ -1095,25 +1100,51 @@ function SqlitePanelContent() {
     toast.add({ title: `Exported ${fileName}` });
   }, [activeQueryResult, selectedEntity?.name, toast]);
 
+  const copyWithToast = useCallback(
+    async (text: string, successTitle: string) => {
+      let copied = false;
+
+      try {
+        copied = await copyToClipboard(text);
+      } catch {
+        copied = false;
+      }
+
+      toast.add(
+        copied
+          ? { title: successTitle }
+          : { title: 'Could not copy to the clipboard', type: 'error' },
+      );
+
+      return copied;
+    },
+    [toast],
+  );
+
   const handleCopyResults = useCallback(async () => {
     if (!activeQueryResult) {
       return;
     }
 
-    await copyToClipboard(JSON.stringify(activeQueryResult.rows, null, 2));
-    setQueryMessage('Copied result rows as JSON.');
-    toast.add({ title: 'Copied result rows as JSON' });
-  }, [activeQueryResult, toast]);
+    if (
+      await copyWithToast(
+        JSON.stringify(activeQueryResult.rows, null, 2),
+        'Copied result rows as JSON',
+      )
+    ) {
+      setQueryMessage('Copied result rows as JSON.');
+    }
+  }, [activeQueryResult, copyWithToast]);
 
   const handleCopyError = useCallback(async () => {
     if (!queryError) {
       return;
     }
 
-    await copyToClipboard(queryError);
-    setQueryMessage('Copied SQL error.');
-    toast.add({ title: 'Copied SQL error' });
-  }, [queryError, toast]);
+    if (await copyWithToast(queryError, 'Copied SQL error')) {
+      setQueryMessage('Copied SQL error.');
+    }
+  }, [copyWithToast, queryError]);
 
   const handleFormatQuery = useCallback(() => {
     try {
@@ -1308,21 +1339,12 @@ function SqlitePanelContent() {
   }, [selectedDatabaseId]);
 
   useEffect(() => {
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'p') {
-        event.preventDefault();
-        objectSearchRef.current?.focus();
-      }
-
-      if (
-        activeTab === 'query' &&
-        (event.metaKey || event.ctrlKey) &&
-        event.key.toLowerCase() === 's'
-      ) {
-        event.preventDefault();
-        handleSaveQuery();
-      }
-    };
+    const handleKeyDown = (event: globalThis.KeyboardEvent) =>
+      handleWorkspaceShortcut(event, {
+        activeTab,
+        focusObjectSearch: () => objectSearchRef.current?.focus(),
+        saveQuery: handleSaveQuery,
+      });
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -1664,6 +1686,7 @@ function SqlitePanelContent() {
           rowNumberOffset={browseOffset}
           columnMeta={structureColumnMeta}
           hiddenColumnIds={HIDDEN_BROWSE_COLUMNS}
+          rowIndexes={filteredBrowse.pageIndexes}
           rowActions={dataRowActions}
         />
       </div>
@@ -1687,7 +1710,9 @@ function SqlitePanelContent() {
           </Text>
         </div>
         <div className="flex items-center gap-2">
-          <Text variant="label">Page Size</Text>
+          <Text variant="label" className="whitespace-nowrap">
+            Page Size
+          </Text>
           <Select
             value={browsePageSize}
             onValueChange={(value) => {
@@ -1821,7 +1846,7 @@ function SqlitePanelContent() {
                   <Tabs.Tab value="structure">Structure</Tabs.Tab>
                 </Tabs.List>
               </div>
-              <Tabs.Panel value="query" className="flex min-h-0 flex-col">
+              <Tabs.Panel value="query" keepMounted className="flex min-h-0 flex-col">
                 {queryPane}
               </Tabs.Panel>
               <Tabs.Panel value="data" className="flex min-h-0 flex-col">

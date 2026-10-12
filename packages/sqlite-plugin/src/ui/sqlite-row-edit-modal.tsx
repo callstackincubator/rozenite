@@ -9,6 +9,7 @@ import {
   getPrimaryKeyColumns,
 } from './sqlite-row-mutations';
 import {
+  createFieldDraft,
   parseEditableFieldValue,
   type EditableFieldDraft,
   type EditableValueKind,
@@ -32,60 +33,6 @@ const KIND_LABELS: Record<EditableValueKind, string> = {
   'blob-ish': 'Blob',
   json: 'JSON',
   null: 'NULL',
-};
-
-const stringifyDraftValue = (value: unknown, kind: EditableValueKind) => {
-  if (value === null) {
-    if (kind === 'boolean') {
-      return 'false';
-    }
-
-    if (kind === 'blob-ish') {
-      return '[]';
-    }
-
-    if (kind === 'json') {
-      return '{}';
-    }
-
-    return '';
-  }
-
-  if (value === undefined) {
-    if (kind === 'blob-ish') {
-      return '[]';
-    }
-
-    if (kind === 'json') {
-      return '{}';
-    }
-
-    return kind === 'boolean' ? 'false' : '';
-  }
-
-  if (kind === 'number' && typeof value === 'boolean') {
-    return value ? '1' : '0';
-  }
-
-  if (kind === 'boolean' && typeof value === 'number') {
-    return value === 0 ? 'false' : 'true';
-  }
-
-  if (kind === 'blob-ish' || kind === 'json') {
-    return JSON.stringify(value, null, 2);
-  }
-
-  return String(value);
-};
-
-const createFieldDraft = (column: SqliteColumnInfo, value: unknown): EditableFieldDraft => {
-  const compatibleKinds = getCompatibleValueKinds(column, value);
-  const kind = compatibleKinds[0] ?? 'text';
-
-  return {
-    kind,
-    rawValue: stringifyDraftValue(value, kind),
-  };
 };
 
 export const SqliteRowEditModal = ({

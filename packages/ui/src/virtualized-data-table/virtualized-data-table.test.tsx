@@ -255,11 +255,16 @@ describe('VirtualizedDataTable', () => {
       const separator = () => view.querySelector('[role="separator"]');
       const width = () => view.querySelector('th')?.style.width;
 
+      const tableWidth = () => view.querySelector('table')?.style.width;
+
       pressKey(separator(), 'ArrowRight');
       expect(width()).toBe('210px');
+      expect(tableWidth()).toBe('400px');
       pressKey(separator(), 'ArrowLeft');
       pressKey(separator(), 'ArrowLeft');
       expect(width()).toBe('190px');
+      // The table follows its columns, so shrinking one does not stretch the others.
+      expect(tableWidth()).toBe('380px');
 
       act(() => separator()?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
       expect(width()).toBe('200px');
@@ -274,12 +279,10 @@ describe('VirtualizedDataTable', () => {
       expect(view.querySelector('th')?.style.width).toBe('333px');
     });
 
-    it('gives body cells the column width and clips what overflows it', () => {
+    it('clips body cells to the column width', () => {
       const view = renderTable({ columns: resizableColumns, columnResizing: true });
-      const cell = view.querySelector<HTMLElement>('tbody td');
 
-      expect(cell?.style.width).toBe('200px');
-      expect(cell?.className).toContain('overflow-hidden');
+      expect(view.querySelector('tbody td')?.className).toContain('overflow-hidden');
     });
   });
 });

@@ -54,6 +54,8 @@ type StructurePaneProps = {
   onDrop: () => void;
 };
 
+const COLUMN_RESIZING = { defaultSize: 220, minSize: 120 };
+
 const SECTIONS: Array<[StructureSection, string]> = [
   ['columns', 'Columns'],
   ['keys', 'Keys'],
@@ -100,7 +102,7 @@ const columnTableColumns: DataTableColumn<StructureColumnRow>[] = [
       row.original.primaryKey === '—' ? (
         <span className="text-faint">—</span>
       ) : (
-        <Badge tone="primary" variant="soft">
+        <Badge tone="neutral" variant="soft">
           {row.original.primaryKey}
         </Badge>
       ),
@@ -241,6 +243,7 @@ export const StructurePane = ({
         {section === 'columns' ? (
           <DataTable
             ariaLabel="Columns"
+            columnResizing={COLUMN_RESIZING}
             columns={columnTableColumns}
             data={columnRows}
             loading={loading}
@@ -306,6 +309,7 @@ export const StructurePane = ({
         ) : (
           <DataTable
             ariaLabel="Indexes"
+            columnResizing={COLUMN_RESIZING}
             columns={indexTableColumns}
             data={indexRows}
             loading={loading}

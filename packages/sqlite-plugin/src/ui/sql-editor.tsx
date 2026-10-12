@@ -155,7 +155,7 @@ const createSqlEditorTheme = (dark: boolean): Extension =>
       },
       '.cm-gutters': {
         color: 'var(--faint)',
-        backgroundColor: 'transparent',
+        backgroundColor: 'var(--background)',
         border: 'none',
         borderRight: '1px solid var(--border)',
       },

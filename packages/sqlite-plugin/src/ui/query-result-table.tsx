@@ -21,6 +21,8 @@ type QueryResultTableProps = {
   rowNumberOffset?: number;
   columnMeta?: Record<string, ColumnMeta>;
   hiddenColumnIds?: string[];
+  /** Each row's index on the loaded page, when `result.rows` is a filtered subset of it. */
+  rowIndexes?: number[];
   rowActions?: {
     header: string;
     cell: (row: Record<string, unknown>, rowIndex: number) => ReactNode;
@@ -37,6 +39,8 @@ type DrawerPayload = {
   title: string;
   value: Record<string, unknown>;
 } | null;
+
+const COLUMN_RESIZING = { defaultSize: 220, minSize: 120 };
 
 const getColumnHeaderTitle = (column: string, meta?: ColumnMeta) => {
   const details = [
@@ -57,6 +61,7 @@ export const QueryResultTable = ({
   rowNumberOffset = 0,
   columnMeta,
   hiddenColumnIds = [],
+  rowIndexes,
   rowActions,
 }: QueryResultTableProps) => {
   const [drawerPayload, setDrawerPayload] = useState<DrawerPayload>(null);
@@ -66,8 +71,12 @@ export const QueryResultTable = ({
     [result?.columns, hiddenColumnIds],
   );
   const rows = useMemo<ResultRow[]>(
-    () => (result?.rows ?? []).map((values, index) => ({ index, values })),
-    [result?.rows],
+    () =>
+      (result?.rows ?? []).map((values, position) => ({
+        index: rowIndexes?.[position] ?? position,
+        values,
+      })),
+    [result?.rows, rowIndexes],
   );
 
   const columns = useMemo<ColumnDef<ResultRow, unknown>[]>(() => {
@@ -78,6 +87,9 @@ export const QueryResultTable = ({
     const rowNumberColumn: ColumnDef<ResultRow, unknown> = {
       id: '__row-number__',
       header: '#',
+      size: 72,
+      minSize: 72,
+      enableResizing: false,
       enableSorting: false,
       cell: ({ row }) => (
         <Text variant="numeric" className="text-faint">
@@ -92,9 +104,16 @@ export const QueryResultTable = ({
           {
             id: '__row-actions__',
             header: rowActions.header,
+            size: 96,
+            minSize: 96,
+            enableResizing: false,
             enableSorting: false,
             cell: ({ row }) => (
-              <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+              <div
+                className="flex items-center gap-1"
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+              >
                 {rowActions.cell(row.original.values, row.original.index)}
               </div>
             ),
@@ -121,7 +140,7 @@ export const QueryResultTable = ({
         return (
           <div className="flex items-baseline gap-2">
             <span
-              className={cn('max-w-md truncate font-mono text-xs', value === null && 'text-faint')}
+              className={cn('min-w-0 truncate font-mono text-xs', value === null && 'text-faint')}
             >
               {getValuePreview(value)}
             </span>
@@ -162,6 +181,7 @@ export const QueryResultTable = ({
             <EmptyState title={emptyTitle} description={emptyDescription} className="min-h-56" />
           )
         }
+        columnResizing={COLUMN_RESIZING}
         scrollClassName="h-full w-full overflow-auto"
         style={{ height: '100%' }}
       />
