@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => {
   let bindingName = 'rozenite-binding';
   let stalledRuntimeExpression: string | null = null;
   let refusedRuntimeExpression: string | null = null;
+  let dispatcherReadyValue: unknown = true;
 
   class MockWebSocket {
     static readonly CONNECTING = 0;
@@ -138,9 +139,8 @@ const mocks = vi.hoisted(() => {
 
     if (expression.includes(`globalThis.${RUNTIME_GLOBAL} != undefined`)) {
       return {
-        result: {
-          value: true,
-        },
+        // `undefined` models a response with no `value` at all.
+        result: dispatcherReadyValue === undefined ? {} : { value: dispatcherReadyValue },
       };
     }
 
@@ -188,6 +188,9 @@ const mocks = vi.hoisted(() => {
     stallRuntimeEvaluationContaining: (expression: string) => {
       stalledRuntimeExpression = expression;
     },
+    setDispatcherReadyValue: (value: unknown) => {
+      dispatcherReadyValue = value;
+    },
     refuseRuntimeEvaluationContaining: (expression: string) => {
       refusedRuntimeExpression = expression;
     },
@@ -213,6 +216,7 @@ const mocks = vi.hoisted(() => {
       bindingName = 'rozenite-binding';
       stalledRuntimeExpression = null;
       refusedRuntimeExpression = null;
+      dispatcherReadyValue = true;
       wsInstances.length = 0;
       resolveDebuggerOrigin.mockReset();
       resolveDebuggerOrigin.mockImplementation(
@@ -829,6 +833,219 @@ describe('agent session', () => {
 
     socket.close();
     await rejection;
+  });
+
+  describe('bounded bootstrap and command timeout', () => {
+    const countDispatcherChecks = () =>
+      getExpressions().filter((expression) =>
+        expression.includes(`globalThis.${RUNTIME_GLOBAL} != undefined`),
+      ).length;
+
+    it('rejects a CDP command the device never answers and cleans it up', async () => {
+      const { session } = await startSession();
+      mocks.stallRuntimeEvaluationContaining('unanswered-message');
+      const timersBefore = vi.getTimerCount();
+
+      const sending = session.sendTapMessage({
+        pluginId: '@rozenite/test-plugin',
+        type: 'x',
+        payload: { marker: 'unanswered-message' },
+      });
+      const rejection = expect(sending).rejects.toMatchObject({
+        name: 'CdpCommandTimeoutError',
+        method: 'Runtime.evaluate',
+      });
+      await flushMicrotasks();
+      expect(vi.getTimerCount()).toBe(timersBefore + 1);
+
+      await vi.advanceTimersByTimeAsync(9_999);
+      expect(vi.getTimerCount()).toBe(timersBefore + 1);
+      await vi.advanceTimersByTimeAsync(1);
+      await rejection;
+      expect(vi.getTimerCount()).toBe(timersBefore);
+    });
+
+    it('clears the timer of a command that is answered', async () => {
+      const { session } = await startSession();
+      const timersBefore = vi.getTimerCount();
+
+      await session.sendTapMessage({
+        pluginId: '@rozenite/test-plugin',
+        type: 'x',
+        payload: {},
+      });
+      expect(vi.getTimerCount()).toBe(timersBefore);
+    });
+
+    it('drains pending commands and their timers on stop', async () => {
+      const { session } = await startSession();
+      mocks.stallRuntimeEvaluationContaining('unanswered-message');
+      const timersBefore = vi.getTimerCount();
+
+      const sending = session.sendTapMessage({
+        pluginId: '@rozenite/test-plugin',
+        type: 'x',
+        payload: { marker: 'unanswered-message' },
+      });
+      const rejection = expect(sending).rejects.toThrow('Agent session stopped');
+      await flushMicrotasks();
+      await session.stop();
+      await rejection;
+      expect(vi.getTimerCount()).toBeLessThanOrEqual(timersBefore);
+    });
+
+    it('rejects start after repeated bootstrap command timeouts', async () => {
+      mocks.stallRuntimeEvaluationContaining(`${RUNTIME_GLOBAL} != undefined`);
+      const { session, socket, startPromise } = await createStartedSession();
+      const rejection = expect(startPromise).rejects.toMatchObject({
+        name: 'CdpCommandTimeoutError',
+        method: 'Runtime.evaluate',
+      });
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 9_999);
+      expect(session.getInfo().lastError).toBeUndefined();
+      expect(countDispatcherChecks()).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(session.getInfo().lastError).toBe(
+        'CDP command "Runtime.evaluate" timed out after 10000ms',
+      );
+      // Two more attempts (500ms retry delay + 10s timeout each), then give up.
+      await vi.advanceTimersByTimeAsync(2 * 10_500);
+      await rejection;
+      expect(countDispatcherChecks()).toBe(3);
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(countDispatcherChecks()).toBe(3);
+    });
+
+    it('gives up and rejects start when the Rozenite runtime never appears', async () => {
+      mocks.setDispatcherReadyValue(false);
+      const { session, socket, startPromise } = await createStartedSession();
+      const rejection = expect(startPromise).rejects.toThrow(
+        'Rozenite runtime was not found in the app',
+      );
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 20 * 250);
+      await flushMicrotasks();
+      await rejection;
+      expect(session.getInfo().lastError).toContain('Rozenite runtime was not found');
+
+      const checks = countDispatcherChecks();
+      expect(checks).toBeGreaterThan(1);
+      await vi.advanceTimersByTimeAsync(60_000);
+      await flushMicrotasks();
+      expect(countDispatcherChecks()).toBe(checks);
+    });
+
+    it('does not treat a missing readiness value as ready', async () => {
+      mocks.setDispatcherReadyValue(undefined);
+      const { socket, startPromise } = await createStartedSession();
+      const rejection = expect(startPromise).rejects.toThrow(
+        'Rozenite runtime was not found in the app',
+      );
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 20 * 250);
+      await flushMicrotasks();
+      await rejection;
+
+      expect(getExpressions().some((expression) => expression.includes('BINDING_NAME'))).toBe(
+        false,
+      );
+    });
+
+    it('still re-bootstraps on a later main execution context after a successful start', async () => {
+      const { socket } = await startSession();
+      const checksBefore = countDispatcherChecks();
+
+      socket.emit(
+        'message',
+        JSON.stringify({
+          method: 'Runtime.executionContextCreated',
+          params: { context: { name: 'main' } },
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(500);
+      await flushMicrotasks();
+
+      expect(countDispatcherChecks()).toBe(checksBefore + 1);
+    });
+
+    it('ignores an older bootstrap exhausting after a reload superseded it', async () => {
+      mocks.setDispatcherReadyValue(false);
+      const { socket, startPromise } = await createStartedSession();
+      const onSettled = vi.fn();
+      startPromise.then(
+        () => onSettled('resolved'),
+        () => onSettled('rejected'),
+      );
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 4_600);
+      // Reload just before the first poll exhausts (~5250ms): the first
+      // bootstrap is stale even though the replacement is still inside its
+      // 500ms debounce when it fails.
+      socket.emit(
+        'message',
+        JSON.stringify({
+          method: 'Runtime.executionContextCreated',
+          params: { context: { name: 'main' } },
+        }),
+      );
+
+      // The older poll exhausts at 500 + 19 * 250 ms, inside the debounce.
+      await vi.advanceTimersByTimeAsync(300);
+      await flushMicrotasks();
+      expect(onSettled).not.toHaveBeenCalled();
+
+      mocks.setDispatcherReadyValue(true);
+      await vi.advanceTimersByTimeAsync(500);
+      await emitRozeniteBindingPayload(socket, {
+        pluginId: '@rozenite/test-plugin',
+        type: 'register-tool',
+        payload: {},
+      });
+      await vi.advanceTimersByTimeAsync(50);
+      await flushMicrotasks();
+      await startPromise;
+      expect(onSettled).toHaveBeenCalledWith('resolved');
+    });
+
+    it('keeps retrying when the runtime is missing after a reload, then recovers', async () => {
+      const { session, socket } = await startSession();
+      expect(session.getInfo().status).toBe('connected');
+      const reload = () =>
+        socket.emit(
+          'message',
+          JSON.stringify({
+            method: 'Runtime.executionContextCreated',
+            params: { context: { name: 'main' } },
+          }),
+        );
+      const bindingChecks = () =>
+        getExpressions().filter((expression) => expression.includes('BINDING_NAME')).length;
+
+      mocks.setDispatcherReadyValue(false);
+      reload();
+      await vi.advanceTimersByTimeAsync(500 + 20 * 250);
+      const checks = countDispatcherChecks();
+      // Not terminal: another bootstrap is scheduled and polls again.
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(countDispatcherChecks()).toBeGreaterThan(checks);
+      const bindingsBefore = bindingChecks();
+
+      mocks.setDispatcherReadyValue(true);
+      reload();
+      await vi.advanceTimersByTimeAsync(500);
+      await flushMicrotasks();
+
+      expect(bindingChecks()).toBeGreaterThan(bindingsBefore);
+      expect(session.getInfo().status).toBe('connected');
+      expect(session.getInfo().lastError).toBeUndefined();
+    });
   });
 
   describe('tap', () => {
