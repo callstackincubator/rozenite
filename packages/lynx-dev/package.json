@@ -57,6 +57,7 @@
     "@rozenite/lynx": "workspace:*"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "vitest": "^4.0.18"
   },
   "engines": {

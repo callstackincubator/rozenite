@@ -47,6 +47,7 @@
     "test": "vitest --run --passWithNoTests"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "metro-config": "*",
     "typescript": "^5.7.3",
     "vite": "catalog:",

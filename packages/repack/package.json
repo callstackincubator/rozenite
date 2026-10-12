@@ -62,6 +62,7 @@
   },
   "devDependencies": {
     "@callstack/repack": "^5.2",
+    "@rozenite/test-utils": "workspace:*",
     "@types/semver": "^7.7.0"
   },
   "peerDependencies": {

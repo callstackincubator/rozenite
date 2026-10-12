@@ -9,7 +9,11 @@
   "types": "./src/index.ts",
   "exports": {
     "./package.json": "./package.json",
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./packaging": {
+      "types": "./src/packaging/index.d.mts",
+      "default": "./src/packaging/index.mjs"
+    }
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

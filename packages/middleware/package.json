@@ -66,6 +66,7 @@
   },
   "devDependencies": {
     "@react-native/dev-middleware": "~0.76.0",
+    "@rozenite/test-utils": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
     "@types/semver": "^7.7.0",

@@ -49,7 +49,9 @@
   "dependencies": {
     "tslib": "^2.3.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@rozenite/test-utils": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=17"
   },

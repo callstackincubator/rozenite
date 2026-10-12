@@ -51,6 +51,7 @@
     "build:cjs": "tsc -p tsconfig.metro.cjs.json && tsc -p tsconfig.react-native.cjs.json && node -e \"require('node:fs').copyFileSync('scripts/cjs-package.json','dist/cjs/package.json')\"",
     "build:types": "tsc -p tsconfig.metro.types.json && tsc -p tsconfig.react-native.types.json",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "test": "vitest --run package-contents",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -59,7 +60,8 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@react-native/metro-config": "~0.86.0"
+    "@react-native/metro-config": "~0.86.0",
+    "@rozenite/test-utils": "workspace:*"
   },
   "engines": {
     "node": ">=20"

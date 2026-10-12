@@ -61,6 +61,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@rsbuild/core": "2.1.10",
     "@types/express": "^5.0.3",
     "@types/ws": "^8.18.1",
