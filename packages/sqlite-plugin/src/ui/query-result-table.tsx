@@ -144,7 +144,7 @@ export const QueryResultTable = ({
             >
               {getValuePreview(value)}
             </span>
-            <Text variant="label" className="shrink-0 text-[10px]">
+            <Text variant="label" className="min-w-0 shrink-[8] truncate text-[10px]">
               {getValueKind(value)}
             </Text>
           </div>

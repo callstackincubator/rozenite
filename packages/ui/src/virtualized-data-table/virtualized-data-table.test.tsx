@@ -273,10 +273,30 @@ describe('VirtualizedDataTable', () => {
     it('applies controlled sizing', () => {
       const view = renderTable({
         columns: resizableColumns,
-        columnResizing: { sizing: { name: 333 } },
+        columnResizing: { sizing: { name: 333 }, onSizingChange: () => undefined },
       });
 
       expect(view.querySelector('th')?.style.width).toBe('333px');
+    });
+
+    it('follows a mouse drag on the handle', () => {
+      const view = renderTable({
+        columns: resizableColumns,
+        columnResizing: { minSize: 100, maxSize: 400 },
+      });
+
+      act(() =>
+        view
+          .querySelector('[role="separator"]')
+          ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 300 })),
+      );
+      act(() =>
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 350 })),
+      );
+      act(() => document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 350 })));
+
+      expect(view.querySelector('th')?.style.width).toBe('250px');
+      expect(view.querySelector('table')?.style.width).toBe('370px');
     });
 
     it('clips body cells to the column width', () => {

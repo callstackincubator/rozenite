@@ -73,7 +73,7 @@ export function DataTable<TRow>({
   const table = useReactTable({
     data,
     columns,
-    state: { sorting, ...(resizing.enabled && { columnSizing: resizing.columnSizing }) },
+    state: { sorting, ...(resizing.enabled && resizing.state) },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),

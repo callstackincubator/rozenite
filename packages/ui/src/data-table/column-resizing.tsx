@@ -1,5 +1,6 @@
-import { useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import type {
+  ColumnSizingInfoState,
   ColumnSizingState,
   Header,
   OnChangeFn,
@@ -15,15 +16,14 @@ export type ColumnResizingOptions = {
   minSize?: number;
   /** Widest a column can be dragged to, in px. */
   maxSize?: number;
-  /** Controlled column widths, keyed by column id. Pair with `onSizingChange` to persist them. */
-  sizing?: ColumnSizingState;
-  onSizingChange?: OnChangeFn<ColumnSizingState>;
   /**
-   * `'onChange'` resizes the column live while dragging; `'onEnd'` waits for the pointer to be
-   * released.
-   * @default 'onChange'
+   * Controlled column widths, keyed by column id. Always pair it with `onSizingChange`: a
+   * controlled table only changes width when its owner feeds the new widths back, so `sizing`
+   * on its own leaves the handles unable to resize anything.
    */
-  mode?: 'onChange' | 'onEnd';
+  sizing?: ColumnSizingState;
+  /** Called with every width change, while dragging as well as on release. */
+  onSizingChange?: OnChangeFn<ColumnSizingState>;
 };
 
 /** Opt in with `true` for the defaults, or pass options to tune or control the widths. */
@@ -34,8 +34,21 @@ const KEYBOARD_RESIZE_STEP = 16;
 
 type ColumnResizingTableOptions<TData extends RowData> = Pick<
   TableOptions<TData>,
-  'enableColumnResizing' | 'columnResizeMode' | 'defaultColumn' | 'onColumnSizingChange'
+  | 'enableColumnResizing'
+  | 'columnResizeMode'
+  | 'defaultColumn'
+  | 'onColumnSizingChange'
+  | 'onColumnSizingInfoChange'
 >;
+
+const INITIAL_SIZING_INFO: ColumnSizingInfoState = {
+  startOffset: null,
+  startSize: null,
+  deltaOffset: null,
+  deltaPercentage: null,
+  isResizingColumn: false,
+  columnSizingStart: [],
+};
 
 /**
  * Resolves the `columnResizing` prop into the TanStack options and the widths to feed back
@@ -44,25 +57,58 @@ type ColumnResizingTableOptions<TData extends RowData> = Pick<
  */
 export function useColumnResizing<TData extends RowData>(prop: ColumnResizingProp | undefined) {
   const [uncontrolledSizing, setUncontrolledSizing] = useState<ColumnSizingState>({});
+  const [sizingInfo, setSizingInfo] = useState<ColumnSizingInfoState>(INITIAL_SIZING_INFO);
+  const sizingInfoRef = useRef(sizingInfo);
+  sizingInfoRef.current = sizingInfo;
   const enabled = Boolean(prop);
   const options: ColumnResizingOptions = typeof prop === 'object' && prop !== null ? prop : {};
+
+  const sizingWithoutHandler = enabled && options.sizing !== undefined && !options.onSizingChange;
+
+  useEffect(() => {
+    if (
+      sizingWithoutHandler &&
+      typeof process !== 'undefined' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      console.warn(
+        '[@rozenite/ui] `columnResizing.sizing` was passed without `onSizingChange`, so the table ' +
+          'cannot resize: the widths are controlled and nothing updates them. Pass ' +
+          '`onSizingChange` too, or drop `sizing` to let the table keep its own widths.',
+      );
+    }
+  }, [sizingWithoutHandler]);
 
   const tableOptions: Partial<ColumnResizingTableOptions<TData>> = enabled
     ? {
         enableColumnResizing: true,
-        columnResizeMode: options.mode ?? 'onChange',
+        columnResizeMode: 'onChange',
         defaultColumn: {
           ...(options.defaultSize !== undefined && { size: options.defaultSize }),
           ...(options.minSize !== undefined && { minSize: options.minSize }),
           ...(options.maxSize !== undefined && { maxSize: options.maxSize }),
         },
         onColumnSizingChange: options.onSizingChange ?? setUncontrolledSizing,
+        // TanStack's drag handler fills a shared object from inside this updater and reads it
+        // from the sizing updater queued right after. React runs queued updaters lazily, and in
+        // the order their state hooks were declared, so left to React the sizing updater can run
+        // first and every move would land one step late (the last one never). Evaluating this
+        // one eagerly, against a ref, keeps the two in order.
+        onColumnSizingInfoChange: (updater) => {
+          sizingInfoRef.current =
+            typeof updater === 'function' ? updater(sizingInfoRef.current) : updater;
+          setSizingInfo(sizingInfoRef.current);
+        },
       }
     : {};
 
   return {
     enabled,
-    columnSizing: options.sizing ?? uncontrolledSizing,
+    /** The `state` entries the table needs while resizing is enabled. */
+    state: {
+      columnSizing: options.sizing ?? uncontrolledSizing,
+      columnSizingInfo: sizingInfo,
+    },
     tableOptions,
   };
 }
@@ -140,9 +186,9 @@ export function ColumnResizeHandle<TData extends RowData>({
       <span
         aria-hidden="true"
         className={cn(
-          'h-full w-px bg-border transition-colors duration-[120ms]',
-          'group-hover/resize:bg-border-strong group-focus-visible/resize:bg-primary',
-          'group-data-[resizing]/resize:bg-primary',
+          'h-full w-px bg-border transition-[width,background-color] duration-[120ms]',
+          'group-hover/resize:bg-border-strong group-focus-visible/resize:w-0.5 group-focus-visible/resize:bg-primary',
+          'group-data-[resizing]/resize:w-0.5 group-data-[resizing]/resize:bg-primary',
         )}
       />
     </div>

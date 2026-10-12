@@ -212,7 +212,7 @@ export const VirtualizedDataTable = <TData,>({
     manualSorting,
     onSortingChange: handleSortingChange,
     ...resizing.tableOptions,
-    state: { sorting, ...(resizing.enabled && { columnSizing: resizing.columnSizing }) },
+    state: { sorting, ...(resizing.enabled && resizing.state) },
   });
   const rows = table.getRowModel().rows;
   // Read per render: `table` is a stable object, so the memo below would never see a resize.

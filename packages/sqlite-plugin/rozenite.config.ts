@@ -524,6 +524,9 @@ const runSelect = (database: MockDatabase, sql: string, params: Value[]) => {
     if (!aliased) throw new SqlError(`near "${text.slice(0, 24)}": syntax error`);
     const source = unquote(aliased[1]);
     const rowIdentifier = /^(rowid|_rowid_|oid)$/i.test(source);
+    if (rowIdentifier && /without\s+rowid/i.test(entity.sql)) {
+      throw new SqlError(`no such column: ${source}`);
+    }
     if (!rowIdentifier && !entity.columns.some((column) => column.name === source)) {
       throw new SqlError(`no such column: ${source}`);
     }
