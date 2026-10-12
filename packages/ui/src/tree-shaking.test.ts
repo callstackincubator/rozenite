@@ -89,30 +89,42 @@ async function bundleConsumer(name: string, importNames: string[]): Promise<Bund
   };
 }
 
+// A bundle takes about a second on an idle machine, but Turborepo runs this beside the other
+// packages' suites, and Vitest's default of 5 seconds is too close for that.
+const BUNDLE_TIMEOUT = 60_000;
+
 describe('@rozenite/ui tree shaking', () => {
-  it('bundles only the Button for a consumer that imports only the Button', async () => {
-    const { slots, gzipKb } = await bundleConsumer('button-only', ['Button']);
+  it(
+    'bundles only the Button for a consumer that imports only the Button',
+    async () => {
+      const { slots, gzipKb } = await bundleConsumer('button-only', ['Button']);
 
-    // Any other slot is a component, or a part of one, that a module-scope statement kept alive.
-    // Before the module-scope calls were annotated this was 96 of the library's 124 slots.
-    expect(slots).toEqual(['button']);
+      // Any other slot is a component, or a part of one, that a module-scope statement kept alive.
+      // Before the module-scope calls were annotated this was 96 of the library's 124 slots.
+      expect(slots).toEqual(['button']);
 
-    // 11 kB at the time of writing, nearly all of it tailwind-merge. It was 110 kB when every
-    // component was retained, so this fails for a regression and not for a dependency bump.
-    expect(gzipKb).toBeLessThan(20);
-  });
+      // 11 kB at the time of writing, nearly all of it tailwind-merge. It was 110 kB when every
+      // component was retained, so this fails for a regression and not for a dependency bump.
+      expect(gzipKb).toBeLessThan(20);
+    },
+    BUNDLE_TIMEOUT,
+  );
 
-  it('drops every component for a consumer that imports only tokens and hooks', async () => {
-    // These live in modules that also define compound components or class-variance configs.
-    const { slots, gzipKb } = await bundleConsumer('tokens-only', [
-      'sizeHeight',
-      'useToast',
-      'useConfirmDialog',
-      'usePluginTheme',
-    ]);
+  it(
+    'drops every component for a consumer that imports only tokens and hooks',
+    async () => {
+      // These live in modules that also define compound components or class-variance configs.
+      const { slots, gzipKb } = await bundleConsumer('tokens-only', [
+        'sizeHeight',
+        'useToast',
+        'useConfirmDialog',
+        'usePluginTheme',
+      ]);
 
-    expect(slots).toEqual([]);
-    // A module-scope `cn(...)` call retains tailwind-merge, ~8 kB gzipped, here.
-    expect(gzipKb).toBeLessThan(2);
-  });
+      expect(slots).toEqual([]);
+      // A module-scope `cn(...)` call retains tailwind-merge, ~8 kB gzipped, here.
+      expect(gzipKb).toBeLessThan(2);
+    },
+    BUNDLE_TIMEOUT,
+  );
 });
