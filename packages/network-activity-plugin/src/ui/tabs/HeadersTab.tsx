@@ -71,6 +71,7 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
             {
               key: 'Source',
               value: sourceLabel,
+              valueClassName: 'font-mono text-xs',
             },
           ]
         : []),

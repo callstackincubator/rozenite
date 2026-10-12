@@ -14,15 +14,19 @@ describe('formatTime', () => {
 
 describe('formatTimestamp', () => {
   it('reads the timestamp as epoch milliseconds, like the device sends it', () => {
-    // Regression guard: the Timing tab used to multiply by 1000, which rendered
-    // a clock time far from the request's real start.
     const timestamp = new Date(2026, 2, 2, 14, 5, 9).getTime();
 
     expect(formatTimestamp(timestamp)).toBe(new Date(timestamp).toLocaleTimeString());
     expect(formatTimestamp(timestamp + 61_000)).toBe(
       new Date(timestamp + 61_000).toLocaleTimeString(),
     );
-    // One minute later reads as a different clock time (a ×1000 timestamp would not).
-    expect(formatTimestamp(timestamp + 61_000)).not.toBe(formatTimestamp(timestamp));
+  });
+
+  it('does not read the timestamp as seconds', () => {
+    // Regression guard: the Timing tab used to multiply by 1000, which showed a clock time
+    // unrelated to the request's real start.
+    const timestamp = new Date(2026, 2, 2, 14, 5, 9).getTime();
+
+    expect(formatTimestamp(timestamp)).not.toBe(new Date(timestamp * 1000).toLocaleTimeString());
   });
 });
