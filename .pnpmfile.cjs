@@ -7,7 +7,11 @@
 // after editing it run `pnpm install` and commit the lockfile, or
 // `pnpm install --frozen-lockfile` fails. `npm publish` ignores it.
 const withoutDevelopment = (value) => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (Array.isArray(value)) {
+    return value.map(withoutDevelopment);
+  }
+
+  if (!value || typeof value !== 'object') {
     return value;
   }
 
