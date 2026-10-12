@@ -82,6 +82,8 @@ function hasPrereleaseState() {
 
 function updateLockfile() {
   run('pnpm', ['install', '--lockfile-only']);
+  // Materialize once before parallel checks can trigger competing pnpm installs.
+  run('pnpm', ['install', '--frozen-lockfile']);
 }
 
 function syncChromeExtensionManifestVersion() {
