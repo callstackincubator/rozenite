@@ -21,6 +21,7 @@ import {
   lineNumbers,
   placeholder,
 } from '@codemirror/view';
+import { usePluginTheme } from '@rozenite/ui';
 import { forwardRef, useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 
 export type SqlEditorHandle = {
@@ -51,130 +52,174 @@ const autocompleteCompartment = new Compartment();
 const errorLineCompartment = new Compartment();
 const placeholderCompartment = new Compartment();
 const editableCompartment = new Compartment();
+const themeCompartment = new Compartment();
 
 const emptyDecorations = Decoration.set([]);
+
+/*
+ * The editor takes its colours from the @rozenite/ui tokens, so it follows the theme without a
+ * palette of its own. Code reads as on rozenite.dev (docs/DESIGN.md, "Code"): keywords and
+ * punctuation dimmed, names and functions in the foreground, strings and numbers in the
+ * accent, comments faint.
+ */
 const sqlHighlightStyle = HighlightStyle.define([
   {
     tag: [tags.keyword, tags.operatorKeyword],
-    color: '#60a5fa',
-    fontWeight: '500',
+    color: 'var(--muted-foreground)',
   },
   {
     tag: [tags.string, tags.special(tags.string)],
-    color: '#4ade80',
+    color: 'var(--primary)',
   },
   {
     tag: [tags.number, tags.integer, tags.float, tags.bool],
-    color: '#fbbf24',
+    color: 'var(--primary)',
   },
   {
     tag: [tags.comment, tags.lineComment, tags.blockComment],
-    color: '#858585',
-    fontStyle: 'italic',
+    color: 'var(--faint)',
   },
   {
     tag: [tags.name, tags.variableName, tags.propertyName],
-    color: '#e5e5e5',
+    color: 'var(--foreground)',
   },
   {
     tag: [tags.definition(tags.name), tags.typeName, tags.namespace],
-    color: '#93c5fd',
+    color: 'var(--foreground)',
   },
   {
     tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
-    color: '#22d3ee',
+    color: 'var(--foreground)',
   },
   {
     tag: [tags.operator, tags.compareOperator, tags.logicOperator],
-    color: '#a3a3a3',
+    color: 'var(--muted-foreground)',
   },
   {
     tag: tags.null,
-    color: '#ff7a50',
+    color: 'var(--muted-foreground)',
   },
   {
     tag: [tags.paren, tags.squareBracket, tags.brace, tags.punctuation],
-    color: '#a3a3a3',
+    color: 'var(--muted-foreground)',
   },
 ]);
 
-const sqlEditorTheme = EditorView.theme(
-  {
-    '&': {
-      display: 'flex',
-      flex: '1 1 auto',
-      minHeight: '0',
-      height: '100%',
-      color: 'var(--sqlite-text)',
-      backgroundColor: 'transparent',
-      fontSize: '0.8rem',
+const createSqlEditorTheme = (dark: boolean): Extension =>
+  EditorView.theme(
+    {
+      '&': {
+        display: 'flex',
+        flex: '1 1 auto',
+        minHeight: '0',
+        height: '100%',
+        color: 'var(--foreground)',
+        backgroundColor: 'transparent',
+        fontSize: '12px',
+      },
+      '&.cm-focused': {
+        outline: 'none',
+      },
+      '.cm-scroller': {
+        display: 'flex',
+        flex: '1 1 auto',
+        minHeight: '0',
+        fontFamily: 'inherit',
+        lineHeight: '1.65',
+      },
+      '.cm-sizer': {
+        minHeight: '100%',
+        minWidth: '100%',
+        flex: '1 1 auto',
+      },
+      '.cm-content': {
+        minHeight: '100%',
+        caretColor: 'var(--foreground)',
+      },
+      '.cm-cursor, .cm-dropCursor': {
+        borderLeftColor: 'var(--foreground)',
+      },
+      '.cm-selectionBackground, &.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, ::selection':
+        {
+          backgroundColor: 'color-mix(in srgb, var(--primary) 25%, transparent)',
+        },
+      '.cm-placeholder': {
+        color: 'var(--faint)',
+      },
+      '.cm-activeLine': {
+        backgroundColor: 'var(--accent)',
+      },
+      '.cm-activeLineGutter': {
+        backgroundColor: 'var(--accent)',
+        color: 'var(--foreground)',
+      },
+      '.cm-gutters': {
+        color: 'var(--faint)',
+        backgroundColor: 'transparent',
+        border: 'none',
+        borderRight: '1px solid var(--border)',
+      },
+      '.cm-sqlite-errorLine': {
+        backgroundColor: 'color-mix(in srgb, var(--danger) 14%, transparent)',
+        boxShadow: 'inset 2px 0 0 var(--danger)',
+      },
+      '.cm-tooltip': {
+        border: '1px solid var(--border-strong)',
+        backgroundColor: 'var(--popover)',
+        color: 'var(--popover-foreground)',
+        borderRadius: '0',
+        overflow: 'hidden',
+      },
+      '.cm-tooltip-autocomplete > ul > li': {
+        padding: '2px 8px',
+      },
+      '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
+        backgroundColor: 'var(--accent)',
+        color: 'var(--foreground)',
+      },
+      '.cm-completionMatchedText': {
+        textDecoration: 'none',
+        color: 'var(--primary)',
+      },
+      '.cm-completionDetail': {
+        color: 'var(--faint)',
+      },
+      '.cm-panels': {
+        backgroundColor: 'var(--card)',
+        color: 'var(--foreground)',
+        borderBottom: '1px solid var(--border)',
+      },
+      '.cm-panels input, .cm-panels button': {
+        fontFamily: 'inherit',
+        fontSize: '12px',
+      },
+      '.cm-panels .cm-textfield': {
+        backgroundColor: 'var(--muted)',
+        border: '1px solid var(--input)',
+        color: 'var(--foreground)',
+        borderRadius: '0',
+      },
+      '.cm-panels .cm-button': {
+        backgroundImage: 'none',
+        backgroundColor: 'var(--secondary)',
+        border: '1px solid var(--border-strong)',
+        color: 'var(--foreground)',
+        borderRadius: '0',
+      },
+      '.cm-searchMatch': {
+        backgroundColor: 'color-mix(in srgb, var(--warning) 20%, transparent)',
+        outline: '1px solid color-mix(in srgb, var(--warning) 30%, transparent)',
+      },
+      '.cm-searchMatch.cm-searchMatch-selected': {
+        backgroundColor: 'color-mix(in srgb, var(--primary) 26%, transparent)',
+      },
+      '&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket': {
+        backgroundColor: 'var(--accent)',
+        outline: '1px solid var(--border-strong)',
+      },
     },
-    '&.cm-focused': {
-      outline: 'none',
-    },
-    '.cm-scroller': {
-      display: 'flex',
-      flex: '1 1 auto',
-      minHeight: '0',
-      fontFamily: 'var(--sqlite-font-mono)',
-    },
-    '.cm-sizer': {
-      minHeight: '100%',
-      minWidth: '100%',
-      flex: '1 1 auto',
-    },
-    '.cm-content': {
-      minHeight: '100%',
-      caretColor: '#ffffff',
-    },
-    '.cm-cursor, .cm-dropCursor': {
-      borderLeftColor: '#ffffff',
-    },
-    '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection': {
-      backgroundColor: 'rgba(255, 79, 123, 0.25)',
-    },
-    '.cm-activeLine': {
-      backgroundColor: 'rgba(255, 255, 255, 0.032)',
-    },
-    '.cm-activeLineGutter': {
-      backgroundColor: 'rgba(255, 255, 255, 0.028)',
-      color: '#ffffff',
-    },
-    '.cm-gutters': {
-      color: '#858585',
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      borderRight: '1px solid var(--sqlite-line)',
-    },
-    '.cm-tooltip': {
-      border: '1px solid var(--sqlite-line-strong)',
-      backgroundColor: 'var(--sqlite-surface)',
-      color: 'var(--sqlite-text)',
-      borderRadius: '0',
-      overflow: 'hidden',
-    },
-    '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
-      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-      color: '#fff',
-    },
-    '.cm-panels': {
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      color: 'var(--sqlite-text)',
-      borderBottom: '1px solid var(--sqlite-line)',
-    },
-    '.cm-searchMatch': {
-      backgroundColor: 'rgba(251, 191, 36, 0.2)',
-      outline: '1px solid rgba(251, 191, 36, 0.22)',
-    },
-    '.cm-searchMatch.cm-searchMatch-selected': {
-      backgroundColor: 'rgba(255, 79, 123, 0.26)',
-    },
-    '.cm-matchingBracket, .cm-nonmatchingBracket': {
-      backgroundColor: 'rgba(255, 255, 255, 0.06)',
-      outline: '1px solid rgba(255, 255, 255, 0.08)',
-    },
-  },
-  { dark: true },
-);
+    { dark },
+  );
 
 const createErrorLineExtension = (errorLine: number | null): Extension => {
   if (!errorLine) {
@@ -246,6 +291,7 @@ const SqlEditorInner = (
   }: SqlEditorProps,
   ref: Ref<SqlEditorHandle>,
 ) => {
+  const { theme } = usePluginTheme();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onValueChangeRef = useRef(onValueChange);
@@ -256,6 +302,7 @@ const SqlEditorInner = (
   const onFormatRef = useRef(onFormat);
   const applyingExternalValueRef = useRef(false);
   const initialValueRef = useRef(value);
+  const initialThemeRef = useRef(theme);
   const initialConfigRef = useRef({
     ariaLabel,
     completionSchema,
@@ -319,7 +366,7 @@ const SqlEditorInner = (
       state: EditorState.create({
         doc: initialValueRef.current,
         extensions: [
-          sqlEditorTheme,
+          themeCompartment.of(createSqlEditorTheme(initialThemeRef.current === 'dark')),
           EditorView.contentAttributes.of({
             'aria-label': initialConfigRef.current.ariaLabel,
           }),
@@ -440,6 +487,12 @@ const SqlEditorInner = (
   ]);
 
   useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: themeCompartment.reconfigure(createSqlEditorTheme(theme === 'dark')),
+    });
+  }, [theme]);
+
+  useEffect(() => {
     const editorView = viewRef.current;
     if (!editorView) {
       return;
@@ -468,7 +521,7 @@ const SqlEditorInner = (
     applyingExternalValueRef.current = false;
   }, [value]);
 
-  return <div ref={hostRef} className="sqlite-editor-shell" />;
+  return <div ref={hostRef} className="flex h-full min-h-0 flex-1 flex-col font-mono" />;
 };
 
 export const SqlEditor = forwardRef(SqlEditorInner);
