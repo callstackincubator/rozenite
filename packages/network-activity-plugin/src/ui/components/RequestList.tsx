@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { createColumnHelper, type ColumnSizingState } from '@tanstack/react-table';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createColumnHelper, type ColumnSizingState, type OnChangeFn } from '@tanstack/react-table';
 import {
   Badge,
   EmptyState,
@@ -19,6 +19,7 @@ import {
 import { getStatusTextClassName } from '../utils/getStatusTone';
 import { isNumber } from '../../utils/typeChecks';
 import { formatClockTime, parseUrl } from '../utils/memoized';
+import { keepColumnFillBase, withColumnFill } from '../utils/columnFill';
 
 type NetworkRequest = {
   id: RequestId;
@@ -138,13 +139,26 @@ const processNetworkRequests = (
   });
 };
 
+// Column widths in px when nobody has resized them. Name takes whatever width the pane has left
+// over (see `withColumnFill`), so its size here is the least it keeps.
+const COLUMN_SIZES = {
+  timestamp: 124,
+  name: 160,
+  status: 84,
+  method: 88,
+  domain: 100,
+  size: 76,
+  time: 76,
+};
+const FILL_COLUMN_ID = 'name';
+
 const columnHelper = createColumnHelper<RequestRow>();
 
 // Sizes and times sort on the numbers behind them, not on the formatted text.
 const columns: DataTableColumn<RequestRow>[] = [
   columnHelper.accessor('timestamp', {
     header: 'Start Time',
-    size: 124,
+    size: COLUMN_SIZES.timestamp,
     minSize: 116,
     cell: ({ row }) => (
       <>
@@ -158,8 +172,8 @@ const columns: DataTableColumn<RequestRow>[] = [
   }),
   columnHelper.accessor('name', {
     header: 'Name',
-    size: 156,
-    minSize: 96,
+    size: COLUMN_SIZES.name,
+    minSize: COLUMN_SIZES.name,
     cell: ({ row, getValue }) => {
       const sourceLabel = getSourceLabel(row.original.source);
 
@@ -187,7 +201,7 @@ const columns: DataTableColumn<RequestRow>[] = [
   }),
   columnHelper.accessor('status', {
     header: 'Status',
-    size: 84,
+    size: COLUMN_SIZES.status,
     minSize: 84,
     maxSize: 160,
     cell: ({ getValue }) => (
@@ -199,7 +213,7 @@ const columns: DataTableColumn<RequestRow>[] = [
   }),
   columnHelper.accessor('method', {
     header: 'Method',
-    size: 88,
+    size: COLUMN_SIZES.method,
     minSize: 88,
     maxSize: 160,
     cell: ({ getValue }) => <Text variant="code">{getValue()}</Text>,
@@ -207,7 +221,7 @@ const columns: DataTableColumn<RequestRow>[] = [
   }),
   columnHelper.accessor('domain', {
     header: 'Domain',
-    size: 116,
+    size: COLUMN_SIZES.domain,
     minSize: 80,
     cell: ({ getValue }) => (
       <Text variant="code" className="block truncate text-muted-foreground">
@@ -219,7 +233,7 @@ const columns: DataTableColumn<RequestRow>[] = [
   columnHelper.accessor((request) => request.sizeBytes ?? -1, {
     id: 'size',
     header: 'Size',
-    size: 76,
+    size: COLUMN_SIZES.size,
     minSize: 72,
     maxSize: 160,
     cell: ({ row }) => (
@@ -232,7 +246,7 @@ const columns: DataTableColumn<RequestRow>[] = [
   columnHelper.accessor('durationMs', {
     id: 'time',
     header: 'Time',
-    size: 76,
+    size: COLUMN_SIZES.time,
     minSize: 72,
     maxSize: 160,
     cell: ({ row }) => (
@@ -264,8 +278,52 @@ export const RequestList = ({
   const overrides = useOverrides();
   const clientUISettings = useClientUISettings();
   // Column widths live here, not in the table: the list stays mounted while the side panel opens
-  // and closes, so a width set once holds for the whole session.
+  // and closes, so a width set once holds for the whole session. `columnSizing` is what people
+  // have set; the table is laid out with `laidOutSizing`, which also lets Name fill the pane.
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+  const [paneWidth, setPaneWidth] = useState(0);
+  const paneRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const pane = paneRef.current;
+
+    if (!pane) {
+      return;
+    }
+
+    // The width the table can use is the scroller's, which leaves out its vertical scrollbar.
+    const scroller = pane.querySelector<HTMLElement>('[data-virtuoso-scroller="true"]');
+    const measure = () => setPaneWidth((scroller ?? pane).clientWidth);
+    const observer = new ResizeObserver(measure);
+
+    measure();
+    observer.observe(pane);
+
+    if (scroller) {
+      observer.observe(scroller);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const laidOutSizing = useMemo(
+    () =>
+      withColumnFill({
+        fillId: FILL_COLUMN_ID,
+        sizing: columnSizing,
+        defaultSizes: COLUMN_SIZES,
+        paneWidth,
+      }),
+    [columnSizing, paneWidth],
+  );
+
+  const handleSizingChange: OnChangeFn<ColumnSizingState> = (updater) => {
+    const next = typeof updater === 'function' ? updater(laidOutSizing) : updater;
+
+    setColumnSizing((previous) =>
+      keepColumnFillBase({ fillId: FILL_COLUMN_ID, previous, laidOut: laidOutSizing, next }),
+    );
+  };
 
   const requests = useMemo(() => {
     return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
@@ -285,7 +343,7 @@ export const RequestList = ({
   };
 
   return (
-    <div className="min-h-0 flex-1">
+    <div ref={paneRef} className="min-h-0 flex-1">
       <VirtualizedDataTable
         ariaLabel="Requests"
         className="network-request-table"
@@ -294,7 +352,7 @@ export const RequestList = ({
         columns={columns}
         getRowId={(request) => request.id}
         getRowTextValue={(request) => `${request.method} ${request.name}`}
-        columnResizing={{ sizing: columnSizing, onSizingChange: setColumnSizing }}
+        columnResizing={{ sizing: laidOutSizing, onSizingChange: handleSizingChange }}
         onRowClick={onRequestSelect}
         renderEmptyState={() => (
           <EmptyState
