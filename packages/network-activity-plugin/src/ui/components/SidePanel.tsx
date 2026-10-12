@@ -33,7 +33,7 @@ const getTypeColor = (type: string) => {
     websocket: 'bg-blue-600',
     sse: 'bg-cyan-600',
   };
-  return colors[type] || 'bg-gray-600';
+  return colors[type] || 'bg-gray-500';
 };
 
 // Adapter to convert new model to old format for tab components

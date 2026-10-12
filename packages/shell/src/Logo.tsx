@@ -3,25 +3,18 @@ import { cn } from '@rozenite/ui';
 /**
  * The Rozenite mark: the stepped crystal on its 7x10 step grid (docs/DESIGN.md, "The mark").
  * It keeps the bright accent in every theme, so the colour is literal rather than the
- * theme-aware `primary` token (which is the deeper crimson in light mode).
+ * theme-aware `primary` token (which is the deeper crimson in light mode). Keep its height a
+ * multiple of 10px so every step stays whole.
  */
-export function RozeniteMark({
-  className,
-  decorative = false,
-}: {
-  className?: string;
-  /** Hide it from assistive tech when a visible "Rozenite" label sits next to it. */
-  decorative?: boolean;
-}) {
+export function RozeniteMark({ className }: { className?: string }) {
   return (
     <svg
-      role={decorative ? undefined : 'img'}
-      aria-label={decorative ? undefined : 'Rozenite'}
-      aria-hidden={decorative ? true : undefined}
+      role="img"
+      aria-label="Rozenite"
       viewBox="0 0 7 10"
       shapeRendering="crispEdges"
       fill="#ff4f7b"
-      className={cn('h-6 w-auto', className)}
+      className={cn('h-5 w-auto', className)}
     >
       <path d="M3 0h1v1h1v2h1v2h1v3h-1v1h-1v1h-3v-1h-1v-1h-1v-3h1v-2h1v-2h1z" />
     </svg>
@@ -41,7 +34,7 @@ export function RozeniteLockup({ className }: { className?: string }) {
       aria-label="Rozenite"
       viewBox="0 0 104.17 24"
       fill="none"
-      className={cn('h-5 w-auto', className)}
+      className={cn('h-6 w-auto', className)}
     >
       <path
         transform="translate(0 2) scale(2)"
