@@ -42,7 +42,7 @@ type PluginThemeContextValue = {
   toggleTheme: () => void;
 };
 
-const PluginThemeContext = createContext<PluginThemeContextValue | null>(null);
+const PluginThemeContext = /* @__PURE__ */ createContext<PluginThemeContextValue | null>(null);
 
 export type PluginThemeProviderProps = {
   children: ReactNode;
@@ -116,7 +116,7 @@ export function usePluginTheme(): PluginThemeContextValue {
  * `null` outside a `PluginShell` (or before it has mounted), in which case
  * consumers should fall back to the Base UI default of `document.body`.
  */
-export const PluginPortalContainerContext = createContext<HTMLElement | null>(null);
+export const PluginPortalContainerContext = /* @__PURE__ */ createContext<HTMLElement | null>(null);
 
 export function usePluginPortalContainer(): HTMLElement | null {
   return useContext(PluginPortalContainerContext);

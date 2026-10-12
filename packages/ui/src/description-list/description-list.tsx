@@ -31,6 +31,6 @@ function DescriptionListItem({ label, className, children, ...props }: Descripti
 }
 
 /** A list of label/value rows, e.g. metadata about an entity. */
-export const DescriptionList = Object.assign(DescriptionListRoot, {
+export const DescriptionList = /* @__PURE__ */ Object.assign(DescriptionListRoot, {
   Item: DescriptionListItem,
 });

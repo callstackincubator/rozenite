@@ -81,7 +81,7 @@ type PendingConfirm = {
   resolve: (confirmed: boolean) => void;
 };
 
-const ConfirmDialogContext = createContext<ConfirmFn | null>(null);
+const ConfirmDialogContext = /* @__PURE__ */ createContext<ConfirmFn | null>(null);
 
 export type ConfirmDialogProviderProps = {
   children?: ReactNode;
@@ -150,6 +150,6 @@ export function useConfirmDialog(): ConfirmFn {
   return context;
 }
 
-export const ConfirmDialog = Object.assign(ConfirmDialogRoot, {
+export const ConfirmDialog = /* @__PURE__ */ Object.assign(ConfirmDialogRoot, {
   Provider: ConfirmDialogProvider,
 });

@@ -60,7 +60,7 @@ function TooltipContent({
 }
 
 /** A contextual label shown when the user hovers or focuses a trigger. */
-export const Tooltip = Object.assign(TooltipRoot, {
+export const Tooltip = /* @__PURE__ */ Object.assign(TooltipRoot, {
   Provider: TooltipProvider,
   Trigger: TooltipTrigger,
   Content: TooltipContent,

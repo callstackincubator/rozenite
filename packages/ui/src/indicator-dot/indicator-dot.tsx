@@ -13,7 +13,7 @@ const indicatorDotTone = {
   info: 'bg-info',
 } as const satisfies Record<Tone, string>;
 
-export const indicatorDotVariants = cva('shrink-0', {
+export const indicatorDotVariants = /* @__PURE__ */ cva('shrink-0', {
   variants: {
     tone: indicatorDotTone,
     size: {

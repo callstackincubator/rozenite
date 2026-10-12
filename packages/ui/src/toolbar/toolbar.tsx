@@ -80,7 +80,7 @@ function ToolbarGroup({ className, ...props }: ToolbarGroupProps) {
 }
 
 /** A compact action bar for related controls and separators. */
-export const Toolbar = Object.assign(ToolbarRoot, {
+export const Toolbar = /* @__PURE__ */ Object.assign(ToolbarRoot, {
   Button: ToolbarButton,
   Separator: ToolbarSeparator,
   Group: ToolbarGroup,

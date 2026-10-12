@@ -68,4 +68,6 @@ function ToggleGroupItem<Value extends string = string>({
 }
 
 /** A segmented control for one or more independent on/off facets. */
-export const ToggleGroup = Object.assign(ToggleGroupRoot, { Item: ToggleGroupItem });
+export const ToggleGroup = /* @__PURE__ */ Object.assign(ToggleGroupRoot, {
+  Item: ToggleGroupItem,
+});

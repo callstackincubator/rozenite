@@ -8,8 +8,8 @@ import type { Tone } from '../tokens/tone';
 import { monoLabel } from '../utils/mono-label';
 
 /** Shape and size only — color comes from `surfaceTone`, crossed with `tone`. */
-export const badgeVariants = cva(
-  cn(
+export const badgeVariants = /* @__PURE__ */ cva(
+  /* @__PURE__ */ cn(
     'inline-flex w-fit shrink-0 items-center justify-center rounded-sm whitespace-nowrap tabular-nums',
     monoLabel,
   ),

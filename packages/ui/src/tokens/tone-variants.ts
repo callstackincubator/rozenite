@@ -19,7 +19,7 @@ const toneKeys = {
  * `soft` is the website's chip: a `field` (muted) fill with the tone as text,
  * rather than a tinted fill, so the accent stays a colour of type, not of area.
  */
-export const surfaceTone = cva('', {
+export const surfaceTone = /* @__PURE__ */ cva('', {
   variants: {
     tone: toneKeys,
     variant: {
@@ -164,7 +164,7 @@ export const surfaceTone = cva('', {
  * Foreground-only tone color, for text-bearing components that don't render
  * a surface — Text, Icon, IndicatorDot.
  */
-export const textTone = cva('', {
+export const textTone = /* @__PURE__ */ cva('', {
   variants: {
     tone: {
       neutral: 'text-foreground',

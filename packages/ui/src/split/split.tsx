@@ -151,7 +151,7 @@ function SplitHandle({ className, withHandle = false, children, ...props }: Spli
 }
 
 /** A resizable layout group made of panes separated by draggable handles. */
-export const Split = Object.assign(SplitRoot, {
+export const Split = /* @__PURE__ */ Object.assign(SplitRoot, {
   Pane: SplitPane,
   Handle: SplitHandle,
 });

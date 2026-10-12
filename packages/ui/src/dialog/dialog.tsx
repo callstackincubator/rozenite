@@ -6,7 +6,7 @@ import { usePluginPortalContainer } from '../theme/theme-context';
 
 export type DialogProps = DialogPrimitive.Root.Props;
 
-const DialogOpenContext = createContext<boolean | null>(null);
+const DialogOpenContext = /* @__PURE__ */ createContext<boolean | null>(null);
 
 function DialogRoot(props: DialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(props.defaultOpen ?? false);
@@ -154,7 +154,7 @@ function DialogDescription({ className, ...props }: DialogDescriptionProps) {
 }
 
 /** A modal surface for focused tasks, information, or confirmation flows. */
-export const Dialog = Object.assign(DialogRoot, {
+export const Dialog = /* @__PURE__ */ Object.assign(DialogRoot, {
   Trigger: DialogTrigger,
   Close: DialogClose,
   Content: DialogContent,
