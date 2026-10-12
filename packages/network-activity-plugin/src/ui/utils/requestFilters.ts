@@ -1,6 +1,7 @@
 import type { FilterState } from '../state/filter';
 import type { ProcessedRequest } from '../state/model';
 import type { HttpMethod } from '../../shared/client';
+import { parseUrl } from './memoized';
 
 export type RequestFilterOptions = {
   hasOverride?: boolean;
@@ -68,16 +69,18 @@ const isHttpMethod = (method: ProcessedRequest['method']): method is HttpMethod 
   method !== 'WS' && method !== 'SSE';
 
 const extractDomainAndPath = (url: string) => {
-  try {
-    const { hostname, pathname, search, hash, port } = new URL(url);
+  const parsed = parseUrl(url);
 
-    return {
-      domain: `${hostname}${port ? `:${port}` : ''}`,
-      path: `${pathname}${search}${hash}`,
-    };
-  } catch {
+  if (!parsed) {
     return { domain: 'unknown', path: url };
   }
+
+  const { hostname, pathname, search, hash, port } = parsed;
+
+  return {
+    domain: `${hostname}${port ? `:${port}` : ''}`,
+    path: `${pathname}${search}${hash}`,
+  };
 };
 
 export const matchesRequestFilter = (

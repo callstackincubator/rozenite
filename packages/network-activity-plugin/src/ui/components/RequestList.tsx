@@ -18,6 +18,7 @@ import {
 } from '../state/hooks';
 import { getStatusTextClassName } from '../utils/getStatusTone';
 import { isNumber } from '../../utils/typeChecks';
+import { formatClockTime, parseUrl } from '../utils/memoized';
 
 type NetworkRequest = {
   id: RequestId;
@@ -70,41 +71,33 @@ const formatDuration = (duration: number): string => {
   return `${(duration / 1000).toFixed(1)} s`;
 };
 
-const formatStartTime = (startTime: number): string => {
-  const date = new Date(startTime);
-  const timeString = date.toLocaleTimeString('en-US', {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-  const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
-  return `${timeString}.${milliseconds}`;
-};
+const formatStartTime = (startTime: number): string => formatClockTime(startTime);
 
 const extractDomainAndPath = (url: string): { domain: string; path: string } => {
-  try {
-    const { hostname, pathname, search, hash, port } = new URL(url);
+  const parsed = parseUrl(url);
 
-    return {
-      domain: `${hostname}${port ? `:${port}` : ''}`,
-      path: `${pathname}${search}${hash}`,
-    };
-  } catch {
+  if (!parsed) {
     return { domain: 'unknown', path: url };
   }
+
+  const { hostname, pathname, search, hash, port } = parsed;
+
+  return {
+    domain: `${hostname}${port ? `:${port}` : ''}`,
+    path: `${pathname}${search}${hash}`,
+  };
 };
 
 const generateName = (url: string, showEntirePathName = false): string => {
-  try {
-    const urlObj = new URL(url);
-    const pathname = urlObj.pathname;
-    const filename = showEntirePathName ? undefined : pathname.split('/').pop();
+  const parsed = parseUrl(url);
 
-    return filename || pathname || urlObj.hostname;
-  } catch {
+  if (!parsed) {
     return url;
   }
+
+  const filename = showEntirePathName ? undefined : parsed.pathname.split('/').pop();
+
+  return filename || parsed.pathname || parsed.hostname;
 };
 
 const processNetworkRequests = (
