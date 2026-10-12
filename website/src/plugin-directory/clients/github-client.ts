@@ -1,72 +1,27 @@
-interface GitHubRepository {
-  name: string;
-  full_name: string;
-  description: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  language: string | null;
-  html_url: string;
-  created_at: string;
-  updated_at: string;
-  owner: {
-    login: string;
-    avatar_url: string;
+import { getJson, HttpError } from './http-client';
+
+export async function getRepositoryStars(owner: string, repo: string): Promise<number> {
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'rozenite-website',
   };
-}
 
-interface GitHubError {
-  message: string;
-  documentation_url?: string;
-}
-
-async function getGitHubRepository(repository: string): Promise<GitHubRepository> {
-  const response = await fetch(`https://api.github.com/repos/${repository}`, {
-    headers: {
-      Accept: 'application/vnd.github.v3+json',
-      'User-Agent': 'rozenite-website',
-    },
-  });
-
-  if (!response.ok) {
-    const error: GitHubError = await response.json();
-    throw new Error(`GitHub API error: ${error.message}`);
+  // The token goes only in this header, to api.github.com. It is optional: without it the
+  // request is unauthenticated and subject to the much lower anonymous rate limit. It is not
+  // named GITHUB_TOKEN: Turborepo passes every GITHUB_* variable to every task, and the release
+  // job sets a write-scoped GITHUB_TOKEN that must never be sent from here.
+  const token = process.env.PLUGIN_DIRECTORY_GITHUB_TOKEN;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  return response.json();
-}
+  const repository = await getJson<{ stargazers_count?: unknown }>(url, headers);
 
-export async function getRepositoryStars(repository: string): Promise<number> {
-  try {
-    const repoData = await getGitHubRepository(repository);
-    return repoData.stargazers_count;
-  } catch (error) {
-    console.error(`Failed to fetch stars for ${repository}:`, error);
-    return 0;
+  if (typeof repository?.stargazers_count !== 'number') {
+    throw new HttpError(`GET ${url} returned no star count`, url);
   }
-}
 
-export function getRepositoryFromUrl(url: string): string | null {
-  try {
-    const urlObj = new URL(url);
-
-    if (urlObj.hostname !== 'github.com') {
-      return null;
-    }
-
-    const pathSegments = urlObj.pathname.split('/').filter(Boolean);
-
-    if (pathSegments.length < 2) {
-      return null;
-    }
-
-    const [owner, repo] = pathSegments;
-
-    if (!owner || !repo) {
-      return null;
-    }
-
-    return `${owner}/${repo}`;
-  } catch {
-    return null;
-  }
+  return repository.stargazers_count;
 }

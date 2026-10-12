@@ -39,11 +39,43 @@
     // inside the parent task's `errors-only` logs. Declaring it as a real task
     // here makes it cache on its own inputs, so a docs-only change restores it
     // instead of rebuilding it.
+    //
+    // The plugin directory page reads npm and GitHub while the site builds, so
+    // this task is never cached: its output depends on live data that is not a
+    // task input, and a cached degraded build must not satisfy a strict one.
+    // Strict env mode strips every variable not declared here, which is how the
+    // directory once shipped mock data without failing, so the variables it
+    // reads are passed through (not hashed). GITHUB_ACTIONS is listed although
+    // Turborepo already passes GITHUB_* through, so the deploy warnings do not
+    // depend on that default. The token is not named
+    // GITHUB_TOKEN: Turborepo passes every GITHUB_* variable to every task, and
+    // release.yml sets a write-scoped GITHUB_TOKEN for the job that builds this
+    // site.
     "@rozenite/docs#build": {
       "dependsOn": ["^build", "ui-storybook#build-storybook"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
       "outputs": ["dist/**", "build/**"],
-      "outputLogs": "errors-only"
+      "outputLogs": "errors-only",
+      "cache": false,
+      "passThroughEnv": [
+        "PLUGIN_DIRECTORY_GITHUB_TOKEN",
+        "PLUGIN_DIRECTORY_STRICT",
+        "GITHUB_ACTIONS"
+      ]
+    },
+    // The site has no typecheck of its own, but the generic task would still
+    // pull in the uncached, networked site build above.
+    "@rozenite/docs#typecheck": {
+      "dependsOn": [],
+      "outputs": []
+    },
+    // The docs tests cover pure validation code and need neither the site build
+    // (uncached, and it calls npm and GitHub) nor any other package's output.
+    "@rozenite/docs#test": {
+      "dependsOn": [],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     },
     "ui-storybook#build-storybook": {
       "dependsOn": ["^build"],

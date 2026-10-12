@@ -54,16 +54,20 @@ const href = (n: number) => `/plugin-directory/${n}`;
           <ul class="cells cells--3 dir">
             {page.data.map((p) => (
               <li class="cell">
-                <span class="cell-top">
-                  <span class="chip">v{p.version}</span>
-                  {p.isOfficial && <span class="chip chip--agent">Official</span>}
-                </span>
+                {(p.version !== undefined || p.isOfficial) && (
+                  <span class="cell-top">
+                    {p.version !== undefined && <span class="chip">v{p.version}</span>}
+                    {p.isOfficial && <span class="chip chip--agent">Official</span>}
+                  </span>
+                )}
                 <h2 class="h3 name">{p.packageName}</h2>
                 <p class="body">{p.description || 'A Rozenite plugin for React Native DevTools.'}</p>
                 <span class="meta label">
-                  <span class="stars" aria-label={`${p.stars.toLocaleString('en-US')} GitHub stars`}>
-                    ★ {p.stars.toLocaleString('en-US')}
-                  </span>
+                  {p.stars !== undefined && (
+                    <span class="stars" aria-label={`${p.stars.toLocaleString('en-US')} GitHub stars`}>
+                      ★ {p.stars.toLocaleString('en-US')}
+                    </span>
+                  )}
                   <a class="more" href={p.githubUrl} rel="noopener">
                     GitHub
                   </a>
@@ -75,7 +79,7 @@ const href = (n: number) => `/plugin-directory/${n}`;
             ))}
           </ul>
         ) : (
-          <p class="body empty">The directory could not be loaded right now. Try again in a moment.</p>
+          <p class="body empty">No plugins are listed yet.</p>
         )
       }
       {
@@ -140,6 +144,14 @@ const href = (n: number) => `/plugin-directory/${n}`;
   }
   .stars {
     margin-inline-end: auto;
+  }
+  /* Stays on the right when the version chip is missing. */
+  .cell-top > .chip--agent {
+    margin-inline-start: auto;
+  }
+  /* Keeps the links on the right when the star count is missing. */
+  .meta > .more:first-child {
+    margin-inline-start: auto;
   }
   .empty {
     padding: var(--pad);

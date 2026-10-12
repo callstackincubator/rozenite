@@ -44,6 +44,11 @@ jobs:
       - name: Check formatting
         run: pnpm format:all
 
+      # A pull request that only edits the root plugin-directory.json builds no package, so
+      # validate the file itself. Offline: it checks the entries, not npm or GitHub.
+      - name: Validate plugin directory
+        run: pnpm --filter @rozenite/docs run validate:plugin-directory
+
       # Rotates weekly. There is deliberately no fallback to the previous
       # period's key: falling back would carry the accumulated cache forward and
       # defeat the reset. Turborepo never prunes .turbo/cache, so without this it

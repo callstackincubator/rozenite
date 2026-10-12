@@ -1,16 +1,18 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { getRepository } from './repository/repository-factory';
-import type { PluginDirectoryReference, RozenitePluginEntry } from './types';
-import { getPackageNamesFromReferences, extractPackageNameFromNpmUrl } from './utils';
+import { getRepositoryStars } from './clients/github-client';
+import { HttpError } from './clients/http-client';
+import { getNpmPackageInfo } from './clients/npm-client';
+import type { RozenitePluginEntry, ValidatedPluginReference } from './types';
+import { validatePluginReferences } from './utils';
 
-export const getPluginReferences = async (): Promise<PluginDirectoryReference[]> => {
+export const getPluginReferences = async (): Promise<ValidatedPluginReference[]> => {
+  let plugins: unknown;
+
   try {
-    const plugins = JSON.parse(
+    plugins = JSON.parse(
       fs.readFileSync(path.resolve(process.cwd(), '../plugin-directory.json'), 'utf8'),
     );
-
-    return plugins;
   } catch (error) {
     throw new Error(
       `Failed to read plugin directory: ${
@@ -18,37 +20,63 @@ export const getPluginReferences = async (): Promise<PluginDirectoryReference[]>
       }`,
     );
   }
+
+  return validatePluginReferences(plugins);
 };
 
-export const getPlugins = async (
-  references: PluginDirectoryReference[],
-): Promise<RozenitePluginEntry[]> => {
-  try {
-    const repository = await getRepository();
-    const packageNames = getPackageNamesFromReferences(references);
+// Set by the deploy workflow. Strict builds fail rather than ship a directory with wrong data.
+const isStrict = () => process.env.PLUGIN_DIRECTORY_STRICT === 'true';
 
-    const cachedPlugins = await repository.getPlugins(packageNames);
-    const cachedPackageNames = new Set(cachedPlugins.map((p) => p.packageName));
-    console.log(`Found ${cachedPlugins.length} of ${packageNames.length} plugins in cache`);
+// Statuses that mean a third-party package or repository is gone (not found, gone, taken down for
+// legal reasons). Anything else (401, 403, 429, 5xx, network errors, bad payloads) is systemic.
+const GONE_STATUSES = new Set([404, 410, 451]);
 
-    const pluginsToFetch = references.filter((ref) => {
-      const packageName = extractPackageNameFromNpmUrl(ref.npmUrl);
-      return packageName && !cachedPackageNames.has(packageName);
-    });
+// A strict build fails when an official plugin cannot be loaded, or when a request for any plugin
+// fails for a reason other than the third-party plugin being gone. Everything else degrades: the
+// card is shown without the data, and the failure is logged.
+// A failing URL is retried by every page that lists the plugin, so the same line would repeat.
+const reported = new Set<string>();
 
-    console.log(`Fetching missing ${pluginsToFetch.length} of ${packageNames.length} plugins`);
-    const fetchedPlugins = await Promise.all(
-      pluginsToFetch.map((ref) => repository.getPluginWithFallback(ref)),
-    );
+const handleFailure = (packageName: string, isOfficial: boolean, error: unknown): void => {
+  const status = error instanceof HttpError ? error.status : undefined;
 
-    const allPlugins = [...cachedPlugins, ...fetchedPlugins];
+  if (isStrict() && (isOfficial || status === undefined || !GONE_STATUSES.has(status))) {
+    throw error;
+  }
 
-    await repository.cleanupExpired();
-
-    return allPlugins;
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch plugins data: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
+  const detail = error instanceof Error ? error.message : String(error);
+  // On GitHub Actions the prefix turns the line into an annotation on the run.
+  const annotation = process.env.GITHUB_ACTIONS === 'true' ? '::warning::' : '';
+  const line = `${annotation}[plugin-directory] ${packageName}: ${detail}`;
+  if (!reported.has(line)) {
+    reported.add(line);
+    console.warn(line);
   }
 };
+
+const loadPlugin = async (reference: ValidatedPluginReference): Promise<RozenitePluginEntry> => {
+  const { packageName, owner, repo, npmUrl, githubUrl } = reference;
+  const isOfficial = packageName.startsWith('@rozenite/');
+
+  const [npm, stars] = await Promise.allSettled([
+    getNpmPackageInfo(packageName),
+    getRepositoryStars(owner, repo),
+  ]);
+
+  if (npm.status === 'rejected') handleFailure(packageName, isOfficial, npm.reason);
+  if (stars.status === 'rejected') handleFailure(packageName, isOfficial, stars.reason);
+
+  return {
+    packageName,
+    npmUrl,
+    githubUrl,
+    isOfficial,
+    version: npm.status === 'fulfilled' ? npm.value.version : undefined,
+    description: npm.status === 'fulfilled' ? npm.value.description : undefined,
+    stars: stars.status === 'fulfilled' ? stars.value : undefined,
+  };
+};
+
+export const getPlugins = (
+  references: ValidatedPluginReference[],
+): Promise<RozenitePluginEntry[]> => Promise.all(references.map(loadPlugin));

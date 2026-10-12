@@ -7,12 +7,13 @@
     "build": "astro build && node scripts/copy-storybook.mjs",
     "dev": "astro dev",
     "preview": "astro preview",
-    "og": "node scripts/og.mjs"
+    "og": "node scripts/og.mjs",
+    "test": "vitest --run",
+    "validate:plugin-directory": "node scripts/validate-plugin-directory.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/starlight": "^0.42.2",
-    "@neondatabase/serverless": "^1.0.1",
     "astro": "^7.3.3",
     "cookie": "^2.0.1",
     "sharp": "^0.35.4",

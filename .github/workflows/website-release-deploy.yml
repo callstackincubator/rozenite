@@ -53,6 +53,14 @@ jobs:
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build project artifacts
+        # The plugin directory reads npm and GitHub while the site builds. The job token raises
+        # the GitHub rate limit, and strict mode fails the build instead of shipping a directory
+        # with missing data. Both are scoped to this step; turbo.json passes them to the docs
+        # build. The token is not named GITHUB_TOKEN: Turborepo hands every GITHUB_* variable to
+        # every task, and this one must reach only the docs build.
+        env:
+          PLUGIN_DIRECTORY_GITHUB_TOKEN: ${{ github.token }}
+          PLUGIN_DIRECTORY_STRICT: 'true'
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy prebuilt artifacts to production
