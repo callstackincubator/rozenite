@@ -26,3 +26,4 @@ Status values:
 | [0003](./0003-shared-host-protocol.md) | One definition of the Rozenite host protocol | Accepted — not yet implemented |
 | [0004](./0004-one-agent-list-contract.md) | One agent list contract | Accepted — not yet implemented |
 | [0005](./0005-agent-cli-grammar-v3.md) | Agent CLI grammar v3 | Accepted — not yet implemented |
+| [0006](./0006-plugin-directory-build-time-data.md) | Plugin directory data is fetched at build time, without a database | Accepted — not yet implemented |
