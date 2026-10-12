@@ -10,9 +10,7 @@ import {
   Split,
   type SplitPaneHandle,
 } from '@rozenite/ui';
-import compactLogo from '../../../website/public/logo.svg';
-import lightLogo from '../../../website/public/logo-light.svg';
-import darkLogo from '../../../website/public/logo-dark.svg';
+import { RozeniteLockup, RozeniteMark } from './Logo';
 import {
   closePluginsScreen,
   getInitialSelectionState,
@@ -212,14 +210,7 @@ export function Shell({
               className="h-full w-full gap-0 overflow-hidden border-r-0 p-0"
             >
               <Sidebar.Header className={sidebarHeaderClassName}>
-                {isSidebarCollapsed ? (
-                  <img src={compactLogo} alt="Rozenite" className="h-6 w-6" />
-                ) : (
-                  <>
-                    <img src={lightLogo} alt="Rozenite" className="h-6 w-auto dark:hidden" />
-                    <img src={darkLogo} alt="Rozenite" className="hidden h-6 w-auto dark:block" />
-                  </>
-                )}
+                {isSidebarCollapsed ? <RozeniteMark /> : <RozeniteLockup />}
               </Sidebar.Header>
               {!isSidebarCollapsed && (
                 <div className="min-h-0 flex-1 overflow-y-auto p-2">

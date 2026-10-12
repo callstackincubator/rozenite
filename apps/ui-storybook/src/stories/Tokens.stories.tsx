@@ -14,7 +14,8 @@ function ToneMatrix() {
             className={surfaceTone({
               tone,
               variant,
-              class: 'flex h-10 items-center justify-center rounded-md text-xs font-medium',
+              class:
+                'flex h-10 items-center justify-center rounded-md font-mono text-[10px] tracking-[0.08em] uppercase',
             })}
           >
             {tone}/{variant}
@@ -27,7 +28,7 @@ function ToneMatrix() {
 
 function TextToneRow() {
   return (
-    <div className="flex flex-wrap gap-4 text-sm font-medium">
+    <div className="flex flex-wrap gap-4 font-mono text-[11px] tracking-[0.08em] uppercase">
       {TONES.map((tone) => (
         <span key={tone} className={textTone({ tone })}>
           {tone}
@@ -37,13 +38,46 @@ function TextToneRow() {
   );
 }
 
+const SWATCHES = [
+  ['background', 'bg-background'],
+  ['surface', 'bg-surface'],
+  ['popover', 'bg-popover'],
+  ['muted', 'bg-muted'],
+  ['secondary', 'bg-secondary'],
+  ['border', 'bg-border'],
+  ['border-strong', 'bg-border-strong'],
+  ['faint', 'bg-faint'],
+  ['muted-foreground', 'bg-muted-foreground'],
+  ['foreground', 'bg-foreground'],
+  ['primary', 'bg-primary'],
+  ['primary-hover', 'bg-primary-hover'],
+  ['success', 'bg-success'],
+  ['warning', 'bg-warning'],
+  ['danger', 'bg-danger'],
+  ['info', 'bg-info'],
+] as const;
+
+function SwatchGrid() {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {SWATCHES.map(([name, className]) => (
+        <div key={name} className="flex items-center gap-2">
+          <span className={`${className} border-input size-6 shrink-0 border`} />
+          <span className="text-muted-foreground font-mono text-[11px]">{name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ThemePanel({ dark }: { dark: boolean }) {
   return (
     <div className={dark ? 'dark' : ''}>
       <div className="bg-background text-foreground flex flex-col gap-4 p-4">
-        <p className="text-muted-foreground text-xs font-semibold uppercase">
+        <p className="text-faint font-mono text-[11px] tracking-[0.08em] uppercase">
           {dark ? 'Dark' : 'Light'}
         </p>
+        <SwatchGrid />
         <ToneMatrix />
         <TextToneRow />
       </div>
@@ -70,8 +104,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * The full tone × variant matrix from `surfaceTone`, rendered in both
- * themes, plus the foreground-only palette from `textTone`.
+ * The palette tokens, the full tone × variant matrix from `surfaceTone`,
+ * rendered in both themes, plus the foreground-only palette from `textTone`.
  * @summary Compare every tone and variant combination in both themes.
  */
 export const ToneVariantMatrix: Story = {

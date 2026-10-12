@@ -4,21 +4,21 @@ import { truncateText } from './utils';
 
 const jsonTreeTheme = {
   base00: 'transparent',
-  base01: '#10233c',
-  base02: '#173150',
-  base03: '#7b94b6',
-  base04: '#bfd0e5',
-  base05: '#eef5ff',
+  base01: '#1f1f1f',
+  base02: '#313131',
+  base03: '#858585',
+  base04: '#a3a3a3',
+  base05: '#d4d4d4',
   base06: '#ffffff',
   base07: '#ffffff',
-  base08: '#fb7185',
-  base09: '#f59e0b',
-  base0A: '#facc15',
-  base0B: '#34d399',
+  base08: '#ff7a50',
+  base09: '#fbbf24',
+  base0A: '#fbbf24',
+  base0B: '#4ade80',
   base0C: '#22d3ee',
-  base0D: '#60a5fa',
-  base0E: '#78b8ff',
-  base0F: '#f97316',
+  base0D: '#a3a3a3',
+  base0E: '#60a5fa',
+  base0F: '#ff7a50',
 };
 
 export const isStructuredValue = (value: unknown): value is Record<string, unknown> | unknown[] => {

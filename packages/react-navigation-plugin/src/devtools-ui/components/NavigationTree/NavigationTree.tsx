@@ -16,7 +16,7 @@ export function NavigationTree({ actionHistory }: NavigationTreeProps) {
           key={states.length - index}
           className="flex flex-col-reverse items-center overflow-auto h-full min-w-[34vw]"
         >
-          <span className="font-bold text-sm text-gray-400">
+          <span className="font-medium text-sm text-muted-foreground">
             Navigation state n°{states.length - index}
           </span>
           <div className="h-4" />

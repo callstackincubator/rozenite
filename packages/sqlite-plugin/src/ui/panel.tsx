@@ -296,12 +296,12 @@ const buildExplorerGroups = (
 };
 
 const toneButtonClassName =
-  'sqlite-button inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium';
+  'sqlite-button inline-flex items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium';
 
 const secondaryButtonClassName = `${toneButtonClassName} sqlite-button-secondary`;
 const ghostButtonClassName = `${toneButtonClassName} sqlite-button-ghost`;
 const iconButtonClassName =
-  'sqlite-icon-button inline-flex h-10 w-10 items-center justify-center rounded-xl';
+  'sqlite-icon-button inline-flex h-10 w-10 items-center justify-center rounded-none';
 const primaryIconButtonClassName = `${iconButtonClassName} sqlite-button-primary`;
 const secondaryIconButtonClassName = `${iconButtonClassName} sqlite-button-secondary`;
 const dangerIconButtonClassName = `${iconButtonClassName} sqlite-button-danger`;
@@ -327,8 +327,8 @@ const renderEmptyState = (
         <Icon aria-hidden="true" className="h-6 w-6" />
       </div>
       <div className="max-w-md space-y-2 text-center">
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
-        <p className="text-sm leading-6 text-slate-400">{description}</p>
+        <h2 className="text-lg font-medium text-white">{title}</h2>
+        <p className="text-sm leading-6 text-[var(--sqlite-muted)]">{description}</p>
       </div>
     </div>
   );
@@ -1908,14 +1908,14 @@ export default function SqlitePanel() {
         {queryError ? (
           <div className="sqlite-inline-error" aria-live="polite">
             <div>
-              <p className="font-medium text-rose-100">
+              <p className="font-medium text-[var(--sqlite-danger)]">
                 {(queryExecution?.totalStatementCount ?? queryStatements.length) > 1
                   ? 'Script Error'
                   : 'SQL Error'}
               </p>
-              <p className="mt-1 text-sm text-rose-100/90">{queryError}</p>
+              <p className="mt-1 text-sm text-[var(--sqlite-danger)]">{queryError}</p>
               {queryErrorLine ? (
-                <p className="mt-1 text-xs text-rose-100/70">
+                <p className="mt-1 text-xs text-[var(--sqlite-danger)]">
                   Approximate location: line {formatNumber(queryErrorLine)}
                 </p>
               ) : null}
@@ -2062,8 +2062,8 @@ export default function SqlitePanel() {
       {browseError ? (
         <div className="sqlite-inline-error" aria-live="polite">
           <div>
-            <p className="font-medium text-rose-100">Data Load Failed</p>
-            <p className="mt-1 text-sm text-rose-100/90">{browseError}</p>
+            <p className="font-medium text-[var(--sqlite-danger)]">Data Load Failed</p>
+            <p className="mt-1 text-sm text-[var(--sqlite-danger)]">{browseError}</p>
           </div>
         </div>
       ) : null}
@@ -2221,8 +2221,8 @@ export default function SqlitePanel() {
       {structureError ? (
         <div className="sqlite-inline-error" aria-live="polite">
           <div>
-            <p className="font-medium text-rose-100">Structure Load Failed</p>
-            <p className="mt-1 text-sm text-rose-100/90">{structureError}</p>
+            <p className="font-medium text-[var(--sqlite-danger)]">Structure Load Failed</p>
+            <p className="mt-1 text-sm text-[var(--sqlite-danger)]">{structureError}</p>
           </div>
         </div>
       ) : null}
@@ -2473,8 +2473,10 @@ export default function SqlitePanel() {
                             ) : databaseExplorerState.error ? (
                               <div className="sqlite-inline-error" aria-live="polite">
                                 <div>
-                                  <p className="font-medium text-rose-100">Explorer Load Failed</p>
-                                  <p className="mt-1 text-sm text-rose-100/90">
+                                  <p className="font-medium text-[var(--sqlite-danger)]">
+                                    Explorer Load Failed
+                                  </p>
+                                  <p className="mt-1 text-sm text-[var(--sqlite-danger)]">
                                     {databaseExplorerState.error}
                                   </p>
                                 </div>

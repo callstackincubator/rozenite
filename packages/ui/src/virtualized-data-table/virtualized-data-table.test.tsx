@@ -135,7 +135,7 @@ describe('VirtualizedDataTable', () => {
     expect(rows[0]?.getAttribute('aria-label')).toBe('row-0');
     expect(view.querySelector('table')?.getAttribute('aria-label')).toBe('Entries');
     expect(view.querySelector('thead tr')?.className).toContain('border-b border-border');
-    expect(view.querySelector('th')?.className).toContain('text-muted-foreground');
+    expect(view.querySelector('th')?.className).toContain('text-faint');
     expect(rows[0]?.className).toContain('border-b border-border');
     expect(rows[0]?.querySelector('td')?.className).toContain('px-3 py-1.5 text-foreground');
   });

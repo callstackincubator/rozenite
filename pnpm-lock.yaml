@@ -1063,6 +1063,9 @@ importers:
       '@rozenite/test-utils':
         specifier: workspace:*
         version: link:../test-utils
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1627,6 +1630,9 @@ importers:
       '@rozenite/test-utils':
         specifier: workspace:*
         version: link:../test-utils
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin

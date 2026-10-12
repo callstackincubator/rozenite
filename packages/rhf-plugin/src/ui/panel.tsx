@@ -154,7 +154,7 @@ function LeafRow({
       </td>
       <td className="px-3 py-1.5">
         {hasError && (
-          <Badge tone="danger" variant="outline">
+          <Badge tone="danger" variant="outline" className="normal-case tracking-normal">
             {error?.type ?? 'error'}
           </Badge>
         )}

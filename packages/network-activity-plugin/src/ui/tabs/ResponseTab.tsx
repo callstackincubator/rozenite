@@ -85,7 +85,7 @@ export const ResponseTab = ({
       <Button
         variant="ghost"
         size="xs"
-        className="text-violet-300 hover:text-violet-300"
+        className="text-primary hover:text-primary-hover"
         onClick={(e) => {
           e.stopPropagation();
           setInitialOverride({

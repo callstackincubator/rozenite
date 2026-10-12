@@ -119,9 +119,11 @@ function SplitHandle({ className, withHandle = false, children, ...props }: Spli
     <Separator
       data-slot="split-handle"
       className={cn(
-        // Match shadcn's ResizableHandle: the one-pixel separator is the only
-        // visible affordance unless callers explicitly opt into a grip.
-        'group/split-handle relative flex items-center justify-center bg-border',
+        // The one-pixel hairline is the only visible affordance unless callers
+        // explicitly opt into a grip. It brightens on hover and takes the accent
+        // while it is being dragged.
+        'group/split-handle relative flex items-center justify-center bg-border transition-colors duration-[120ms]',
+        'hover:bg-faint data-[separator=active]:bg-primary',
         'aria-[orientation=vertical]:w-px aria-[orientation=vertical]:cursor-col-resize',
         'aria-[orientation=horizontal]:h-px aria-[orientation=horizontal]:cursor-row-resize',
         'after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2',
@@ -133,14 +135,14 @@ function SplitHandle({ className, withHandle = false, children, ...props }: Spli
       {withHandle && (
         <div
           className={cn(
-            'z-10 flex items-center justify-center rounded-sm border border-border bg-background',
+            'z-10 flex items-center justify-center rounded-sm border border-input bg-background',
             // `aria-orientation` lives on the Separator, so these read it from
             // the parent rather than from the grip itself.
             'group-aria-[orientation=vertical]/split-handle:h-4 group-aria-[orientation=vertical]/split-handle:w-3',
             'group-aria-[orientation=horizontal]/split-handle:h-3 group-aria-[orientation=horizontal]/split-handle:w-4 group-aria-[orientation=horizontal]/split-handle:rotate-90',
           )}
         >
-          <GripVertical className="h-2.5 w-2.5 text-muted-foreground" />
+          <GripVertical className="h-2.5 w-2.5 text-faint" />
         </div>
       )}
       {children}

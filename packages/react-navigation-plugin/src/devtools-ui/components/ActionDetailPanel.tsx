@@ -16,14 +16,14 @@ export const ActionDetailPanel = ({ action, state, origin }: ActionDetailPanelPr
         <DispatchOriginSection origin={origin} />
 
         <div className="mb-6">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">Action Payload</h3>
+          <h3 className="mb-3 text-sm font-medium text-foreground">Action Payload</h3>
           <div className="rounded-md border border-border bg-card p-3">
             <JsonInspector data={action} defaultExpandedDepth={2} />
           </div>
         </div>
 
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-foreground">Navigation State</h3>
+          <h3 className="mb-3 text-sm font-medium text-foreground">Navigation State</h3>
           <div className="rounded-md border border-border bg-card p-3">
             {state ? (
               <JsonInspector data={state} defaultExpandedDepth={2} />

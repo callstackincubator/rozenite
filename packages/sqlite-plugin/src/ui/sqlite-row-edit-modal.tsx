@@ -179,23 +179,19 @@ export const SqliteRowEditModal = ({
 
   return (
     <Modal state={overlay}>
-      <Modal.Backdrop
-        variant="blur"
-        isDismissable={!submitting}
-        className="bg-[rgba(5,10,16,0.24)] backdrop-blur-[2px]"
-      >
+      <Modal.Backdrop variant="opaque" isDismissable={!submitting} className="bg-black/60">
         <Modal.Container placement="center" size="lg" scroll="inside">
           <Modal.Dialog
             aria-label={`Edit row ${rowNumber} in ${entityName}`}
-            className="w-full max-w-4xl overflow-hidden border border-white/10 bg-[#0a121b] p-0 text-white shadow-[0_30px_90px_rgba(0,0,0,0.42)]"
+            className="w-full max-w-4xl overflow-hidden border border-[var(--sqlite-line-strong)] bg-[var(--sqlite-surface)] p-0 text-white"
           >
-            <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-5">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--sqlite-line)] px-5 py-5">
               <div>
                 <div className="flex items-center gap-2">
-                  <Pencil aria-hidden="true" className="h-4 w-4 text-sky-300" />
-                  <h2 className="text-lg font-semibold text-white">Edit Row {rowNumber}</h2>
+                  <Pencil aria-hidden="true" className="h-4 w-4 text-[var(--sqlite-muted)]" />
+                  <h2 className="text-lg font-medium text-white">Edit Row {rowNumber}</h2>
                 </div>
-                <p className="mt-1 text-sm text-slate-400">{entityName}</p>
+                <p className="mt-1 text-sm text-[var(--sqlite-muted)]">{entityName}</p>
               </div>
               <SqliteModalCloseButton onClose={onClose} disabled={submitting} />
             </div>
@@ -205,8 +201,10 @@ export const SqliteRowEditModal = ({
                 {primaryKeyColumns.length > 0 ? (
                   <section className="space-y-3">
                     <div>
-                      <h3 className="text-sm font-medium text-slate-200">Row Identifier</h3>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <h3 className="text-sm font-medium text-[var(--sqlite-text)]">
+                        Row Identifier
+                      </h3>
+                      <p className="mt-1 text-xs text-[var(--sqlite-muted)]">
                         Primary-key fields are shown for reference and cannot be edited.
                       </p>
                     </div>
@@ -214,21 +212,21 @@ export const SqliteRowEditModal = ({
                       {primaryKeyColumns.map((column) => (
                         <div
                           key={column.name}
-                          className="rounded-2xl border border-white/8 bg-white/[0.03] p-3"
+                          className="rounded-none border border-[var(--sqlite-line)] bg-white/[0.03] p-3"
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <p className="text-sm font-medium text-white">{column.name}</p>
-                              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                              <p className="text-xs uppercase tracking-[0.08em] text-[var(--sqlite-muted-soft)]">
                                 {column.type || 'value'}
                               </p>
                             </div>
                             <span className="sqlite-chip sqlite-chip-static">PK</span>
                           </div>
-                          <p className="mt-3 break-all font-mono text-sm text-slate-200">
+                          <p className="mt-3 break-all font-mono text-sm text-[var(--sqlite-text)]">
                             {getValuePreview(row?.[column.name])}
                           </p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-[var(--sqlite-muted-soft)]">
                             {getValueKind(row?.[column.name])}
                           </p>
                         </div>
@@ -239,14 +237,16 @@ export const SqliteRowEditModal = ({
 
                 <section className="space-y-3">
                   <div>
-                    <h3 className="text-sm font-medium text-slate-200">Editable Values</h3>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <h3 className="text-sm font-medium text-[var(--sqlite-text)]">
+                      Editable Values
+                    </h3>
+                    <p className="mt-1 text-xs text-[var(--sqlite-muted)]">
                       Update any non-primary-key column and save to write the row back to SQLite.
                     </p>
                   </div>
 
                   {editableColumns.length === 0 ? (
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm text-slate-300">
+                    <div className="rounded-none border border-[var(--sqlite-line)] bg-white/[0.03] p-4 text-sm text-[var(--sqlite-muted)]">
                       This row does not expose editable, non-primary-key columns.
                     </div>
                   ) : (
@@ -264,7 +264,7 @@ export const SqliteRowEditModal = ({
                         return (
                           <div
                             key={column.name}
-                            className="rounded-2xl border border-white/8 bg-white/[0.03] p-4"
+                            className="rounded-none border border-[var(--sqlite-line)] bg-white/[0.03] p-4"
                           >
                             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                               <div className="min-w-0">
@@ -274,7 +274,7 @@ export const SqliteRowEditModal = ({
                                 >
                                   {column.name}
                                 </label>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-[var(--sqlite-muted-soft)]">
                                   {column.type || 'value'}
                                 </p>
                               </div>
@@ -332,7 +332,7 @@ export const SqliteRowEditModal = ({
 
                             <div className="mt-3">
                               {draft.kind === 'null' ? (
-                                <div className="rounded-xl border border-dashed border-white/10 bg-black/10 px-3 py-2 text-sm text-slate-400">
+                                <div className="rounded-none border border-dashed border-[var(--sqlite-line-strong)] bg-black/10 px-3 py-2 text-sm text-[var(--sqlite-muted)]">
                                   This field will be saved as SQL NULL.
                                 </div>
                               ) : draft.kind === 'boolean' ? (
@@ -390,7 +390,7 @@ export const SqliteRowEditModal = ({
                               )}
                             </div>
 
-                            <p className="mt-2 text-xs text-slate-500">
+                            <p className="mt-2 text-xs text-[var(--sqlite-muted-soft)]">
                               Current value: {getValuePreview(row?.[column.name])} (
                               {getValueKind(row?.[column.name])}) · Compatible:{' '}
                               {compatibleKinds
@@ -410,14 +410,14 @@ export const SqliteRowEditModal = ({
                 {error ? (
                   <div className="sqlite-inline-error" aria-live="polite">
                     <div>
-                      <p className="font-medium text-rose-100">Save Failed</p>
-                      <p className="mt-1 text-sm text-rose-100/90">{error}</p>
+                      <p className="font-medium text-[var(--sqlite-danger)]">Save Failed</p>
+                      <p className="mt-1 text-sm text-[var(--sqlite-danger)]">{error}</p>
                     </div>
                   </div>
                 ) : null}
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-white/8 px-5 py-5">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--sqlite-line)] px-5 py-5">
                 <button
                   type="button"
                   className={sqliteSecondaryButtonClassName}

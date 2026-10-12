@@ -18,7 +18,7 @@ export const CookieCard = ({ cookie, keyClassName }: CookieCardProps) => (
           </Badge>
         )}
         {cookie.httpOnly && (
-          <Badge variant="outline" className="text-xs text-purple-400 border-purple-400">
+          <Badge variant="outline" className="text-xs text-gray-300 border-gray-600">
             HttpOnly
           </Badge>
         )}

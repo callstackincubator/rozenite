@@ -9,8 +9,8 @@ export function Switch({ className, ...props }: SwitchProps) {
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        'relative inline-flex h-5 w-9 shrink-0 rounded-full border border-input bg-muted transition-colors',
-        'data-[checked]:border-primary data-[checked]:bg-primary',
+        'relative inline-flex h-[18px] w-8 shrink-0 border border-input bg-muted transition-colors duration-[120ms]',
+        'hover:border-faint data-[checked]:border-primary data-[checked]:bg-primary',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         'disabled:pointer-events-none disabled:opacity-50',
         className,
@@ -19,8 +19,8 @@ export function Switch({ className, ...props }: SwitchProps) {
     >
       <SwitchPrimitive.Thumb
         className={cn(
-          'pointer-events-none absolute top-1/2 left-0.5 h-4 w-4 -translate-y-1/2 rounded-full bg-background shadow-xs transition-transform',
-          'data-[checked]:translate-x-4',
+          'pointer-events-none absolute top-1/2 left-[2px] size-3 -translate-y-1/2 bg-faint transition-transform duration-[120ms]',
+          'data-[checked]:translate-x-[14px] data-[checked]:bg-primary-foreground',
         )}
       />
     </SwitchPrimitive.Root>

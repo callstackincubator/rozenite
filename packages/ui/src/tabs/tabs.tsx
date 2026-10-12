@@ -1,17 +1,18 @@
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs';
 import { cn } from '../utils/cn';
 import type { Size } from '../tokens/size';
+import { monoLabel } from '../utils/mono-label';
 
 const tabsListSize = {
-  sm: 'h-6 p-0.5',
-  md: 'h-8 p-1',
-  lg: 'h-10 p-1',
+  sm: 'h-6',
+  md: 'h-8',
+  lg: 'h-10',
 } as const satisfies Record<Size, string>;
 
 const tabsTabSize = {
-  sm: 'h-5 px-2 text-xs',
-  md: 'h-6 px-2.5 text-sm',
-  lg: 'h-8 px-3 text-base',
+  sm: 'px-2.5 text-[11px]',
+  md: 'px-3 text-[11px]',
+  lg: 'px-4 text-xs',
 } as const satisfies Record<Size, string>;
 
 export type TabsProps = TabsPrimitive.Root.Props;
@@ -30,7 +31,7 @@ function TabsList({ className, size = 'md', ...props }: TabsListProps) {
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        'inline-flex items-center gap-1 rounded-md bg-muted text-muted-foreground',
+        'inline-flex items-stretch border border-border text-faint',
         tabsListSize[size],
         className,
       )}
@@ -49,9 +50,11 @@ function TabsTab({ className, size = 'md', ...props }: TabsTabProps) {
     <TabsPrimitive.Tab
       data-slot="tabs-tab"
       className={cn(
-        'inline-flex items-center justify-center rounded-sm border border-transparent font-medium whitespace-nowrap text-muted-foreground',
-        'outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        'data-[active]:border-border data-[active]:bg-background data-[active]:text-foreground data-[active]:shadow-xs',
+        'inline-flex items-center justify-center whitespace-nowrap text-faint transition-colors duration-[120ms] not-first:border-l not-first:border-border',
+        monoLabel,
+        'hover:text-foreground',
+        'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+        'data-[active]:bg-accent data-[active]:text-foreground data-[active]:shadow-[inset_0_-2px_0_var(--primary)]',
         'disabled:pointer-events-none disabled:opacity-50',
         tabsTabSize[size],
         className,

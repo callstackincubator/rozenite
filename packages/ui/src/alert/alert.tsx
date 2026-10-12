@@ -24,7 +24,8 @@ function AlertRoot({ tone = 'neutral', className, render, ref, ...props }: Alert
         surfaceTone({
           tone,
           variant: 'soft',
-          class: 'flex flex-col gap-1 rounded-md border border-current/15 p-3 text-sm',
+          class:
+            'flex flex-col gap-1 rounded-md border border-current/20 p-3 text-sm shadow-[inset_2px_0_0_currentColor]',
         }),
         className,
       ),
@@ -42,7 +43,13 @@ function AlertTitle({ className, ...props }: AlertTitleProps) {
 export type AlertDescriptionProps = ComponentProps<'div'>;
 
 function AlertDescription({ className, ...props }: AlertDescriptionProps) {
-  return <div data-slot="alert-description" className={cn('opacity-80', className)} {...props} />;
+  return (
+    <div
+      data-slot="alert-description"
+      className={cn('text-muted-foreground', className)}
+      {...props}
+    />
+  );
 }
 
 /** A tone-aware strip for surfacing status, warnings, or errors inline. */

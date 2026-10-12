@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { cn } from '../utils/cn';
+import { monoLabel } from '../utils/mono-label';
 
 export type DescriptionListProps = ComponentProps<'div'>;
 
@@ -8,7 +9,7 @@ function DescriptionListRoot({ className, ...props }: DescriptionListProps) {
     <div
       data-slot="description-list"
       className={cn(
-        'grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm',
+        'grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] items-baseline gap-x-2 gap-y-2 text-sm',
         className,
       )}
       {...props}
@@ -23,7 +24,7 @@ export type DescriptionListItemProps = ComponentProps<'div'> & {
 function DescriptionListItem({ label, className, children, ...props }: DescriptionListItemProps) {
   return (
     <div data-slot="description-list-item" className={cn('contents', className)} {...props}>
-      <span className="text-muted-foreground">{label}</span>
+      <span className={cn('text-[11px] text-faint', monoLabel)}>{label}</span>
       <span className="min-w-0">{children}</span>
     </div>
   );

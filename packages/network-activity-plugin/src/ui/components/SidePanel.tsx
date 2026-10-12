@@ -25,15 +25,15 @@ const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
     document: 'bg-blue-600',
     script: 'bg-yellow-600',
-    stylesheet: 'bg-purple-600',
+    stylesheet: 'bg-cyan-600',
     xhr: 'bg-green-600',
-    img: 'bg-pink-600',
+    img: 'bg-gray-500',
     font: 'bg-orange-600',
     http: 'bg-green-600',
     websocket: 'bg-blue-600',
-    sse: 'bg-purple-600',
+    sse: 'bg-cyan-600',
   };
-  return colors[type] || 'bg-gray-600';
+  return colors[type] || 'bg-gray-500';
 };
 
 // Adapter to convert new model to old format for tab components
@@ -138,27 +138,15 @@ export const SidePanel = () => {
     if (httpDetails) {
       return (
         <>
-          <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700">
-            Headers
-          </TabsTrigger>
-          <TabsTrigger value="request" className="data-[state=active]:bg-gray-700">
-            Request
-          </TabsTrigger>
-          <TabsTrigger value="response" className="data-[state=active]:bg-gray-700">
+          <TabsTrigger value="headers">Headers</TabsTrigger>
+          <TabsTrigger value="request">Request</TabsTrigger>
+          <TabsTrigger value="response">
             Response
-            {hasResponseOverride && (
-              <span className="w-2 h-2 rounded-full bg-violet-300 ms-2 inline-block"></span>
-            )}
+            {hasResponseOverride && <span className="w-2 h-2 bg-primary ms-2 inline-block"></span>}
           </TabsTrigger>
-          <TabsTrigger value="cookies" className="data-[state=active]:bg-gray-700">
-            Cookies
-          </TabsTrigger>
-          <TabsTrigger value="initiator" className="data-[state=active]:bg-gray-700">
-            Initiator
-          </TabsTrigger>
-          <TabsTrigger value="timing" className="data-[state=active]:bg-gray-700">
-            Timing
-          </TabsTrigger>
+          <TabsTrigger value="cookies">Cookies</TabsTrigger>
+          <TabsTrigger value="initiator">Initiator</TabsTrigger>
+          <TabsTrigger value="timing">Timing</TabsTrigger>
         </>
       );
     }
@@ -166,27 +154,17 @@ export const SidePanel = () => {
     if (sseDetails) {
       return (
         <>
-          <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700">
-            Headers
-          </TabsTrigger>
-          <TabsTrigger value="request" className="data-[state=active]:bg-gray-700">
-            Request
-          </TabsTrigger>
-          <TabsTrigger value="messages" className="data-[state=active]:bg-gray-700">
-            Messages
-          </TabsTrigger>
-          <TabsTrigger value="initiator" className="data-[state=active]:bg-gray-700">
-            Initiator
-          </TabsTrigger>
+          <TabsTrigger value="headers">Headers</TabsTrigger>
+          <TabsTrigger value="request">Request</TabsTrigger>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
+          <TabsTrigger value="initiator">Initiator</TabsTrigger>
         </>
       );
     }
 
     return (
       <>
-        <TabsTrigger value="messages" className="data-[state=active]:bg-gray-700">
-          Messages
-        </TabsTrigger>
+        <TabsTrigger value="messages">Messages</TabsTrigger>
       </>
     );
   };
@@ -278,9 +256,7 @@ export const SidePanel = () => {
       {/* Side Panel Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div
-            className={`w-3 h-3 rounded-full flex-shrink-0 ${getTypeColor(selectedRequest.type)}`}
-          ></div>
+          <div className={`w-3 h-3 flex-shrink-0 ${getTypeColor(selectedRequest.type)}`}></div>
           <span className="font-medium truncate">{requestName}</span>
           <Badge
             variant="outline"
@@ -293,7 +269,7 @@ export const SidePanel = () => {
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="h-6 w-6 p-0 text-gray-400 hover:text-blue-400 flex-shrink-0 ml-2"
+          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-100 flex-shrink-0 ml-2"
         >
           <X className="h-4 w-4" />
         </Button>

@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 
 const toneButtonClassName =
-  'sqlite-button inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium';
+  'sqlite-button inline-flex items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium';
 
 export const sqliteSecondaryButtonClassName = `${toneButtonClassName} sqlite-button-secondary`;
 export const sqlitePrimaryButtonClassName = `${toneButtonClassName} sqlite-button-primary`;

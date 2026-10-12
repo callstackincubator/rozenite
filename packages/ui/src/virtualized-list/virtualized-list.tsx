@@ -108,7 +108,7 @@ const VirtualizedListRow = ({ children, context, item, ...props }: ListItemCompo
       {...props}
       aria-label={context.getItemTextValue?.(item, index) ?? fallbackKey}
       className={cn(
-        'border-b border-border last:border-0 transition-colors hover:bg-accent/50',
+        'border-b border-border last:border-0 transition-colors duration-[120ms] hover:bg-accent',
         isActionable && 'cursor-pointer',
         context.itemClassName,
       )}

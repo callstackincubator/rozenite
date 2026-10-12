@@ -79,7 +79,7 @@ export const MetadataCard = ({ body, ctx }: MetadataCardProps) => {
         onClick={handleDownload}
         disabled={!isDownloadAvailable}
         title={downloadTitle}
-        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-violet-500 text-violet-200 hover:bg-violet-900/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-primary text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
       >
         <Download className="h-3 w-3" />
         Download

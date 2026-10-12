@@ -103,11 +103,11 @@
 }
 
 .dev-host-pane-title {
-  color: var(--foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--faint);
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -124,15 +124,15 @@
 
 .dev-host-message-table {
   min-width: 42rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 
 .dev-host-direction-in {
-  color: #22c55e;
+  color: var(--success);
 }
 
 .dev-host-direction-out {
-  color: #f59e0b;
+  color: var(--warning);
 }
 
 .dev-host-form,
@@ -155,8 +155,8 @@
 }
 
 .dev-host-label {
-  color: var(--muted-foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--faint);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
 }
 
@@ -238,7 +238,7 @@
   border-radius: var(--radius-sm);
   background: var(--muted);
   padding: 0.625rem 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   line-height: 1.5;
   white-space: pre-wrap;

@@ -28,8 +28,8 @@ type SqliteDropModalProps = {
 };
 
 const toneButtonClassName =
-  'sqlite-button inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium';
-const dangerButtonClassName = `${toneButtonClassName} border border-rose-400/30 bg-rose-500/16 text-rose-50 hover:bg-rose-500/24`;
+  'sqlite-button inline-flex items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium';
+const dangerButtonClassName = `${toneButtonClassName} sqlite-button-danger`;
 
 const getModalTitle = (target: SqliteDropModalTarget) =>
   target.kind === 'entity'
@@ -86,24 +86,22 @@ export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDr
 
   return (
     <Modal state={overlay}>
-      <Modal.Backdrop
-        variant="blur"
-        isDismissable={!dropping}
-        className="bg-[rgba(5,10,16,0.24)] backdrop-blur-[2px]"
-      >
+      <Modal.Backdrop variant="opaque" isDismissable={!dropping} className="bg-black/60">
         <Modal.Container placement="center" size="md" scroll="inside">
           <Modal.Dialog
             aria-label={`${getModalTitle(target)} ${getModalSubtitle(target)}`}
-            className="w-full max-w-xl overflow-hidden border border-white/10 bg-[#0a121b] p-0 text-white shadow-[0_30px_90px_rgba(0,0,0,0.42)]"
+            className="w-full max-w-xl overflow-hidden border border-[var(--sqlite-line-strong)] bg-[var(--sqlite-surface)] p-0 text-white"
           >
-            <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-5">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--sqlite-line)] px-5 py-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/12 text-rose-200">
+                <div className="flex h-10 w-10 items-center justify-center rounded-none bg-[var(--sqlite-danger-soft)] text-[var(--sqlite-danger)]">
                   <AlertTriangle aria-hidden="true" className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">{getModalTitle(target)}</h2>
-                  <p className="mt-1 text-sm text-slate-400">{getModalSubtitle(target)}</p>
+                  <h2 className="text-lg font-medium text-white">{getModalTitle(target)}</h2>
+                  <p className="mt-1 text-sm text-[var(--sqlite-muted)]">
+                    {getModalSubtitle(target)}
+                  </p>
                 </div>
               </div>
               <SqliteModalCloseButton onClose={onClose} disabled={dropping} />
@@ -112,7 +110,7 @@ export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDr
             <Modal.Body className="space-y-0 p-0">
               <div className="space-y-5 px-5 py-5">
                 {target.kind === 'database' ? (
-                  <p className="text-sm leading-6 text-slate-300">
+                  <p className="text-sm leading-6 text-[var(--sqlite-muted)]">
                     This drops every table and view in{' '}
                     <span className="font-medium text-white">{target.databaseName}</span> —{' '}
                     {target.tableCount} table
@@ -122,7 +120,7 @@ export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDr
                     be undone.
                   </p>
                 ) : (
-                  <p className="text-sm leading-6 text-slate-300">
+                  <p className="text-sm leading-6 text-[var(--sqlite-muted)]">
                     This permanently drops{' '}
                     <span className="font-medium text-white">{target.qualifiedName}</span> and
                     everything it owns — rows, indexes and triggers. This cannot be undone.
@@ -131,7 +129,7 @@ export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDr
 
                 <div className="space-y-2">
                   <p className="sqlite-helper-text">SQL to be executed</p>
-                  <pre className="max-h-40 overflow-auto rounded-lg border border-white/8 bg-black/30 px-3 py-2 text-xs leading-5 text-slate-200">
+                  <pre className="max-h-40 overflow-auto rounded-none border border-[var(--sqlite-line)] bg-black/30 px-3 py-2 text-xs leading-5 text-[var(--sqlite-text)]">
                     {target.sql}
                   </pre>
                 </div>
@@ -158,14 +156,14 @@ export const SqliteDropModal = ({ isOpen, target, onClose, onConfirm }: SqliteDr
                 {error ? (
                   <div className="sqlite-inline-error" aria-live="polite">
                     <div>
-                      <p className="font-medium text-rose-100">Drop Failed</p>
-                      <p className="mt-1 text-sm text-rose-100/90">{error}</p>
+                      <p className="font-medium text-[var(--sqlite-danger)]">Drop Failed</p>
+                      <p className="mt-1 text-sm text-[var(--sqlite-danger)]">{error}</p>
                     </div>
                   </div>
                 ) : null}
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-white/8 px-5 py-5">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--sqlite-line)] px-5 py-5">
                 <button
                   type="button"
                   className={sqliteSecondaryButtonClassName}

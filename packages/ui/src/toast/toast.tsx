@@ -56,9 +56,10 @@ function Toaster({
             toast={toast}
             data-slot="toast"
             className={cn(
-              'relative flex items-start gap-2 rounded-md border border-border bg-card p-3 text-card-foreground shadow-md',
+              'relative flex items-start gap-2 rounded-md border border-input bg-popover p-3 text-popover-foreground',
               'transition-[transform,opacity] data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
-              toast.type === 'error' && 'border-danger/50 text-danger',
+              toast.type === 'error' &&
+                'border-danger/50 text-danger shadow-[inset_2px_0_0_var(--danger)]',
             )}
           >
             <ToastPrimitive.Content
@@ -78,7 +79,7 @@ function Toaster({
             <ToastPrimitive.Close
               data-slot="toast-close"
               aria-label={dismissLabel}
-              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors duration-[120ms] hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </ToastPrimitive.Close>

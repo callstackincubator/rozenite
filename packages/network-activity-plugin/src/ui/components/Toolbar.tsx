@@ -23,7 +23,7 @@ export const Toolbar = () => {
         size="sm"
         onClick={onToggleRecording}
         className={`h-8 w-8 p-0 ${
-          isRecording ? 'text-red-400 hover:text-red-300' : 'text-gray-400 hover:text-blue-400'
+          isRecording ? 'text-danger hover:text-danger' : 'text-gray-400 hover:text-gray-100'
         }`}
         title={isRecording ? 'Stop recording' : 'Start recording'}
       >
@@ -37,7 +37,7 @@ export const Toolbar = () => {
         variant="ghost"
         size="sm"
         onClick={onClearRequests}
-        className="h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
+        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-100"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -46,7 +46,7 @@ export const Toolbar = () => {
         size="sm"
         onClick={exportSession}
         disabled={!canExportSession}
-        className="ml-auto h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
+        className="ml-auto h-8 w-8 p-0 text-gray-400 hover:text-gray-100"
         title="Export session"
       >
         <Download className="h-4 w-4" />

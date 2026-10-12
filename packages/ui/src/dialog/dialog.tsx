@@ -64,14 +64,14 @@ function DialogContent({
         data-slot="dialog-backdrop"
         className={cn(
           'fixed inset-0 z-50 bg-background/70',
-          'transition-opacity data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
+          'transition-opacity duration-[120ms] data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
         )}
       />
       <DialogPrimitive.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <DialogPrimitive.Popup
           data-slot="dialog-content"
           className={cn(
-            'relative flex w-full max-w-md flex-col gap-4 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg',
+            'relative flex w-full max-w-md flex-col gap-4 rounded-lg border border-input bg-popover p-6 text-popover-foreground',
             'transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
             className,
           )}
@@ -92,8 +92,8 @@ function DialogContent({
               data-slot="dialog-close"
               aria-label={closeLabel}
               className={cn(
-                'absolute top-4 right-4 inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground',
-                'hover:bg-accent hover:text-accent-foreground',
+                'absolute top-4 right-4 inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors duration-[120ms]',
+                'hover:bg-accent hover:text-foreground',
                 'outline-none focus-visible:ring-2 focus-visible:ring-ring',
               )}
             >
@@ -132,7 +132,10 @@ function DialogTitle({ className, ...props }: DialogTitleProps) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-sm font-semibold text-foreground', className)}
+      className={cn(
+        'text-[15px] leading-snug font-medium tracking-[-0.01em] text-foreground',
+        className,
+      )}
       {...props}
     />
   );

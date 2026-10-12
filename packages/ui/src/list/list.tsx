@@ -2,6 +2,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { useRender } from '@base-ui/react/use-render';
 import { cn } from '../utils/cn';
 import type { Size } from '../tokens/size';
+import { monoLabel } from '../utils/mono-label';
 
 const listItemSize = {
   sm: 'h-6 text-xs',
@@ -25,7 +26,7 @@ function ListGroup({ className, label, children, ...props }: ListGroupProps) {
       {label && (
         <div
           data-slot="list-group-label"
-          className="px-2 py-1 text-xs font-medium text-sidebar-foreground/60"
+          className={cn('px-2 pt-2 pb-1 text-[10px] text-faint', monoLabel)}
         >
           {label}
         </div>
@@ -67,10 +68,10 @@ function ListItem({
       'data-selected': selected || undefined,
       'aria-current': selected || undefined,
       className: cn(
-        'flex w-full items-center gap-2 rounded-md px-2 text-left text-sidebar-foreground',
-        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-        'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-        'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:font-medium',
+        'flex w-full items-center gap-2 rounded-md px-2 text-left text-muted-foreground transition-colors duration-[120ms]',
+        'hover:bg-accent hover:text-sidebar-foreground',
+        'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-inset',
+        'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:shadow-[inset_2px_0_0_var(--sidebar-primary)]',
         listItemSize[size],
         className,
       ),

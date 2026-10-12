@@ -56,45 +56,45 @@ const emptyDecorations = Decoration.set([]);
 const sqlHighlightStyle = HighlightStyle.define([
   {
     tag: [tags.keyword, tags.operatorKeyword],
-    color: '#8ec5ff',
-    fontWeight: '600',
+    color: '#60a5fa',
+    fontWeight: '500',
   },
   {
     tag: [tags.string, tags.special(tags.string)],
-    color: '#8fe0ba',
+    color: '#4ade80',
   },
   {
     tag: [tags.number, tags.integer, tags.float, tags.bool],
-    color: '#f9c97a',
+    color: '#fbbf24',
   },
   {
     tag: [tags.comment, tags.lineComment, tags.blockComment],
-    color: 'rgba(165, 185, 204, 0.56)',
+    color: '#858585',
     fontStyle: 'italic',
   },
   {
     tag: [tags.name, tags.variableName, tags.propertyName],
-    color: '#edf5fb',
+    color: '#e5e5e5',
   },
   {
     tag: [tags.definition(tags.name), tags.typeName, tags.namespace],
-    color: '#9ecbff',
+    color: '#93c5fd',
   },
   {
     tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
-    color: '#7fd8ff',
+    color: '#22d3ee',
   },
   {
     tag: [tags.operator, tags.compareOperator, tags.logicOperator],
-    color: 'rgba(190, 216, 238, 0.88)',
+    color: '#a3a3a3',
   },
   {
     tag: tags.null,
-    color: '#ff9f7f',
+    color: '#ff7a50',
   },
   {
     tag: [tags.paren, tags.squareBracket, tags.brace, tags.punctuation],
-    color: 'rgba(226, 236, 245, 0.82)',
+    color: '#a3a3a3',
   },
 ]);
 
@@ -116,7 +116,7 @@ const sqlEditorTheme = EditorView.theme(
       display: 'flex',
       flex: '1 1 auto',
       minHeight: '0',
-      fontFamily: "'IBM Plex Mono', 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace",
+      fontFamily: 'var(--sqlite-font-mono)',
     },
     '.cm-sizer': {
       minHeight: '100%',
@@ -125,36 +125,35 @@ const sqlEditorTheme = EditorView.theme(
     },
     '.cm-content': {
       minHeight: '100%',
-      caretColor: '#f7fbff',
+      caretColor: '#ffffff',
     },
     '.cm-cursor, .cm-dropCursor': {
-      borderLeftColor: '#f7fbff',
+      borderLeftColor: '#ffffff',
     },
     '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection': {
-      backgroundColor: 'rgba(89, 163, 255, 0.2)',
+      backgroundColor: 'rgba(255, 79, 123, 0.25)',
     },
     '.cm-activeLine': {
       backgroundColor: 'rgba(255, 255, 255, 0.032)',
     },
     '.cm-activeLineGutter': {
       backgroundColor: 'rgba(255, 255, 255, 0.028)',
-      color: 'rgba(244, 249, 253, 0.96)',
+      color: '#ffffff',
     },
     '.cm-gutters': {
-      color: 'rgba(165, 185, 204, 0.5)',
+      color: '#858585',
       backgroundColor: 'rgba(255, 255, 255, 0.02)',
       borderRight: '1px solid var(--sqlite-line)',
     },
     '.cm-tooltip': {
       border: '1px solid var(--sqlite-line-strong)',
-      backgroundColor: 'rgba(10, 20, 31, 0.98)',
+      backgroundColor: 'var(--sqlite-surface)',
       color: 'var(--sqlite-text)',
-      borderRadius: '0.9rem',
-      boxShadow: '0 20px 52px rgba(0, 0, 0, 0.34)',
+      borderRadius: '0',
       overflow: 'hidden',
     },
     '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
-      backgroundColor: 'rgba(89, 163, 255, 0.18)',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
       color: '#fff',
     },
     '.cm-panels': {
@@ -163,11 +162,11 @@ const sqlEditorTheme = EditorView.theme(
       borderBottom: '1px solid var(--sqlite-line)',
     },
     '.cm-searchMatch': {
-      backgroundColor: 'rgba(255, 191, 105, 0.2)',
-      outline: '1px solid rgba(255, 191, 105, 0.22)',
+      backgroundColor: 'rgba(251, 191, 36, 0.2)',
+      outline: '1px solid rgba(251, 191, 36, 0.22)',
     },
     '.cm-searchMatch.cm-searchMatch-selected': {
-      backgroundColor: 'rgba(89, 163, 255, 0.26)',
+      backgroundColor: 'rgba(255, 79, 123, 0.26)',
     },
     '.cm-matchingBracket, .cm-nonmatchingBracket': {
       backgroundColor: 'rgba(255, 255, 255, 0.06)',

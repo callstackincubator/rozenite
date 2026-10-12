@@ -87,10 +87,10 @@ function NestedListItem({
         aria-expanded={hasChildren ? expanded : undefined}
         style={{ paddingLeft: BASE_PADDING_PX + depth * INDENT_PER_DEPTH_PX }}
         className={cn(
-          'flex min-w-full items-center gap-1.5 rounded-md pr-2 text-left text-sidebar-foreground',
-          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-          'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-          'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:font-medium',
+          'flex min-w-full items-center gap-1.5 rounded-md pr-2 text-left text-muted-foreground transition-colors duration-[120ms]',
+          'hover:bg-accent hover:text-sidebar-foreground',
+          'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-inset',
+          'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:shadow-[inset_2px_0_0_var(--sidebar-primary)]',
           nestedListItemSize[size],
           className,
         )}
@@ -101,7 +101,7 @@ function NestedListItem({
           <ChevronRight
             data-slot="nested-list-item-chevron"
             className={cn(
-              'h-3.5 w-3.5 shrink-0 text-sidebar-foreground/60 transition-transform',
+              'h-3.5 w-3.5 shrink-0 text-faint transition-transform duration-[120ms]',
               expanded && 'rotate-90',
             )}
           />

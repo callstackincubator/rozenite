@@ -9,7 +9,7 @@ type LiftedActionWithTrace<A extends Action<string>> = {
 
 const rootStyle: CSSProperties = {
   padding: '8px 12px',
-  fontFamily: 'Consolas, Menlo, monospace',
+  fontFamily: "'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
   fontSize: 12,
   lineHeight: 1.45,
   overflow: 'auto',
@@ -18,41 +18,41 @@ const rootStyle: CSSProperties = {
 };
 
 const mutedStyle: CSSProperties = {
-  color: '#8f9aa8',
+  color: '#a3a3a3',
 };
 
 const statusStyle: CSSProperties = {
   marginBottom: 10,
-  color: '#8f9aa8',
+  color: '#a3a3a3',
 };
 
 const frameStyle: CSSProperties = {
   padding: '5px 0',
-  borderBottom: '1px solid rgba(148, 163, 184, 0.18)',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
 };
 
 const functionStyle: CSSProperties = {
-  color: '#d7dde7',
+  color: '#e5e5e5',
 };
 
 const appLocationStyle: CSSProperties = {
-  color: '#8bd5ff',
+  color: '#60a5fa',
   wordBreak: 'break-all',
 };
 
 const libraryLocationStyle: CSSProperties = {
-  color: '#9ca3af',
+  color: '#a3a3a3',
   wordBreak: 'break-all',
 };
 
 const codeFrameStyle: CSSProperties = {
   margin: '10px 0 12px',
   padding: 10,
-  border: '1px solid rgba(148, 163, 184, 0.25)',
-  borderRadius: 6,
+  border: '1px solid rgba(255, 255, 255, 0.16)',
+  borderRadius: 0,
   overflow: 'auto',
-  color: '#d7dde7',
-  background: 'rgba(15, 23, 42, 0.55)',
+  color: '#e5e5e5',
+  background: 'rgba(0, 0, 0, 0.25)',
 };
 
 const detailsStyle: CSSProperties = {
@@ -61,13 +61,13 @@ const detailsStyle: CSSProperties = {
 
 const summaryStyle: CSSProperties = {
   cursor: 'pointer',
-  color: '#cbd5e1',
+  color: '#d4d4d4',
 };
 
 const rawStackStyle: CSSProperties = {
   marginTop: 8,
   whiteSpace: 'pre-wrap',
-  color: '#9ca3af',
+  color: '#a3a3a3',
 };
 
 const NODE_MODULES_PATTERN = /(?:^|\/)node_modules\//;

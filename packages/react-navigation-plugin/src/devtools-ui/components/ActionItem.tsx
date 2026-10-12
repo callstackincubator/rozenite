@@ -62,7 +62,7 @@ export const ActionItem = ({
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Badge tone="neutral" variant="outline">
+          <Badge tone="neutral" variant="outline" className="normal-case tracking-normal">
             {action.type}
           </Badge>
           <span className="text-xs text-muted-foreground">#{index}</span>

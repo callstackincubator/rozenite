@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { cn } from '../utils/cn';
 import { SortIcon } from '../utils/sort-icon';
+import { monoLabel } from '../utils/mono-label';
 
 const DEFAULT_TABLE_CLASSNAME = 'w-full border-collapse text-sm';
 const DEFAULT_SCROLL_CLASSNAME = 'h-full w-full overflow-auto';
@@ -99,7 +100,7 @@ const VirtualizedTableRow = ({ children, context, item, ...props }: TableRowComp
       {...props}
       aria-label={context.getRowTextValue?.(row.original, row.index) ?? String(row.id)}
       className={cn(
-        'border-b border-border last:border-0 transition-colors hover:bg-accent/50',
+        'border-b border-border last:border-0 transition-colors duration-[120ms] hover:bg-accent',
         isActionable && 'cursor-pointer',
       )}
       onClick={isActionable ? activateRow : undefined}
@@ -232,12 +233,12 @@ export const VirtualizedDataTable = <TData,>({
                     : undefined
                 }
                 colSpan={header.colSpan}
-                className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"
+                className={cn('h-8 px-3 text-left text-[11px] text-faint', monoLabel)}
                 scope="col"
               >
                 {header.isPlaceholder ? null : canSort ? (
                   <button
-                    className="inline-flex items-center gap-1 hover:text-foreground"
+                    className="inline-flex items-center gap-1 uppercase transition-colors duration-[120ms] hover:text-foreground"
                     onClick={header.column.getToggleSortingHandler()}
                     type="button"
                   >

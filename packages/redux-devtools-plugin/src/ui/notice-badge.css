@@ -1,15 +1,15 @@
 .notice-badge {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
-  background: rgb(42, 47, 58);
-  border: 1px solid rgb(60, 68, 79);
+  /* Sits inside the redux-devtools app, so it inherits that app's font. */
+  font-family: inherit;
+  background: #111111;
+  border: 1px solid #313131;
   padding: 8px 12px;
   font-size: 13px;
   line-height: 1.4;
-  color: rgb(245, 245, 245);
+  color: #ffffff;
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .notice-badge-icon {
@@ -25,29 +25,29 @@
 }
 
 .notice-badge-title {
-  font-weight: 600;
+  font-weight: 500;
   margin: 0 0 4px 0;
   font-size: 14px;
 }
 
 .notice-badge-text {
   margin: 0 0 8px 0;
-  color: rgb(245, 245, 245);
+  color: #a3a3a3;
 }
 
 .notice-badge-link {
-  color: #60a5fa;
+  color: #ff4f7b;
   text-decoration: none;
   font-weight: 500;
   font-size: 12px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  transition: color 0.15s ease;
+  transition: color 120ms ease;
 }
 
 .notice-badge-link:hover {
-  color: #93c5fd;
+  color: #ff9fb2;
   text-decoration: underline;
 }
 

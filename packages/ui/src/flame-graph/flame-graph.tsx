@@ -200,7 +200,7 @@ function FlameGraphFrameButton({
       {width > MIN_LABEL_WIDTH_PERCENT && (
         <span
           className={cn(
-            'block truncate text-[11px] leading-none',
+            'block truncate font-mono text-[11px] leading-none',
             highlight && matched && 'font-medium',
           )}
         >
@@ -231,8 +231,13 @@ function FlameGraphLegend({ className, ...props }: FlameGraphLegendProps) {
     >
       {LEGEND_ITEMS.map(({ bucket, label }) => (
         <div key={bucket} className="flex items-center gap-1.5">
-          <span className={cn('h-3 w-3 shrink-0 rounded-sm', heatBucketClassName[bucket])} />
-          <Text variant="caption">{label}</Text>
+          <span
+            className={cn(
+              'h-3 w-3 shrink-0 rounded-sm border border-input',
+              heatBucketClassName[bucket],
+            )}
+          />
+          <Text variant="label">{label}</Text>
         </div>
       ))}
     </div>

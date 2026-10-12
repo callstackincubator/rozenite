@@ -58,7 +58,7 @@ const KeyList = ({ title, items }: { title: string; items: string[] }) => {
 const StatTile = ({ label, value }: { label: string; value: number }) => (
   <div className="rounded-md bg-muted p-2">
     <div className="text-muted-foreground">{label}</div>
-    <div className="text-base font-semibold text-foreground">{value}</div>
+    <div className="text-base font-medium text-foreground">{value}</div>
   </div>
 );
 
@@ -167,7 +167,11 @@ const ResultBody = ({
         {state.failedKey && (
           <div className="text-xs text-muted-foreground">
             Failed at key:{' '}
-            <Badge tone="neutral" variant="outline" className="font-mono">
+            <Badge
+              tone="neutral"
+              variant="outline"
+              className="font-mono normal-case tracking-normal"
+            >
               {state.failedKey}
             </Badge>
           </div>

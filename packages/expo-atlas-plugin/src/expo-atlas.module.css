@@ -1,3 +1,8 @@
+/*
+ * Loading and error screens, in the rozenite.dev look (docs/DESIGN.md): hairlines, square
+ * corners, the crimson accent. This plugin does not depend on @rozenite/ui, so colour that
+ * should follow the DevTools theme is inherited rather than hard-coded.
+ */
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -15,24 +20,21 @@
 .loadingCard {
   max-width: 400px;
   padding: 24px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid rgba(128, 128, 128, 0.35);
 }
 
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #e9ecef;
-  border-top: 3px solid #007bff;
-  border-radius: 50%;
+  border: 3px solid rgba(128, 128, 128, 0.35);
+  border-top: 3px solid #ff4f7b;
   animation: spin 1s linear infinite;
   margin: 0 auto 16px auto;
 }
 
 .loadingMessage {
   margin: 0;
-  color: #6c757d;
+  opacity: 0.7;
   line-height: 1.5;
 }
 
@@ -62,32 +64,34 @@
 .errorCard {
   max-width: 400px;
   padding: 24px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid rgba(128, 128, 128, 0.35);
 }
 
 .errorTitle {
   margin: 0 0 16px 0;
-  color: #495057;
+  font-weight: 500;
 }
 
 .errorMessage {
   margin: 0 0 16px 0;
-  color: #6c757d;
+  opacity: 0.7;
   line-height: 1.5;
 }
 
 .setupLink {
   display: inline-block;
   padding: 8px 16px;
-  background-color: #007bff;
-  color: white;
+  background-color: #ff4f7b;
+  color: #0a0a0a;
   text-decoration: none;
-  border-radius: 4px;
-  font-size: 14px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background-color 120ms ease;
 }
 
 .setupLink:hover {
-  background-color: #0056b3;
+  background-color: #ff9fb2;
 }

@@ -97,7 +97,7 @@ const FilterField = ({
 );
 
 const FilterPanelLabel = ({ children }: { children: string }) => (
-  <div className="px-2 py-1.5 text-xs font-semibold text-gray-400">{children}</div>
+  <div className="px-2 py-1.5 text-xs font-medium text-gray-400">{children}</div>
 );
 
 const FilterPanelSeparator = () => <div className="-mx-1 my-1 h-px bg-gray-700" />;
@@ -216,7 +216,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
         size="sm"
         className={`h-8 px-3 text-xs transition-all ${
           activeFilterCount > 0
-            ? 'bg-blue-600/20 border border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
+            ? 'bg-primary/15 border border-primary/50 text-primary hover:bg-primary/25'
             : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'
         }`}
         {...getReferenceProps()}
@@ -224,7 +224,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
         <Filter className="h-3 w-3 mr-1" />
         Filters
         {activeFilterCount > 0 && (
-          <span className="rounded bg-blue-500/30 px-1 text-[10px] text-blue-100">
+          <span className="rounded bg-primary/30 px-1 text-[10px] text-foreground">
             {activeFilterCount}
           </span>
         )}
@@ -235,7 +235,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
         <FloatingPortal>
           <div
             ref={refs.setFloating}
-            className="z-50 w-80 space-y-1 overflow-y-auto overscroll-contain rounded-md border border-gray-600 bg-gray-800 p-1 text-gray-100 shadow-lg"
+            className="z-50 w-80 space-y-1 overflow-y-auto overscroll-contain rounded-md border border-gray-600 bg-gray-800 p-1 text-gray-100"
             style={floatingStyles}
             {...getFloatingProps()}
           >
@@ -350,7 +350,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
           variant="ghost"
           size="sm"
           onClick={clearFilters}
-          className="h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
+          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-100"
         >
           <X className="h-4 w-4" />
         </Button>

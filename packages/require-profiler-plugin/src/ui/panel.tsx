@@ -409,7 +409,12 @@ const RequireProfilerContent = () => {
                       chain.moduleCount,
                     )} modules · ${formatOffset(chain.startedAt, firstStartedAt)}`}
                     trailing={
-                      <Badge size="sm" tone="neutral" variant="soft">
+                      <Badge
+                        size="sm"
+                        tone="neutral"
+                        variant="soft"
+                        className="normal-case tracking-normal"
+                      >
                         {formatDuration(chain.duration)}
                       </Badge>
                     }

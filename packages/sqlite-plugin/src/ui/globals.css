@@ -1,29 +1,86 @@
 @import 'tailwindcss';
 @import '@heroui/styles';
+/* Geist and Geist Mono, the panel UI fonts (docs/DESIGN.md, "DevTools panel UI"). */
+@import '@rozenite/ui/fonts.css';
 
+/*
+ * The rozenite.dev look (docs/DESIGN.md, "DevTools panel UI"): near-black, one crimson-rose
+ * accent, neutral greys, square corners, 1px hairlines, no shadows or gradients. The panel is
+ * dark-only; these are the dark values of packages/ui/styles.css.
+ */
 @layer theme {
   :root {
-    --radius: 0.875rem;
-    --sqlite-bg: #07111a;
-    --sqlite-bg-soft: #0b1722;
-    --sqlite-surface: rgba(12, 23, 35, 0.9);
-    --sqlite-surface-strong: rgba(14, 28, 44, 0.96);
-    --sqlite-surface-muted: rgba(19, 35, 53, 0.76);
-    --sqlite-line: rgba(167, 194, 220, 0.14);
-    --sqlite-line-strong: rgba(167, 194, 220, 0.24);
-    --sqlite-text: rgba(243, 248, 252, 0.96);
-    --sqlite-muted: rgba(165, 185, 204, 0.86);
-    --sqlite-muted-soft: rgba(165, 185, 204, 0.58);
-    --sqlite-accent: #8232ff;
-    --sqlite-accent-strong: #6921d6;
-    --sqlite-accent-soft: rgba(130, 50, 255, 0.14);
-    --sqlite-success: #4fce92;
-    --sqlite-success-soft: rgba(79, 206, 146, 0.16);
-    --sqlite-warning: #ffbf69;
-    --sqlite-warning-soft: rgba(255, 191, 105, 0.14);
-    --sqlite-danger: #ff7b7b;
-    --sqlite-danger-soft: rgba(255, 123, 123, 0.14);
-    --sqlite-shadow: 0 24px 64px rgba(2, 8, 16, 0.42);
+    --sqlite-font-sans:
+      'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    --sqlite-font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --sqlite-bg: #0a0a0a;
+    --sqlite-bg-soft: #111111;
+    --sqlite-surface: #111111;
+    --sqlite-surface-strong: #161616;
+    --sqlite-surface-muted: #161616;
+    --sqlite-line: #1f1f1f;
+    --sqlite-line-strong: #313131;
+    --sqlite-text: #ffffff;
+    --sqlite-muted: #a3a3a3;
+    --sqlite-muted-soft: #858585;
+    --sqlite-accent: #ff4f7b;
+    --sqlite-accent-strong: #ff9fb2;
+    --sqlite-accent-soft: rgba(255, 79, 123, 0.14);
+    --sqlite-success: #4ade80;
+    --sqlite-success-soft: rgba(74, 222, 128, 0.14);
+    --sqlite-warning: #fbbf24;
+    --sqlite-warning-soft: rgba(251, 191, 36, 0.14);
+    --sqlite-danger: #ff7a50;
+    --sqlite-danger-soft: rgba(255, 122, 80, 0.14);
+    --sqlite-info: #60a5fa;
+  }
+}
+
+/*
+ * HeroUI's own theme variables (its `:root` block is in the same layer and earlier in the
+ * cascade, so these win): the same dark palette, square corners and no shadows, so the modals
+ * and form controls it renders match the rest of the panel.
+ */
+@layer base {
+  :root {
+    --radius: 0;
+    --field-radius: 0;
+    --field-border-width: 1px;
+    --background: var(--sqlite-bg);
+    --foreground: var(--sqlite-text);
+    --surface: var(--sqlite-surface);
+    --surface-foreground: var(--sqlite-text);
+    --surface-secondary: var(--sqlite-surface-strong);
+    --surface-secondary-foreground: var(--sqlite-text);
+    --surface-tertiary: var(--sqlite-line);
+    --surface-tertiary-foreground: var(--sqlite-text);
+    --overlay: var(--sqlite-surface);
+    --overlay-foreground: var(--sqlite-text);
+    --muted: var(--sqlite-muted);
+    --scrollbar: var(--sqlite-line-strong);
+    --default: var(--sqlite-surface-strong);
+    --default-foreground: var(--sqlite-text);
+    --accent: var(--sqlite-accent);
+    --accent-foreground: #0a0a0a;
+    --field-background: var(--sqlite-surface-strong);
+    --field-foreground: var(--sqlite-text);
+    --field-placeholder: var(--sqlite-muted-soft);
+    --field-border: var(--sqlite-line-strong);
+    --success: var(--sqlite-success);
+    --success-foreground: #0a0a0a;
+    --warning: var(--sqlite-warning);
+    --warning-foreground: #0a0a0a;
+    --danger: var(--sqlite-danger);
+    --danger-foreground: #0a0a0a;
+    --segment: var(--sqlite-surface-strong);
+    --segment-foreground: var(--sqlite-text);
+    --border: var(--sqlite-line);
+    --separator: var(--sqlite-line);
+    --focus: var(--sqlite-accent);
+    --link: var(--sqlite-text);
+    --surface-shadow: none;
+    --overlay-shadow: none;
+    --field-shadow: none;
   }
 }
 
@@ -41,15 +98,17 @@
   body {
     margin: 0;
     font-size: 14px;
-    font-family: 'IBM Plex Sans', 'Satoshi', 'Inter', ui-sans-serif, system-ui, sans-serif;
-    background:
-      radial-gradient(circle at top left, rgba(130, 50, 255, 0.18), transparent 22%),
-      radial-gradient(circle at right, rgba(70, 193, 190, 0.08), transparent 18%),
-      linear-gradient(180deg, #07111a 0%, #091520 52%, #07111a 100%);
+    font-family: var(--sqlite-font-sans);
+    background: var(--sqlite-bg);
     color: var(--sqlite-text);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--sqlite-accent);
+    color: #0a0a0a;
   }
 
   *,
@@ -72,7 +131,7 @@
   .sqlite-tabular,
   .sqlite-editor-shell .cm-scroller,
   .sqlite-editor-shell .cm-gutters {
-    font-family: 'IBM Plex Mono', 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
+    font-family: var(--sqlite-font-mono);
     font-variant-numeric: tabular-nums;
   }
 }
@@ -95,15 +154,15 @@
     left: 1rem;
     top: -3rem;
     z-index: 60;
-    border-radius: 999px;
+    border-radius: 0;
     border: 1px solid var(--sqlite-line-strong);
-    background: rgba(12, 27, 41, 0.98);
+    background: var(--sqlite-surface);
     color: white;
     padding: 0.65rem 1rem;
     text-decoration: none;
     transition:
-      top 160ms ease,
-      opacity 160ms ease;
+      top 120ms ease,
+      opacity 120ms ease;
     opacity: 0;
   }
 
@@ -118,23 +177,8 @@
     position: relative;
     overflow: hidden;
     border: 1px solid var(--sqlite-line);
-    border-radius: 1.5rem;
-    background:
-      linear-gradient(180deg, rgba(13, 24, 36, 0.96), rgba(8, 17, 26, 0.96)),
-      radial-gradient(circle at top, rgba(130, 50, 255, 0.08), transparent 34%);
-    box-shadow: var(--sqlite-shadow);
-    backdrop-filter: blur(18px);
-  }
-
-  .sqlite-topbar::before,
-  .sqlite-sidebar-panel::before,
-  .sqlite-workspace-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    border-radius: inherit;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 18%);
+    border-radius: 0;
+    background: var(--sqlite-bg);
   }
 
   .sqlite-topbar {
@@ -170,20 +214,21 @@
     justify-content: center;
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: 0.95rem;
-    border: 1px solid rgba(130, 50, 255, 0.28);
-    background: linear-gradient(180deg, rgba(130, 50, 255, 0.24), rgba(105, 33, 214, 0.18));
-    color: white;
+    border-radius: 0;
+    border: 1px solid rgba(255, 79, 123, 0.3);
+    background: var(--sqlite-accent-soft);
+    color: var(--sqlite-accent);
   }
 
   .sqlite-brand-title {
     margin: 0;
     font-size: 0.98rem;
-    font-weight: 600;
+    font-weight: 500;
     text-wrap: balance;
   }
 
   .sqlite-brand-subtitle {
+    font-family: var(--sqlite-font-mono);
     margin: 0.1rem 0 0;
     color: var(--sqlite-muted-soft);
     font-size: 0.76rem;
@@ -213,17 +258,13 @@
   .sqlite-select {
     width: 100%;
     border: 1px solid var(--sqlite-line);
-    border-radius: 0.95rem;
-    background: linear-gradient(180deg, rgba(10, 18, 29, 0.98), rgba(11, 22, 34, 0.98));
+    border-radius: 0;
+    background: var(--sqlite-surface-muted);
     color: var(--sqlite-text);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.025),
-      0 10px 24px rgba(0, 0, 0, 0.14);
     transition:
-      border-color 140ms ease,
-      box-shadow 140ms ease,
-      background-color 140ms ease,
-      transform 140ms ease;
+      border-color 120ms ease,
+      background-color 120ms ease,
+      transform 120ms ease;
   }
 
   .sqlite-input,
@@ -235,7 +276,7 @@
 
   .sqlite-input::placeholder,
   .sqlite-editor-shell .cm-placeholder {
-    color: rgba(165, 185, 204, 0.5);
+    color: var(--sqlite-muted-soft);
   }
 
   .sqlite-input:focus-visible,
@@ -249,18 +290,16 @@
   .sqlite-connection-row:focus-visible,
   .sqlite-schema-row:focus-visible,
   .sqlite-object-row:focus-visible {
-    outline: 2px solid transparent;
-    border-color: rgba(130, 50, 255, 0.54);
-    box-shadow:
-      0 0 0 2px rgba(130, 50, 255, 0.18),
-      0 0 0 4px rgba(130, 50, 255, 0.08);
+    outline: 2px solid var(--sqlite-accent);
+    outline-offset: 0;
+    border-color: var(--sqlite-accent);
   }
 
   .sqlite-select {
     appearance: none;
     background-image:
-      linear-gradient(45deg, transparent 50%, rgba(165, 185, 204, 0.8) 50%),
-      linear-gradient(135deg, rgba(165, 185, 204, 0.8) 50%, transparent 50%);
+      linear-gradient(45deg, transparent 50%, #a3a3a3 50%),
+      linear-gradient(135deg, #a3a3a3 50%, transparent 50%);
     background-position:
       calc(100% - 18px) calc(50% - 2px),
       calc(100% - 12px) calc(50% - 2px);
@@ -302,7 +341,7 @@
   .sqlite-schema-row,
   .sqlite-object-row {
     touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(130, 50, 255, 0.2);
+    -webkit-tap-highlight-color: rgba(255, 79, 123, 0.2);
     cursor: pointer;
   }
 
@@ -310,11 +349,10 @@
     border: 1px solid var(--sqlite-line);
     cursor: pointer;
     transition:
-      border-color 140ms ease,
-      background-color 140ms ease,
-      box-shadow 140ms ease,
-      transform 140ms ease,
-      color 140ms ease;
+      border-color 120ms ease,
+      background-color 120ms ease,
+      transform 120ms ease,
+      color 120ms ease;
   }
 
   .sqlite-button:disabled,
@@ -326,14 +364,14 @@
   }
 
   .sqlite-button-primary {
-    border-color: rgba(130, 50, 255, 0.3);
-    background: linear-gradient(180deg, rgba(130, 50, 255, 0.98), rgba(105, 33, 214, 0.94));
-    color: white;
-    box-shadow: 0 12px 32px rgba(72, 28, 142, 0.3);
+    border-color: var(--sqlite-accent);
+    background: var(--sqlite-accent);
+    color: #0a0a0a;
   }
 
   .sqlite-button-primary:hover:not(:disabled) {
-    background: linear-gradient(180deg, rgba(145, 74, 255, 0.98), rgba(114, 42, 227, 0.96));
+    border-color: var(--sqlite-accent-strong);
+    background: var(--sqlite-accent-strong);
   }
 
   .sqlite-button-secondary,
@@ -344,7 +382,7 @@
   .sqlite-section-tab {
     border: 1px solid var(--sqlite-line);
     background: rgba(255, 255, 255, 0.035);
-    color: rgba(238, 246, 252, 0.9);
+    color: var(--sqlite-text);
   }
 
   .sqlite-button-secondary:hover:not(:disabled),
@@ -366,28 +404,29 @@
   }
 
   .sqlite-button-danger {
-    border-color: rgba(255, 100, 100, 0.35);
-    background: rgba(255, 90, 90, 0.14);
-    color: rgba(255, 214, 214, 0.95);
+    border-color: rgba(255, 122, 80, 0.35);
+    background: var(--sqlite-danger-soft);
+    color: var(--sqlite-danger);
   }
 
   .sqlite-button-danger:hover:not(:disabled) {
-    border-color: rgba(255, 120, 120, 0.55);
-    background: rgba(255, 90, 90, 0.22);
+    border-color: rgba(255, 122, 80, 0.55);
+    background: rgba(255, 122, 80, 0.22);
     color: white;
   }
 
   .sqlite-badge,
   .sqlite-chip,
   .sqlite-count-pill {
+    font-family: var(--sqlite-font-mono);
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     min-width: 0;
     padding: 0.35rem 0.65rem;
-    border-radius: 999px;
+    border-radius: 0;
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     line-height: 1;
@@ -399,25 +438,25 @@
   .sqlite-chip-static {
     border: 1px solid var(--sqlite-line);
     background: rgba(255, 255, 255, 0.04);
-    color: rgba(231, 241, 249, 0.86);
+    color: var(--sqlite-muted);
   }
 
   .sqlite-badge-accent {
-    border: 1px solid rgba(130, 50, 255, 0.3);
-    background: rgba(130, 50, 255, 0.14);
-    color: rgba(222, 237, 255, 0.95);
+    border: 1px solid rgba(255, 79, 123, 0.3);
+    background: var(--sqlite-accent-soft);
+    color: var(--sqlite-accent);
   }
 
   .sqlite-badge-success {
-    border: 1px solid rgba(79, 206, 146, 0.28);
+    border: 1px solid rgba(74, 222, 128, 0.28);
     background: var(--sqlite-success-soft);
-    color: rgba(203, 249, 225, 0.95);
+    color: var(--sqlite-success);
   }
 
   .sqlite-badge-warning {
-    border: 1px solid rgba(255, 191, 105, 0.26);
+    border: 1px solid rgba(251, 191, 36, 0.26);
     background: var(--sqlite-warning-soft);
-    color: rgba(255, 232, 196, 0.95);
+    color: var(--sqlite-warning);
   }
 
   .sqlite-app-body {
@@ -507,7 +546,7 @@
   .sqlite-results-loading-bar {
     position: relative;
     overflow: hidden;
-    border-radius: 0.9rem;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.06);
   }
 
@@ -523,7 +562,7 @@
     display: grid;
     gap: 0.75rem;
     padding: 0.85rem 0.9rem;
-    border-radius: 1rem;
+    border-radius: 0;
     border: 1px solid var(--sqlite-line);
     background: rgba(255, 255, 255, 0.03);
   }
@@ -537,21 +576,22 @@
   .sqlite-results-loading-bar::after {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: 0 auto 0 0;
+    width: 40%;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+    background: rgba(255, 255, 255, 0.06);
     animation: sqlite-shimmer 1.2s linear infinite;
   }
 
   .sqlite-sidebar-resizer {
     width: 0.4rem;
-    border-radius: 999px;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.04);
     cursor: col-resize;
   }
 
   .sqlite-sidebar-resizer:hover {
-    background: rgba(130, 50, 255, 0.2);
+    background: rgba(255, 79, 123, 0.2);
   }
 
   .sqlite-workspace {
@@ -571,22 +611,22 @@
     align-items: center;
     gap: 0.35rem;
     padding: 0.2rem;
-    border-radius: 0.85rem;
+    border-radius: 0;
     border: 1px solid var(--sqlite-line);
     background: rgba(255, 255, 255, 0.03);
   }
 
   .sqlite-workspace-tab,
   .sqlite-section-tab {
-    border-radius: 0.7rem;
+    border-radius: 0;
     padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .sqlite-workspace-tab.is-active,
   .sqlite-section-tab.is-active {
-    border-color: rgba(130, 50, 255, 0.28);
+    border-color: rgba(255, 79, 123, 0.28);
     background: var(--sqlite-accent-soft);
     color: white;
   }
@@ -605,7 +645,7 @@
     gap: 1rem;
     min-height: 100%;
     border: 1px dashed var(--sqlite-line);
-    border-radius: 1.2rem;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.02);
     padding: 1.5rem;
   }
@@ -616,19 +656,20 @@
     justify-content: center;
     width: 3.2rem;
     height: 3.2rem;
-    border-radius: 1rem;
+    border-radius: 0;
     border: 1px solid var(--sqlite-line);
     background: rgba(255, 255, 255, 0.03);
     color: var(--sqlite-muted);
   }
 
   .sqlite-eyebrow {
+    font-family: var(--sqlite-font-mono);
     margin: 0;
     color: var(--sqlite-muted-soft);
     font-size: 0.72rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .sqlite-helper-text {
@@ -642,7 +683,7 @@
   .sqlite-detail-card-title {
     margin: 0;
     font-size: 0.94rem;
-    font-weight: 600;
+    font-weight: 500;
     text-wrap: balance;
   }
 
@@ -653,11 +694,12 @@
   }
 
   .sqlite-field label {
+    font-family: var(--sqlite-font-mono);
     color: var(--sqlite-muted-soft);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .sqlite-field-compact {
@@ -713,8 +755,8 @@
   .sqlite-results-panel,
   .sqlite-editor-frame {
     border: 1px solid var(--sqlite-line);
-    border-radius: 1.25rem;
-    background: linear-gradient(180deg, rgba(10, 18, 29, 0.98), rgba(8, 15, 24, 0.98));
+    border-radius: 0;
+    background: var(--sqlite-bg);
   }
 
   .sqlite-content-stack,
@@ -832,7 +874,7 @@
   }
 
   .sqlite-editor-shell .cm-selectionLayer .cm-selectionBackground {
-    border-radius: 0.2rem;
+    border-radius: 0;
   }
 
   .sqlite-editor-shell .cm-focused {
@@ -844,15 +886,14 @@
   }
 
   .sqlite-editor-shell .cm-activeLine {
-    border-radius: 0.35rem;
+    border-radius: 0;
   }
 
   .sqlite-editor-shell .cm-sqlite-errorLine {
-    background: linear-gradient(90deg, rgba(255, 123, 123, 0.16), rgba(255, 123, 123, 0.08));
+    background: var(--sqlite-danger-soft);
   }
 
   .sqlite-editor-shell .cm-tooltip-autocomplete {
-    backdrop-filter: blur(14px);
   }
 
   .sqlite-editor-shell .cm-tooltip-autocomplete > ul {
@@ -861,7 +902,7 @@
   }
 
   .sqlite-editor-shell .cm-tooltip-autocomplete ul li {
-    border-radius: 0.6rem;
+    border-radius: 0;
     margin: 0.1rem 0;
     padding-block: 0.32rem;
   }
@@ -878,7 +919,6 @@
   .sqlite-editor-shell .cm-tooltip.cm-completionInfo {
     max-width: 20rem;
     padding: 0.75rem 0.85rem;
-    backdrop-filter: blur(14px);
   }
 
   .sqlite-view-splitter {
@@ -899,8 +939,8 @@
     width: 4rem;
     height: 0.18rem;
     transform: translate(-50%, -50%);
-    border-radius: 999px;
-    background: rgba(165, 185, 204, 0.42);
+    border-radius: 0;
+    background: var(--sqlite-line-strong);
   }
 
   .sqlite-results-header,
@@ -918,9 +958,9 @@
     flex-wrap: wrap;
     margin: 0.7rem;
     padding: 0.7rem 0.8rem;
-    border: 1px solid rgba(255, 123, 123, 0.28);
-    border-radius: 1rem;
-    background: rgba(255, 123, 123, 0.1);
+    border: 1px solid rgba(255, 122, 80, 0.28);
+    border-radius: 0;
+    background: var(--sqlite-danger-soft);
   }
 
   .sqlite-query-statement-switcher {
@@ -995,7 +1035,7 @@
     place-items: center;
     min-height: 12rem;
     border: 1px dashed var(--sqlite-line);
-    border-radius: 1rem;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.02);
     padding: 1.1rem;
   }
@@ -1040,8 +1080,9 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    background: rgba(8, 17, 26, 0.98);
-    color: rgba(200, 216, 230, 0.76);
+    font-family: var(--sqlite-font-mono);
+    background: var(--sqlite-bg);
+    color: var(--sqlite-muted-soft);
     font-size: 0.68rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -1055,17 +1096,17 @@
   .sqlite-results-table tbody td,
   .sqlite-metadata-table tbody td {
     padding: 0.55rem 0.65rem;
-    border-bottom: 1px solid rgba(167, 194, 220, 0.08);
+    border-bottom: 1px solid var(--sqlite-line);
     vertical-align: top;
     line-height: 1.35;
-    color: rgba(240, 246, 251, 0.92);
+    color: var(--sqlite-text);
     display: flex;
     align-items: flex-start;
   }
 
   .sqlite-results-table tbody tr:hover td,
   .sqlite-metadata-table tbody tr:hover td {
-    background: rgba(130, 50, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
   }
 
   .sqlite-results-number-col,
@@ -1086,10 +1127,7 @@
   }
 
   .sqlite-results-row:focus-visible td {
-    background: rgba(130, 50, 255, 0.08);
-    box-shadow:
-      inset 0 1px 0 rgba(130, 50, 255, 0.18),
-      inset 0 -1px 0 rgba(130, 50, 255, 0.18);
+    background: rgba(255, 79, 123, 0.08);
   }
 
   .sqlite-table-header-content {
@@ -1121,33 +1159,28 @@
     width: 1px;
     height: 100%;
     transform: translateX(-50%);
-    border-radius: 999px;
-    background: rgba(167, 194, 220, 0.28);
-    transition:
-      background-color 140ms ease,
-      box-shadow 140ms ease;
+    border-radius: 0;
+    background: var(--sqlite-line-strong);
+    transition: background-color 120ms ease;
   }
 
   .sqlite-column-resizer:hover::before,
   .sqlite-column-resizer.is-active::before {
-    background: rgba(130, 50, 255, 0.92);
-    box-shadow: 0 0 0 1px rgba(130, 50, 255, 0.22);
+    background: var(--sqlite-accent);
   }
 
   .sqlite-column-resizer:focus-visible::before {
-    background: rgba(130, 50, 255, 0.92);
-    box-shadow:
-      0 0 0 1px rgba(130, 50, 255, 0.22),
-      0 0 0 4px rgba(130, 50, 255, 0.08);
+    background: var(--sqlite-accent);
   }
 
   .sqlite-table-column-resizing {
-    background: rgba(130, 50, 255, 0.06);
+    background: rgba(255, 79, 123, 0.06);
   }
 
   .sqlite-cell-kind,
   .sqlite-object-section-title,
   .sqlite-tree-empty {
+    font-family: var(--sqlite-font-mono);
     color: var(--sqlite-muted-soft);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
@@ -1163,7 +1196,7 @@
   }
 
   .sqlite-cell-preview {
-    color: rgba(241, 247, 251, 0.94);
+    color: var(--sqlite-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1203,17 +1236,17 @@
     min-width: 0;
     width: 100%;
     padding: 0.58rem 0.7rem;
-    border-radius: 0.85rem;
+    border-radius: 0;
     border: 1px solid transparent;
     background: rgba(255, 255, 255, 0.025);
-    color: rgba(238, 246, 252, 0.9);
+    color: var(--sqlite-text);
     text-align: left;
     cursor: pointer;
     transition:
-      background-color 140ms ease,
-      border-color 140ms ease,
-      color 140ms ease,
-      transform 140ms ease;
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease,
+      transform 120ms ease;
   }
 
   .sqlite-connection-row:hover,
@@ -1224,14 +1257,15 @@
   }
 
   .sqlite-object-row.is-active {
-    border-color: rgba(130, 50, 255, 0.24);
-    background: rgba(130, 50, 255, 0.12);
+    border-color: var(--sqlite-line);
+    border-left: 2px solid var(--sqlite-accent);
+    background: var(--sqlite-surface);
     color: white;
   }
 
   .sqlite-schema-content {
     padding-left: 0.85rem;
-    border-left: 1px solid rgba(167, 194, 220, 0.08);
+    border-left: 1px solid var(--sqlite-line);
   }
 
   .sqlite-inline-stat {
@@ -1248,7 +1282,7 @@
   .sqlite-detail-card,
   .sqlite-key-row {
     border: 1px solid var(--sqlite-line);
-    border-radius: 1rem;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.03);
   }
 
@@ -1280,7 +1314,7 @@
   .sqlite-tree-empty {
     padding: 0.7rem;
     border: 1px dashed var(--sqlite-line);
-    border-radius: 0.95rem;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.02);
   }
 
@@ -1299,7 +1333,7 @@
   .sqlite-panel-shell .button[data-variant='ghost'] {
     border-color: var(--sqlite-line);
     background: rgba(255, 255, 255, 0.03);
-    color: rgba(226, 232, 240, 0.9);
+    color: var(--sqlite-muted);
   }
 
   .sqlite-panel-shell .button[data-variant='ghost']:hover {
@@ -1310,19 +1344,17 @@
   .sqlite-panel-shell .drawer__dialog,
   .sqlite-panel-shell .modal__dialog {
     border-color: var(--sqlite-line-strong);
-    background: linear-gradient(180deg, rgba(11, 20, 30, 0.98), rgba(7, 13, 21, 0.98));
-    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.48);
+    background: var(--sqlite-surface);
   }
 
   .sqlite-panel-shell .drawer__backdrop,
   .sqlite-panel-shell .modal__backdrop {
-    background: rgba(2, 6, 12, 0.66);
-    backdrop-filter: blur(18px);
+    background: rgba(0, 0, 0, 0.6);
     overscroll-behavior: contain;
   }
 
   .sqlite-panel-shell .tabs__tab {
-    color: rgba(148, 163, 184, 0.9);
+    color: var(--sqlite-muted-soft);
   }
 
   .sqlite-panel-shell .tabs__tab[data-selected='true'] {
@@ -1370,7 +1402,7 @@
 
   @keyframes sqlite-shimmer {
     to {
-      transform: translateX(100%);
+      transform: translateX(250%);
     }
   }
 }

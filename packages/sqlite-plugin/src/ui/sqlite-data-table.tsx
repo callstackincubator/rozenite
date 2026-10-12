@@ -267,7 +267,7 @@ export const SqliteDataTable = <TData extends RowData>({
           <div className="sqlite-results-empty">
             <div className="max-w-sm space-y-2 text-center">
               <p className="text-base font-medium text-white">{emptyTitle}</p>
-              <p className="text-sm text-slate-400">{emptyDescription}</p>
+              <p className="text-sm text-[var(--sqlite-muted)]">{emptyDescription}</p>
             </div>
           </div>
         ) : (

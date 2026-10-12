@@ -15,6 +15,9 @@ const toneKeys = {
  * surface-bearing components — Button, IconButton, Badge, Alert. Pass
  * `interactive: true` (Button, IconButton) to add hover states; leave it
  * off for static surfaces (Badge, Alert) so they don't look clickable.
+ *
+ * `soft` is the website's chip: a `field` (muted) fill with the tone as text,
+ * rather than a tinted fill, so the accent stays a colour of type, not of area.
  */
 export const surfaceTone = cva('', {
   variants: {
@@ -32,12 +35,12 @@ export const surfaceTone = cva('', {
   },
   compoundVariants: [
     { tone: 'neutral', variant: 'solid', class: 'bg-secondary text-secondary-foreground' },
-    { tone: 'neutral', variant: 'soft', class: 'bg-muted text-foreground' },
-    { tone: 'neutral', variant: 'outline', class: 'border border-border text-foreground' },
-    { tone: 'neutral', variant: 'ghost', class: 'text-foreground' },
+    { tone: 'neutral', variant: 'soft', class: 'bg-muted text-muted-foreground' },
+    { tone: 'neutral', variant: 'outline', class: 'border border-input text-foreground' },
+    { tone: 'neutral', variant: 'ghost', class: 'text-muted-foreground' },
 
     { tone: 'primary', variant: 'solid', class: 'bg-primary text-primary-foreground' },
-    { tone: 'primary', variant: 'soft', class: 'bg-accent text-accent-foreground' },
+    { tone: 'primary', variant: 'soft', class: 'bg-muted text-primary' },
     { tone: 'primary', variant: 'outline', class: 'border border-primary text-primary' },
     { tone: 'primary', variant: 'ghost', class: 'text-primary' },
 
@@ -69,30 +72,40 @@ export const surfaceTone = cva('', {
       tone: 'neutral',
       variant: 'solid',
       interactive: true,
-      class: 'hover:bg-secondary/80',
+      class: 'hover:bg-border-strong',
     },
     {
       tone: 'neutral',
       variant: 'soft',
       interactive: true,
-      class: 'hover:bg-muted/80',
+      class: 'hover:bg-border-strong hover:text-foreground',
     },
     {
       tone: 'neutral',
       variant: 'outline',
       interactive: true,
-      class: 'hover:bg-accent hover:text-accent-foreground',
+      class: 'hover:border-faint hover:bg-accent',
     },
     {
       tone: 'neutral',
       variant: 'ghost',
       interactive: true,
-      class: 'hover:bg-accent hover:text-accent-foreground',
+      class: 'hover:bg-accent hover:text-foreground',
     },
 
-    { tone: 'primary', variant: 'solid', interactive: true, class: 'hover:bg-primary/90' },
-    { tone: 'primary', variant: 'soft', interactive: true, class: 'hover:bg-accent/80' },
-    { tone: 'primary', variant: 'outline', interactive: true, class: 'hover:bg-accent' },
+    { tone: 'primary', variant: 'solid', interactive: true, class: 'hover:bg-primary-hover' },
+    {
+      tone: 'primary',
+      variant: 'soft',
+      interactive: true,
+      class: 'hover:bg-secondary hover:text-primary-hover',
+    },
+    {
+      tone: 'primary',
+      variant: 'outline',
+      interactive: true,
+      class: 'hover:bg-primary hover:text-primary-foreground',
+    },
     { tone: 'primary', variant: 'ghost', interactive: true, class: 'hover:bg-accent' },
 
     { tone: 'success', variant: 'solid', interactive: true, class: 'hover:bg-success/90' },

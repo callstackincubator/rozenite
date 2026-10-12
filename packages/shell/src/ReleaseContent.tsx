@@ -1,6 +1,5 @@
 import { Dialog } from '@rozenite/ui';
-import lightLogo from '../../../website/public/logo-light.svg';
-import darkLogo from '../../../website/public/logo-dark.svg';
+import { RozeniteLockup } from './Logo';
 
 const METRO_CONFIGURATION_URL =
   'https://github.com/callstackincubator/rozenite/tree/main/packages/metro#configuration';
@@ -13,10 +12,7 @@ const ISSUES_URL = 'https://github.com/callstackincubator/rozenite/issues';
 export function ReleaseContent() {
   return (
     <div className="space-y-4">
-      <div className="h-8">
-        <img src={lightLogo} alt="Rozenite" className="h-8 w-auto dark:hidden" />
-        <img src={darkLogo} alt="Rozenite" className="hidden h-8 w-auto dark:block" />
-      </div>
+      <RozeniteLockup />
       <Dialog.Header>
         <Dialog.Title>We are changing</Dialog.Title>
         <Dialog.Description>The DevTools experience now uses a unified UI.</Dialog.Description>
@@ -28,11 +24,11 @@ export function ReleaseContent() {
         </p>
         <p>
           Prefer the previous layout? Set{' '}
-          <code className="rounded bg-muted px-1 py-0.5 font-mono text-foreground">
+          <code className="rounded-sm bg-muted px-1 py-0.5 font-mono text-foreground">
             pluginDisplay: 'tabs'
           </code>{' '}
           in the options passed to{' '}
-          <code className="rounded bg-muted px-1 py-0.5 font-mono text-foreground">
+          <code className="rounded-sm bg-muted px-1 py-0.5 font-mono text-foreground">
             withRozenite
           </code>{' '}
           in your Metro config. See the{' '}

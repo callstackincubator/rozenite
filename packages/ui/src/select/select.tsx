@@ -88,7 +88,7 @@ function SelectItem({ className, children, ...props }: SelectItemProps) {
     <SelectPrimitive.Item data-slot="select-item" className={cn(optionRow(), className)} {...props}>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-3.5 w-3.5" />
+        <Check className="h-3.5 w-3.5 text-primary" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   );

@@ -13,7 +13,7 @@ export interface RozeniteLoaderProps {
   period?: number;
   /** Organic grain amount, 0–1.4. Default 0.8. */
   noise?: number;
-  /** Pixel color. Default Rozenite violet. */
+  /** Pixel color. Default: the Rozenite accent, which the mark keeps in every theme. */
   fg?: string;
   /** Background fill, or "transparent". Default "transparent". */
   bg?: string;
@@ -26,6 +26,9 @@ export interface RozeniteLoaderProps {
   className?: string;
   style?: CSSProperties;
 }
+
+/** The mark keeps the bright accent in both themes (docs/DESIGN.md, "The mark"). */
+const ACCENT = '#ff4f7b';
 
 const PATH_D =
   'M17.333 5.333H20V10.667H22.667V16H25.333V24H22.667V26.667H20V29.333H12' +
@@ -85,7 +88,7 @@ export function RozeniteLoader({
   frames = 48,
   period = 2000,
   noise = 0.8,
-  fg = '#8232ff',
+  fg = ACCENT,
   bg = 'transparent',
   cache = 'auto',
   paused = false,
@@ -132,7 +135,6 @@ export function RozeniteLoader({
     const renderFrame = (target: CanvasRenderingContext2D, ox: number, phase: number) => {
       const s = W / cols;
       const gap = Math.max(0.6, s * 0.09);
-      const rad = s * 0.14;
       const A = phase * Math.PI * 2;
       const ca = Math.cos(A);
       const sa = Math.sin(A);
@@ -152,9 +154,8 @@ export function RozeniteLoader({
         const b = 0.5 + 0.45 * sweep + blob + n;
         if (b > c.th) {
           const w = s - gap * 2;
-          target.beginPath();
-          target.roundRect(ox + c.i * s + gap, c.j * s + gap, w, w, rad);
-          target.fill();
+          // Square pixels, like the website's dither: no rounded corners.
+          target.fillRect(ox + c.i * s + gap, c.j * s + gap, w, w);
         }
       }
     };
