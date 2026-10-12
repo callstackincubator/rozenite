@@ -24,6 +24,9 @@
     "fonts",
     "fonts.css",
     "src",
+    "!src/**/__tests__",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
     "styles.css"
   ],
   "type": "module",
