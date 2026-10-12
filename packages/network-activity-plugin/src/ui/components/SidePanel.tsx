@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { Badge, cn, IconButton, IndicatorDot, Tabs, Text, type Tone } from '@rozenite/ui';
 import { HeadersTab } from '../tabs/HeadersTab';
@@ -22,6 +22,67 @@ import type { ResponseView } from '../response-renderers';
 // Tabs share the bar when there is room and keep their full label when there is not: the bar
 // scrolls sideways instead of clipping the last one.
 const TAB_CLASS_NAME = 'flex-auto shrink-0';
+
+// The overflowing sides of the tab bar fade out, so a cut-off tab reads as "more this way" instead
+// of as a clipped label. Only the sides with something hidden fade, and only while there is.
+const TAB_BAR_FADE_CLASS_NAMES = {
+  none: '',
+  start: '[mask-image:linear-gradient(to_right,transparent,black_24px)]',
+  end: '[mask-image:linear-gradient(to_left,transparent,black_24px)]',
+  both: '[mask-image:linear-gradient(to_right,transparent,black_24px,black_calc(100%-24px),transparent)]',
+} as const;
+
+type TabBarOverflow = keyof typeof TAB_BAR_FADE_CLASS_NAMES;
+
+const ScrollableTabsList = ({ children }: { children: ReactNode }) => {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState<TabBarOverflow>('none');
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+
+    if (!list) {
+      return;
+    }
+
+    const update = () => {
+      const hiddenAtStart = list.scrollLeft > 1;
+      const hiddenAtEnd = list.scrollLeft + list.clientWidth < list.scrollWidth - 1;
+
+      setOverflow(
+        hiddenAtStart && hiddenAtEnd
+          ? 'both'
+          : hiddenAtStart
+            ? 'start'
+            : hiddenAtEnd
+              ? 'end'
+              : 'none',
+      );
+    };
+    const observer = new ResizeObserver(update);
+
+    update();
+    list.addEventListener('scroll', update, { passive: true });
+    observer.observe(list);
+
+    return () => {
+      list.removeEventListener('scroll', update);
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <Tabs.List
+      ref={listRef}
+      className={cn(
+        'relative w-full shrink-0 overflow-x-auto border-0 border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        TAB_BAR_FADE_CLASS_NAMES[overflow],
+      )}
+    >
+      {children}
+    </Tabs.List>
+  );
+};
 
 const REQUEST_TYPE_BADGES: Record<string, { label: string; tone: Tone }> = {
   http: { label: 'HTTP', tone: 'neutral' },
@@ -300,9 +361,7 @@ export const SidePanel = () => {
         defaultValue={selectedRequest.type === 'websocket' ? 'messages' : 'headers'}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <Tabs.List className="relative w-full shrink-0 overflow-x-auto border-0 border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {getTabsListTriggers()}
-        </Tabs.List>
+        <ScrollableTabsList>{getTabsListTriggers()}</ScrollableTabsList>
 
         {getTabsContent()}
       </Tabs>
