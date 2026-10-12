@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
-import { Badge, IconButton, IndicatorDot, Tabs, Text, type Tone } from '@rozenite/ui';
+import { Badge, cn, IconButton, IndicatorDot, Tabs, Text, type Tone } from '@rozenite/ui';
 import { HeadersTab } from '../tabs/HeadersTab';
 import { RequestTab } from '../tabs/RequestTab';
 import { ResponseTab } from '../tabs/ResponseTab';
@@ -18,6 +18,10 @@ import { getStatusTone } from '../utils/getStatusTone';
 import { MessagesTab } from '../tabs/MessagesTab';
 import { SSEMessagesTab } from '../tabs/SSEMessagesTab';
 import type { ResponseView } from '../response-renderers';
+
+// Tabs share the bar when there is room and keep their full label when there is not: the bar
+// scrolls sideways instead of clipping the last one.
+const TAB_CLASS_NAME = 'flex-auto shrink-0';
 
 const REQUEST_TYPE_BADGES: Record<string, { label: string; tone: Tone }> = {
   http: { label: 'HTTP', tone: 'neutral' },
@@ -135,23 +139,23 @@ export const SidePanel = () => {
     if (httpDetails) {
       return (
         <>
-          <Tabs.Tab value="headers" className="flex-1">
+          <Tabs.Tab value="headers" className={TAB_CLASS_NAME}>
             Headers
           </Tabs.Tab>
-          <Tabs.Tab value="request" className="flex-1">
+          <Tabs.Tab value="request" className={TAB_CLASS_NAME}>
             Request
           </Tabs.Tab>
-          <Tabs.Tab value="response" className="flex-1 gap-1.5">
+          <Tabs.Tab value="response" className={cn(TAB_CLASS_NAME, 'gap-1.5')}>
             Response
             {hasResponseOverride && <IndicatorDot aria-label="Overridden" />}
           </Tabs.Tab>
-          <Tabs.Tab value="cookies" className="flex-1">
+          <Tabs.Tab value="cookies" className={TAB_CLASS_NAME}>
             Cookies
           </Tabs.Tab>
-          <Tabs.Tab value="initiator" className="flex-1">
+          <Tabs.Tab value="initiator" className={TAB_CLASS_NAME}>
             Initiator
           </Tabs.Tab>
-          <Tabs.Tab value="timing" className="flex-1">
+          <Tabs.Tab value="timing" className={TAB_CLASS_NAME}>
             Timing
           </Tabs.Tab>
         </>
@@ -161,16 +165,16 @@ export const SidePanel = () => {
     if (sseDetails) {
       return (
         <>
-          <Tabs.Tab value="headers" className="flex-1">
+          <Tabs.Tab value="headers" className={TAB_CLASS_NAME}>
             Headers
           </Tabs.Tab>
-          <Tabs.Tab value="request" className="flex-1">
+          <Tabs.Tab value="request" className={TAB_CLASS_NAME}>
             Request
           </Tabs.Tab>
-          <Tabs.Tab value="messages" className="flex-1">
+          <Tabs.Tab value="messages" className={TAB_CLASS_NAME}>
             Messages
           </Tabs.Tab>
-          <Tabs.Tab value="initiator" className="flex-1">
+          <Tabs.Tab value="initiator" className={TAB_CLASS_NAME}>
             Initiator
           </Tabs.Tab>
         </>
@@ -178,7 +182,7 @@ export const SidePanel = () => {
     }
 
     return (
-      <Tabs.Tab value="messages" className="flex-1">
+      <Tabs.Tab value="messages" className={TAB_CLASS_NAME}>
         Messages
       </Tabs.Tab>
     );
@@ -296,7 +300,7 @@ export const SidePanel = () => {
         defaultValue={selectedRequest.type === 'websocket' ? 'messages' : 'headers'}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <Tabs.List className="w-full shrink-0 border-0 border-b border-border">
+        <Tabs.List className="relative w-full shrink-0 overflow-x-auto border-0 border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {getTabsListTriggers()}
         </Tabs.List>
 
