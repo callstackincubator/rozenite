@@ -2,17 +2,18 @@ import { ToggleGroup as ToggleGroupPrimitive } from '@base-ui/react/toggle-group
 import { Toggle as TogglePrimitive } from '@base-ui/react/toggle';
 import { cn } from '../utils/cn';
 import type { Size } from '../tokens/size';
+import { monoLabel } from '../utils/mono-label';
 
 const toggleGroupSize = {
-  sm: 'h-6 p-0.5',
-  md: 'h-8 p-1',
-  lg: 'h-10 p-1',
+  sm: 'h-6',
+  md: 'h-8',
+  lg: 'h-10',
 } as const satisfies Record<Size, string>;
 
 const toggleGroupItemSize = {
-  sm: 'h-5 px-2 text-xs [&_svg]:size-3.5',
-  md: 'h-6 px-2.5 text-sm [&_svg]:size-4',
-  lg: 'h-8 px-3 text-base [&_svg]:size-5',
+  sm: 'px-2.5 text-[11px] [&_svg]:size-3.5',
+  md: 'px-3 text-[11px] [&_svg]:size-4',
+  lg: 'px-4 text-xs [&_svg]:size-5',
 } as const satisfies Record<Size, string>;
 
 export type ToggleGroupProps<Value extends string = string> = ToggleGroupPrimitive.Props<Value> & {
@@ -29,7 +30,7 @@ function ToggleGroupRoot<Value extends string = string>({
     <ToggleGroupPrimitive
       data-slot="toggle-group"
       className={cn(
-        'inline-flex items-center gap-1 rounded-md bg-muted text-muted-foreground',
+        'inline-flex items-stretch rounded-md border border-border text-faint',
         toggleGroupSize[size],
         className,
       )}
@@ -52,9 +53,11 @@ function ToggleGroupItem<Value extends string = string>({
     <TogglePrimitive
       data-slot="toggle-group-item"
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-sm font-medium whitespace-nowrap text-muted-foreground',
-        'outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        'data-[pressed]:bg-background data-[pressed]:text-foreground data-[pressed]:shadow-xs',
+        'inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-faint transition-colors duration-[120ms] not-first:border-l not-first:border-border',
+        monoLabel,
+        'hover:text-foreground',
+        'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+        'data-[pressed]:bg-accent data-[pressed]:text-foreground data-[pressed]:shadow-[inset_0_-2px_0_var(--primary)]',
         'disabled:pointer-events-none disabled:opacity-50',
         toggleGroupItemSize[size],
         className,

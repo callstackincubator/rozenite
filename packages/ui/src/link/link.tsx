@@ -22,8 +22,8 @@ export function Link({ external = false, className, children, render, ref, ...pr
       rel: external ? 'noreferrer' : undefined,
       target: external ? '_blank' : undefined,
       className: cn(
-        'group inline-flex items-center gap-1 text-sm font-medium text-primary outline-none',
-        'hover:underline focus-visible:ring-2 focus-visible:ring-ring',
+        'group inline-flex items-center gap-1 text-sm text-primary outline-none transition-colors duration-[120ms]',
+        'underline-offset-4 hover:text-primary-hover hover:underline focus-visible:ring-2 focus-visible:ring-ring',
         className,
       ),
       children: (
@@ -32,7 +32,7 @@ export function Link({ external = false, className, children, render, ref, ...pr
           {external && (
             <ArrowUpRight
               aria-hidden="true"
-              className="size-3.5 shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              className="size-3.5 shrink-0 transition-transform duration-[120ms] group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
             />
           )}
         </>

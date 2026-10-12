@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
+import { useOptionalPluginTheme } from '../theme/theme-context';
 
 export interface RozeniteLoaderProps {
   /** Height in CSS px; width follows the logo's aspect ratio. Default 48. */
@@ -13,7 +14,7 @@ export interface RozeniteLoaderProps {
   period?: number;
   /** Organic grain amount, 0–1.4. Default 0.8. */
   noise?: number;
-  /** Pixel color. Default Rozenite violet. */
+  /** Pixel color. Defaults to the theme accent (`--primary`), re-read when the theme changes. */
   fg?: string;
   /** Background fill, or "transparent". Default "transparent". */
   bg?: string;
@@ -26,6 +27,9 @@ export interface RozeniteLoaderProps {
   className?: string;
   style?: CSSProperties;
 }
+
+/** The accent in dark; used when `--primary` cannot be read (no stylesheet, jsdom). */
+const FALLBACK_ACCENT = '#ff4f7b';
 
 const PATH_D =
   'M17.333 5.333H20V10.667H22.667V16H25.333V24H22.667V26.667H20V29.333H12' +
@@ -85,7 +89,7 @@ export function RozeniteLoader({
   frames = 48,
   period = 2000,
   noise = 0.8,
-  fg = '#8232ff',
+  fg,
   bg = 'transparent',
   cache = 'auto',
   paused = false,
@@ -95,6 +99,8 @@ export function RozeniteLoader({
 }: RozeniteLoaderProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const controlRef = useRef<{ setPaused(p: boolean): void } | null>(null);
+  // Not read here: the canvas bakes the colour in, so a theme switch has to re-run the effect.
+  const theme = useOptionalPluginTheme()?.theme;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -102,6 +108,8 @@ export function RozeniteLoader({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const color =
+      fg ?? (getComputedStyle(canvas).getPropertyValue('--primary').trim() || FALLBACK_ACCENT);
     const useCache = cache === 'auto' ? size <= 120 : cache;
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     canvas.style.width = size * ASPECT + 'px';
@@ -132,7 +140,6 @@ export function RozeniteLoader({
     const renderFrame = (target: CanvasRenderingContext2D, ox: number, phase: number) => {
       const s = W / cols;
       const gap = Math.max(0.6, s * 0.09);
-      const rad = s * 0.14;
       const A = phase * Math.PI * 2;
       const ca = Math.cos(A);
       const sa = Math.sin(A);
@@ -142,7 +149,7 @@ export function RozeniteLoader({
         target.fillStyle = bg;
         target.fillRect(ox, 0, W, H);
       }
-      target.fillStyle = fg;
+      target.fillStyle = color;
       for (const c of cells) {
         const sweep = (c.u * ca + c.v * sa) * 1.9;
         const dx = c.u - hx;
@@ -152,9 +159,8 @@ export function RozeniteLoader({
         const b = 0.5 + 0.45 * sweep + blob + n;
         if (b > c.th) {
           const w = s - gap * 2;
-          target.beginPath();
-          target.roundRect(ox + c.i * s + gap, c.j * s + gap, w, w, rad);
-          target.fill();
+          // Square pixels, like the website's dither: no rounded corners.
+          target.fillRect(ox + c.i * s + gap, c.j * s + gap, w, w);
         }
       }
     };
@@ -234,7 +240,7 @@ export function RozeniteLoader({
       document.removeEventListener('visibilitychange', onVisibility);
       controlRef.current = null;
     };
-  }, [size, cols, frames, period, noise, fg, bg, cache]);
+  }, [size, cols, frames, period, noise, fg, bg, cache, theme]);
 
   useEffect(() => {
     controlRef.current?.setPaused(paused);

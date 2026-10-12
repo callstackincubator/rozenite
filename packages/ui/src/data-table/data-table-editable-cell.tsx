@@ -33,7 +33,10 @@ export function DataTableEditableCell({
           setDraft(value);
           setEditing(true);
         }}
-        className={cn('w-full rounded-sm px-1 py-0.5 text-left hover:bg-accent/50', className)}
+        className={cn(
+          'w-full rounded-sm px-1 py-0.5 text-left transition-colors duration-[120ms] hover:bg-accent',
+          className,
+        )}
       >
         {value}
       </button>
@@ -61,7 +64,7 @@ export function DataTableEditableCell({
         }
       }}
       className={cn(
-        'w-full rounded-sm border border-ring bg-transparent px-1 py-0.5 outline-none',
+        'w-full rounded-sm border border-ring bg-muted px-1 py-0.5 text-foreground outline-none',
         className,
       )}
       {...props}

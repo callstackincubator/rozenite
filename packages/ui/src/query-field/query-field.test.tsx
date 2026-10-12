@@ -192,11 +192,11 @@ describe('QueryField', () => {
 
     expect(spans).toHaveLength(3);
     expect(spans[0]?.textContent).toBe('level');
-    expect(spans[0]?.className).toContain('text-primary');
+    expect(spans[0]?.className).toContain('text-foreground');
     expect(spans[1]?.textContent).toBe('>=');
-    expect(spans[1]?.className).toContain('text-muted-foreground');
+    expect(spans[1]?.className).toContain('text-faint');
     expect(spans[2]?.textContent).toBe('warn');
-    expect(spans[2]?.className).toContain('text-foreground');
+    expect(spans[2]?.className).toContain('text-primary');
   });
 
   // jsdom computes no layout, so these two can only be guarded structurally.

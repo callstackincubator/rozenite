@@ -82,15 +82,18 @@ function CardHeader({ className, children, ...props }: CardHeaderProps) {
           aria-expanded={context.open}
           aria-label={context.open ? context.collapseLabel : context.expandLabel}
           className={cn(
-            'flex size-5 shrink-0 items-center justify-center rounded outline-none',
-            'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            'flex size-5 shrink-0 items-center justify-center rounded-sm outline-none transition-colors duration-[120ms]',
+            'text-muted-foreground hover:bg-accent hover:text-foreground',
             'focus-visible:ring-2 focus-visible:ring-ring',
           )}
           onClick={context.toggle}
         >
           <ChevronRight
             aria-hidden="true"
-            className={cn('size-4 transition-transform', context.open && 'rotate-90')}
+            className={cn(
+              'size-4 transition-transform duration-[120ms]',
+              context.open && 'rotate-90',
+            )}
           />
         </button>
       )}

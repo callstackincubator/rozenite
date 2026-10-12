@@ -44,7 +44,7 @@ function JsonNodeView({ label, value, depth, defaultExpandedDepth }: JsonNodeVie
   if (!expandable) {
     return (
       <div data-slot="json-inspector-leaf" className="flex gap-1">
-        {label !== null && <span className="text-muted-foreground">{label}:</span>}
+        {label !== null && <JsonKey label={label} />}
         <LeafValue value={value} />
       </div>
     );
@@ -57,16 +57,16 @@ function JsonNodeView({ label, value, depth, defaultExpandedDepth }: JsonNodeVie
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
-        className="inline-flex items-center gap-1 text-foreground hover:text-primary"
+        className="inline-flex items-center gap-1 text-foreground transition-colors duration-[120ms] hover:bg-accent"
       >
         <ChevronRight
           className={cn(
-            'h-3 w-3 shrink-0 text-muted-foreground transition-transform',
+            'h-3 w-3 shrink-0 text-faint transition-transform duration-[120ms]',
             expanded && 'rotate-90',
           )}
         />
-        {label !== null && <span className="text-muted-foreground">{label}:</span>}
-        <span className="text-muted-foreground">{getContainerSummary(value)}</span>
+        {label !== null && <JsonKey label={label} />}
+        <span className="text-faint">{getContainerSummary(value)}</span>
       </button>
       {expanded && (
         <div className="ml-3.5 border-l border-border pl-2">
@@ -85,12 +85,23 @@ function JsonNodeView({ label, value, depth, defaultExpandedDepth }: JsonNodeVie
   );
 }
 
+/** Keys in foreground, punctuation faint. */
+function JsonKey({ label }: { label: string }) {
+  return (
+    <span>
+      <span className="text-foreground">{label}</span>
+      <span className="text-faint">:</span>
+    </span>
+  );
+}
+
+/** The website's code colours: strings and numbers in the accent, keywords dimmed. */
 const LEAF_COLOR_BY_TYPE: Partial<Record<JsonNodeType, string>> = {
   string: 'text-primary',
-  number: 'text-accent-foreground',
-  boolean: 'text-secondary-foreground',
-  null: 'text-danger',
-  undefined: 'text-danger',
+  number: 'text-primary',
+  boolean: 'text-muted-foreground',
+  null: 'text-muted-foreground',
+  undefined: 'text-muted-foreground',
 };
 
 function LeafValue({ value }: { value: unknown }) {

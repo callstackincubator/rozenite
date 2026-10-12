@@ -11,6 +11,23 @@ import { fileURLToPath } from 'url';
 function getAbsolutePath(value: string) {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
 }
+// The manager's fonts: the same Switzer and Geist Mono files the panels bundle (see staticDirs).
+const managerFonts = `<style>
+${(
+  [
+    ['Switzer', 'Switzer-Regular', '400'],
+    ['Switzer', 'Switzer-Medium', '500 700'],
+    ['Geist Mono', 'GeistMono-Regular', '400'],
+    ['Geist Mono', 'GeistMono-Medium', '500 700'],
+  ] as const
+)
+  .map(
+    ([family, file, weight]) =>
+      `@font-face { font-family: '${family}'; src: url('./fonts/${file}.woff2') format('woff2'); font-weight: ${weight}; font-display: swap; }`,
+  )
+  .join('\n')}
+</style>`;
+
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   typescript: {
@@ -27,6 +44,9 @@ const config: StorybookConfig = {
     getAbsolutePath('@storybook/addon-mcp'),
   ],
   framework: getAbsolutePath('@storybook/react-vite'),
+  // Switzer and Geist Mono ship with the UI package; the manager (Storybook's own chrome, which
+  // is themed in manager.ts) loads them from here instead of keeping a second copy.
+  staticDirs: [{ from: '../../../packages/ui/fonts', to: '/fonts' }],
   // The docs site serves this build at /storybook. Vite's default relative
   // base (`./`) breaks when the page is requested without a trailing slash
   // (e.g. `/storybook`, which the site's `trailingSlash: false` Vercel
@@ -43,6 +63,8 @@ const config: StorybookConfig = {
   // always emits relative asset paths, so it needs the same fix via a
   // `<base>` tag placed before Storybook's default head content.
   managerHead: (head, { configType }) =>
-    configType === 'PRODUCTION' ? `<base href="/storybook/" />\n${head}` : head,
+    configType === 'PRODUCTION'
+      ? `<base href="/storybook/" />\n${managerFonts}\n${head}`
+      : `${managerFonts}\n${head}`,
 };
 export default config;

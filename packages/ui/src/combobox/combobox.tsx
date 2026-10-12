@@ -45,7 +45,7 @@ function ComboboxInput({ className, size = 'md', ...props }: ComboboxInputProps)
         <ComboboxPrimitive.Clear
           data-slot="combobox-clear"
           className={cn(
-            'inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground',
+            'inline-flex items-center justify-center rounded-sm text-muted-foreground transition-colors duration-[120ms] hover:text-foreground',
             sizing.control,
           )}
         >
@@ -91,7 +91,7 @@ function ComboboxContent({
         >
           <ComboboxPrimitive.Empty
             data-slot="combobox-empty"
-            className="px-2 py-1.5 text-sm text-muted-foreground"
+            className="px-2 py-1.5 text-sm text-faint empty:hidden"
           >
             {emptyMessage}
           </ComboboxPrimitive.Empty>
@@ -113,7 +113,7 @@ function ComboboxItem({ className, children, ...props }: ComboboxItemProps) {
     >
       {children}
       <ComboboxPrimitive.ItemIndicator>
-        <Check className="h-3.5 w-3.5" />
+        <Check className="h-3.5 w-3.5 text-primary" />
       </ComboboxPrimitive.ItemIndicator>
     </ComboboxPrimitive.Item>
   );

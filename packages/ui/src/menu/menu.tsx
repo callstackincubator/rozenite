@@ -1,6 +1,7 @@
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import { Check } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { monoLabel } from '../utils/mono-label';
 import { usePluginPortalContainer } from '../theme/theme-context';
 
 export type MenuProps = MenuPrimitive.Root.Props;
@@ -41,7 +42,7 @@ function MenuContent({
         <MenuPrimitive.Popup
           data-slot="menu-content"
           className={cn(
-            'max-h-(--available-height) min-w-40 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md',
+            'max-h-(--available-height) min-w-40 overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground',
             'origin-(--transform-origin) transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
             className,
           )}
@@ -87,7 +88,7 @@ function MenuCheckboxItem({ className, children, ...props }: MenuCheckboxItemPro
     >
       {children}
       <MenuPrimitive.CheckboxItemIndicator>
-        <Check className="size-3.5" />
+        <Check className="size-3.5 text-primary" />
       </MenuPrimitive.CheckboxItemIndicator>
     </MenuPrimitive.CheckboxItem>
   );
@@ -117,7 +118,7 @@ function MenuGroupLabel({ className, ...props }: MenuGroupLabelProps) {
   return (
     <MenuPrimitive.GroupLabel
       data-slot="menu-group-label"
-      className={cn('px-2 py-1.5 text-xs font-medium text-muted-foreground', className)}
+      className={cn('px-2 pt-2 pb-1 text-[10px] text-faint', monoLabel, className)}
       {...props}
     />
   );

@@ -85,9 +85,10 @@ export function normalizeQueryTokens(
 }
 
 const queryTokenKindClass = {
-  field: 'text-primary',
-  operator: 'text-muted-foreground',
-  value: 'text-foreground',
+  // The website's code colours: names in white, punctuation dimmed, values in the accent.
+  field: 'text-foreground',
+  operator: 'text-faint',
+  value: 'text-primary',
   negation: 'text-warning',
   text: 'text-foreground',
   error: 'text-danger underline decoration-wavy',
@@ -177,7 +178,8 @@ export function QueryField({
           // text vertically, a block box does not, so a block mirror paints the
           // text several pixels above the caret. Centering with flex keeps the
           // two layers aligned without hardcoding a line height per size.
-          'pointer-events-none absolute inset-0 flex items-center overflow-hidden border-transparent bg-transparent font-mono whitespace-pre shadow-none',
+          // The mirror carries the field fill, since the input above it must stay see-through.
+          'pointer-events-none absolute inset-0 flex items-center overflow-hidden border-transparent font-mono whitespace-pre',
           showClear && sizing.clearPad,
         )}
       >
@@ -198,7 +200,7 @@ export function QueryField({
         onScroll={handleScroll}
         className={cn(
           fieldSurface({ size }),
-          'absolute inset-0 min-w-0 font-mono text-transparent caret-foreground selection:bg-primary/30',
+          'absolute inset-0 min-w-0 bg-transparent font-mono text-transparent caret-foreground selection:bg-primary/30',
           showClear && sizing.clearPad,
           className,
         )}
@@ -211,7 +213,7 @@ export function QueryField({
           onClick={onClear}
           aria-label={clearLabel}
           className={cn(
-            'absolute inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground',
+            'absolute inline-flex items-center justify-center rounded-sm text-muted-foreground transition-colors duration-[120ms] hover:text-foreground',
             sizing.clear,
           )}
         >

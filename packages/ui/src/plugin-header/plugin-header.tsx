@@ -104,7 +104,7 @@ function PluginHeaderThemeSwitcher({
         'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground',
         'hover:bg-accent hover:text-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        'transition-colors',
+        'transition-colors duration-[120ms]',
         className,
       ),
       children:

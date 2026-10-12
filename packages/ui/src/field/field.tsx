@@ -1,5 +1,6 @@
 import { Field as FieldPrimitive } from '@base-ui/react/field';
 import { cn } from '../utils/cn';
+import { monoLabel } from '../utils/mono-label';
 import { fieldSurface } from '../utils/control-surfaces';
 import type { Size } from '../tokens/size';
 
@@ -21,7 +22,7 @@ function FieldLabel({ className, ...props }: FieldLabelProps) {
   return (
     <FieldPrimitive.Label
       data-slot="field-label"
-      className={cn('text-sm font-medium text-foreground', className)}
+      className={cn('text-[11px] text-muted-foreground', monoLabel, className)}
       {...props}
     />
   );
@@ -48,7 +49,7 @@ function FieldDescription({ className, ...props }: FieldDescriptionProps) {
   return (
     <FieldPrimitive.Description
       data-slot="field-description"
-      className={cn('text-xs text-muted-foreground', className)}
+      className={cn('text-xs text-faint', className)}
       {...props}
     />
   );
