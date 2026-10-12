@@ -41,6 +41,19 @@
     }
   },
   "publishConfig": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
+      },
+      "./transport": {
+        "types": "./dist/transport.d.ts",
+        "import": "./dist/transport.js",
+        "require": "./dist/transport.cjs"
+      }
+    },
     "access": "public"
   },
   "scripts": {

@@ -38,6 +38,18 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/react-native/react-native.d.ts",
+        "import": "./dist/react-native/react-native.js",
+        "require": "./dist/react-native/cjs/react-native.js"
+      },
+      "./sdk": {
+        "types": "./dist/sdk/sdk.d.ts",
+        "default": "./dist/sdk/sdk.js"
+      },
+      "./package.json": "./package.json"
+    },
     "access": "public"
   },
   "scripts": {

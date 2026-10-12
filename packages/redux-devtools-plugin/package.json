@@ -42,6 +42,22 @@
     }
   },
   "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/react-native/react-native.d.ts",
+        "import": "./dist/react-native/react-native.js",
+        "require": "./dist/react-native/cjs/react-native.js"
+      },
+      "./package.json": "./package.json",
+      "./metro": {
+        "types": "./dist/metro/metro.d.ts",
+        "default": "./dist/metro/metro.js"
+      },
+      "./sdk": {
+        "types": "./dist/sdk/sdk.d.ts",
+        "default": "./dist/sdk/sdk.js"
+      }
+    },
     "access": "public"
   },
   "scripts": {
