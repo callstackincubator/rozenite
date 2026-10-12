@@ -1,16 +1,18 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { getRepository } from './repository/repository-factory';
-import type { PluginDirectoryReference, RozenitePluginEntry } from './types';
-import { getPackageNamesFromReferences, extractPackageNameFromNpmUrl } from './utils';
+import { getRepositoryStars } from './clients/github-client';
+import { HttpError } from './clients/http-client';
+import { getNpmPackageInfo } from './clients/npm-client';
+import type { RozenitePluginEntry, ValidatedPluginReference } from './types';
+import { validatePluginReferences } from './utils';
 
-export const getPluginReferences = async (): Promise<PluginDirectoryReference[]> => {
+export const getPluginReferences = async (): Promise<ValidatedPluginReference[]> => {
+  let plugins: unknown;
+
   try {
-    const plugins = JSON.parse(
+    plugins = JSON.parse(
       fs.readFileSync(path.resolve(process.cwd(), '../plugin-directory.json'), 'utf8'),
     );
-
-    return plugins;
   } catch (error) {
     throw new Error(
       `Failed to read plugin directory: ${
@@ -18,37 +20,50 @@ export const getPluginReferences = async (): Promise<PluginDirectoryReference[]>
       }`,
     );
   }
+
+  return validatePluginReferences(plugins);
 };
 
-export const getPlugins = async (
-  references: PluginDirectoryReference[],
-): Promise<RozenitePluginEntry[]> => {
-  try {
-    const repository = await getRepository();
-    const packageNames = getPackageNamesFromReferences(references);
+// Set by the deploy workflow. Strict builds fail rather than ship a directory with wrong data.
+const isStrict = () => process.env.PLUGIN_DIRECTORY_STRICT === 'true';
 
-    const cachedPlugins = await repository.getPlugins(packageNames);
-    const cachedPackageNames = new Set(cachedPlugins.map((p) => p.packageName));
-    console.log(`Found ${cachedPlugins.length} of ${packageNames.length} plugins in cache`);
+// A strict build fails when an official plugin cannot be loaded, or when any request fails for a
+// reason other than 404. A third-party package or repository that is gone (404) still degrades.
+// Everything else degrades: the card is shown without the data, and the failure is logged.
+const handleFailure = (packageName: string, isOfficial: boolean, error: unknown): void => {
+  const status = error instanceof HttpError ? error.status : undefined;
 
-    const pluginsToFetch = references.filter((ref) => {
-      const packageName = extractPackageNameFromNpmUrl(ref.npmUrl);
-      return packageName && !cachedPackageNames.has(packageName);
-    });
-
-    console.log(`Fetching missing ${pluginsToFetch.length} of ${packageNames.length} plugins`);
-    const fetchedPlugins = await Promise.all(
-      pluginsToFetch.map((ref) => repository.getPluginWithFallback(ref)),
-    );
-
-    const allPlugins = [...cachedPlugins, ...fetchedPlugins];
-
-    await repository.cleanupExpired();
-
-    return allPlugins;
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch plugins data: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
+  if (isStrict() && (isOfficial || status !== 404)) {
+    throw error;
   }
+
+  const detail = error instanceof Error ? error.message : String(error);
+  console.warn(`[plugin-directory] ${packageName}: ${detail}`);
 };
+
+const loadPlugin = async (reference: ValidatedPluginReference): Promise<RozenitePluginEntry> => {
+  const { packageName, owner, repo, npmUrl, githubUrl } = reference;
+  const isOfficial = packageName.startsWith('@rozenite/');
+
+  const [npm, stars] = await Promise.allSettled([
+    getNpmPackageInfo(packageName),
+    getRepositoryStars(owner, repo),
+  ]);
+
+  if (npm.status === 'rejected') handleFailure(packageName, isOfficial, npm.reason);
+  if (stars.status === 'rejected') handleFailure(packageName, isOfficial, stars.reason);
+
+  return {
+    packageName,
+    npmUrl,
+    githubUrl,
+    isOfficial,
+    version: npm.status === 'fulfilled' ? npm.value.version : undefined,
+    description: npm.status === 'fulfilled' ? npm.value.description : undefined,
+    stars: stars.status === 'fulfilled' ? stars.value : undefined,
+  };
+};
+
+export const getPlugins = (
+  references: ValidatedPluginReference[],
+): Promise<RozenitePluginEntry[]> => Promise.all(references.map(loadPlugin));

@@ -12,7 +12,6 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/starlight": "^0.42.2",
-    "@neondatabase/serverless": "^1.0.1",
     "astro": "^7.3.3",
     "cookie": "^2.0.1",
     "sharp": "^0.35.4",

@@ -1,6 +1,6 @@
 # 0006 — Plugin directory data is fetched at build time, without a database
 
-**Status:** Accepted — not yet implemented
+**Status:** Accepted
 
 **Related:** [callstackincubator/rozenite#486](https://github.com/callstackincubator/rozenite/pull/486),
 [callstackincubator/rozenite#535](https://github.com/callstackincubator/rozenite/pull/535)
