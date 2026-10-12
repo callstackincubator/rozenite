@@ -21,6 +21,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.tsbuildinfo",
     "!dist/**/__tests__",
     "!dist/**/*.test.*"
   ],

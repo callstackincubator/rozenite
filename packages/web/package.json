@@ -12,6 +12,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.tsbuildinfo",
     "CHANGELOG.md"
   ],
   "type": "module",

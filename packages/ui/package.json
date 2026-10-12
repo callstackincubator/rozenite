@@ -21,6 +21,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.tsbuildinfo",
     "fonts",
     "fonts.css",
     "src",

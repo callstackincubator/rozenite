@@ -21,6 +21,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.tsbuildinfo",
     "templates"
   ],
   "type": "module",
