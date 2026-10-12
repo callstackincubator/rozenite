@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { ScrollArea } from '../components/ScrollArea';
+import { cn } from '@rozenite/ui';
+import { TabContent } from '../components/TabContent';
 import { Section } from '../components/Section';
 import { KeyValueGrid, KeyValueItem } from '../components/KeyValueGrid';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
-import { getStatusColor } from '../utils/getStatusColor';
+import { getStatusTextClassName } from '../utils/getStatusTone';
 import { CopyRequestDropdown } from '../components/CopyRequestDropdown';
 import { HttpHeaders } from '../../shared/client';
 
@@ -41,23 +42,27 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
       {
         key: 'Request URL',
         value: selectedRequest.request.url,
-        valueClassName: 'text-blue-400',
+        valueClassName: 'font-mono text-xs',
       },
       {
         key: 'Request Method',
         value: selectedRequest.request.method,
+        valueClassName: 'font-mono text-xs',
       },
       {
         key: 'Status Code',
         value: selectedRequest.response?.status ?? 'Pending',
-        valueClassName: getStatusColor(selectedRequest.response?.status ?? 0),
+        valueClassName: cn(
+          'font-mono text-xs',
+          getStatusTextClassName(selectedRequest.response?.status ?? 0),
+        ),
       },
       ...(requestBody
         ? [
             {
               key: 'Content-Type',
               value: requestBody.type,
-              valueClassName: 'text-blue-400',
+              valueClassName: 'font-mono text-xs',
             },
           ]
         : []),
@@ -84,30 +89,28 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
   );
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div className="p-4 space-y-4">
-        <CopyRequestDropdown selectedRequest={selectedRequest} />
+    <TabContent>
+      <CopyRequestDropdown selectedRequest={selectedRequest} />
 
-        <Section title="General">
-          <KeyValueGrid items={generalItems} />
-        </Section>
+      <Section title="General">
+        <KeyValueGrid items={generalItems} />
+      </Section>
 
-        <Section title="Response Headers">
-          <KeyValueGrid
-            items={responseHeadersItems}
-            emptyMessage="No response headers available"
-            className="font-mono"
-          />
-        </Section>
+      <Section title="Response Headers">
+        <KeyValueGrid
+          variant="data"
+          items={responseHeadersItems}
+          emptyMessage="No response headers available"
+        />
+      </Section>
 
-        <Section title="Request Headers">
-          <KeyValueGrid
-            items={requestHeadersItems}
-            emptyMessage="No request headers available"
-            className="font-mono"
-          />
-        </Section>
-      </div>
-    </ScrollArea>
+      <Section title="Request Headers">
+        <KeyValueGrid
+          variant="data"
+          items={requestHeadersItems}
+          emptyMessage="No request headers available"
+        />
+      </Section>
+    </TabContent>
   );
 };

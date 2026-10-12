@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { createColumnHelper } from '@tanstack/react-table';
 import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  SortingFn,
-  SortingState,
-  useReactTable,
-} from '@tanstack/react-table';
+  Badge,
+  EmptyState,
+  Search,
+  Text,
+  VirtualizedDataTable,
+  type DataTableColumn,
+} from '@rozenite/ui';
 import type { ProcessedRequest } from '../state/model';
 import type { NetworkEventSource, RequestId, RequestOverride } from '../../shared/client';
 import {
@@ -16,7 +16,7 @@ import {
   useSelectedRequestId,
   useClientUISettings,
 } from '../state/hooks';
-import { getStatusColor } from '../utils/getStatusColor';
+import { getStatusTextClassName } from '../utils/getStatusTone';
 import { isNumber } from '../../utils/typeChecks';
 
 type NetworkRequest = {
@@ -35,8 +35,11 @@ type NetworkRequest = {
   type: ProcessedRequest['type'];
   source?: NetworkEventSource;
   startTime: string;
+  timestamp: number;
   hasOverride: boolean;
 };
+
+type RequestRow = NetworkRequest & { isSelected: boolean };
 
 const getSourceLabel = (source?: NetworkEventSource) => {
   if (source === 'nitro') {
@@ -104,42 +107,6 @@ const generateName = (url: string, showEntirePathName = false): string => {
   }
 };
 
-const sortSize: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
-  const a = rowA.getValue(columnId) as string;
-  const b = rowB.getValue(columnId) as string;
-
-  const getNumericValue = (str: string) => {
-    const match = str.match(/^([\d.]+)\s*([KMGT]?B)$/);
-    if (!match) return 0;
-    const value = parseFloat(match[1]);
-    const unit = match[2];
-    const multipliers: Record<string, number> = {
-      B: 1,
-      kB: 1024,
-      MB: 1024 * 1024,
-      GB: 1024 * 1024 * 1024,
-    };
-    return value * (multipliers[unit] || 1);
-  };
-
-  return getNumericValue(a) - getNumericValue(b);
-};
-
-const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
-  const a = rowA.getValue(columnId) as string;
-  const b = rowB.getValue(columnId) as string;
-
-  const getNumericValue = (str: string) => {
-    const match = str.match(/^([\d.]+)\s*(ms|s)$/);
-    if (!match) return 0;
-    const value = parseFloat(match[1]);
-    const unit = match[2];
-    return unit === 's' ? value * 1000 : value;
-  };
-
-  return getNumericValue(a) - getNumericValue(b);
-};
-
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
   overrides: Map<string, RequestOverride>,
@@ -172,79 +139,117 @@ const processNetworkRequests = (
       type: request.type,
       source: request.source,
       startTime: formatStartTime(request.timestamp),
+      timestamp: request.timestamp,
       hasOverride,
     };
   });
 };
 
-const columnHelper = createColumnHelper<NetworkRequest>();
+const columnHelper = createColumnHelper<RequestRow>();
 
-const columns = [
-  columnHelper.accessor('startTime', {
+// Sizes and times sort on the numbers behind them, not on the formatted text.
+const columns: DataTableColumn<RequestRow>[] = [
+  columnHelper.accessor('timestamp', {
     header: 'Start Time',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
-    size: 120,
+    cell: ({ row }) => (
+      <>
+        {row.original.isSelected && <span data-row-selected hidden />}
+        <Text variant="numeric" className="text-muted-foreground">
+          {row.original.startTime}
+        </Text>
+      </>
+    ),
     sortingFn: 'basic',
   }),
   columnHelper.accessor('name', {
     header: 'Name',
-    cell: ({ row, getValue }) => (
-      <div className="flex-1 min-w-0 truncate" title={row.original.path}>
-        {getValue()}
+    cell: ({ row, getValue }) => {
+      const sourceLabel = getSourceLabel(row.original.source);
 
-        {row.original.hasOverride && <span className="w-2 h-2 bg-primary ms-2 inline-block"></span>}
+      return (
+        <div className="flex min-w-0 items-center gap-2" title={row.original.path}>
+          <span className="truncate text-sm">{getValue()}</span>
 
-        {getSourceLabel(row.original.source) && (
-          <span className="ml-2 rounded border border-gray-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-400">
-            {getSourceLabel(row.original.source)}
-          </span>
-        )}
-      </div>
-    ),
+          {row.original.hasOverride && (
+            <span
+              role="img"
+              aria-label="Response overridden"
+              className="size-1.5 shrink-0 bg-primary"
+            />
+          )}
+
+          {sourceLabel && (
+            <Badge tone="neutral" variant="soft" size="sm">
+              {sourceLabel}
+            </Badge>
+          )}
+        </div>
+      );
+    },
     sortingFn: 'alphanumeric',
   }),
   columnHelper.accessor('status', {
     header: 'Status',
-    cell: ({ getValue }) => {
-      return <div className={`${getStatusColor(getValue())}`}>{getValue()}</div>;
-    },
-    size: 64,
+    cell: ({ getValue }) => (
+      <Text variant="numeric" className={getStatusTextClassName(getValue())}>
+        {getValue()}
+      </Text>
+    ),
     sortingFn: 'basic',
   }),
   columnHelper.accessor('method', {
     header: 'Method',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
-    size: 64,
+    cell: ({ getValue }) => <Text variant="code">{getValue()}</Text>,
     sortingFn: 'alphanumeric',
   }),
   columnHelper.accessor('domain', {
     header: 'Domain',
-    cell: ({ getValue }) => <div className="text-gray-300 truncate">{getValue()}</div>,
-    size: 128,
+    cell: ({ getValue }) => (
+      <Text variant="code" className="block truncate text-muted-foreground">
+        {getValue()}
+      </Text>
+    ),
     sortingFn: 'alphanumeric',
   }),
-  columnHelper.accessor('size', {
+  columnHelper.accessor((request) => request.sizeBytes ?? -1, {
+    id: 'size',
     header: 'Size',
-    cell: ({ getValue }) => <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>,
-    size: 80,
-    sortingFn: sortSize,
+    cell: ({ row }) => (
+      <Text variant="numeric" className="whitespace-nowrap text-muted-foreground">
+        {row.original.size}
+      </Text>
+    ),
+    sortingFn: 'basic',
   }),
-  columnHelper.accessor('time', {
+  columnHelper.accessor('durationMs', {
+    id: 'time',
     header: 'Time',
-    cell: ({ getValue }) => <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>,
-    size: 80,
-    sortingFn: sortTime,
+    cell: ({ row }) => (
+      <Text variant="numeric" className="whitespace-nowrap text-muted-foreground">
+        {row.original.time}
+      </Text>
+    ),
+    sortingFn: 'basic',
   }),
 ];
 
 export type RequestListProps = {
   requests: ProcessedRequest[];
+  /** What to say when there is nothing to list. */
+  emptyState?: { title: string; description?: string };
 };
 
-export const RequestList = ({ requests: filteredRequests }: RequestListProps) => {
+const DEFAULT_EMPTY_STATE = {
+  title: 'No requests yet',
+  description: 'Requests show up here as the app makes them.',
+};
+
+export const RequestList = ({
+  requests: filteredRequests,
+  emptyState = DEFAULT_EMPTY_STATE,
+}: RequestListProps) => {
   const actions = useNetworkActivityActions();
   const selectedRequestId = useSelectedRequestId();
-  const [sorting, setSorting] = useState<SortingState>([]);
   const overrides = useOverrides();
   const clientUISettings = useClientUISettings();
 
@@ -252,74 +257,39 @@ export const RequestList = ({ requests: filteredRequests }: RequestListProps) =>
     return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
   }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
 
-  const table = useReactTable({
-    data: requests,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: {
-      sorting,
-    },
-  });
+  const rows = useMemo(
+    () =>
+      requests.map((request): RequestRow => ({
+        ...request,
+        isSelected: request.id === selectedRequestId,
+      })),
+    [requests, selectedRequestId],
+  );
 
-  const onRequestSelect = (requestId: RequestId): void => {
-    actions.setSelectedRequest(requestId);
+  const onRequestSelect = (request: RequestRow): void => {
+    actions.setSelectedRequest(request.id);
   };
 
   return (
-    <div className="flex-1 overflow-auto">
-      <table className="w-full">
-        <thead className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className={`text-left text-xs font-medium text-gray-400 px-2 py-2 ${
-                    header.column.getCanSort() ? 'cursor-pointer select-none hover:bg-gray-700' : ''
-                  }`}
-                  style={{ width: header.getSize() }}
-                  onClick={header.column.getToggleSortingHandler()}
-                >
-                  <div className="flex items-center gap-1">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getCanSort() && (
-                      <span className="text-gray-500">
-                        {{
-                          asc: '↑',
-                          desc: '↓',
-                        }[header.column.getIsSorted() as string] ?? '↕'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr
-              key={row.id}
-              className={`text-sm cursor-pointer border-b border-gray-700 ${
-                selectedRequestId === row.original.id
-                  ? 'bg-gray-700 [&>td:first-child]:shadow-[inset_2px_0_0_hsl(var(--primary))]'
-                  : 'hover:bg-gray-800'
-              }`}
-              onClick={() => onRequestSelect(row.original.id)}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-2 py-1" style={{ width: cell.column.getSize() }}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="min-h-0 flex-1">
+      <VirtualizedDataTable
+        ariaLabel="Requests"
+        className="network-request-table"
+        style={{ height: '100%' }}
+        data={rows}
+        columns={columns}
+        getRowId={(request) => request.id}
+        getRowTextValue={(request) => `${request.method} ${request.name}`}
+        onRowClick={onRequestSelect}
+        renderEmptyState={() => (
+          <EmptyState
+            icon={Search}
+            title={emptyState.title}
+            description={emptyState.description}
+            className="min-h-56"
+          />
+        )}
+      />
     </div>
   );
 };

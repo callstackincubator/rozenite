@@ -1,3 +1,4 @@
+import { Text } from '@rozenite/ui';
 import type { ResponseRenderer } from './types';
 
 // Defensive last-resort match — every preceding renderer should already
@@ -11,8 +12,8 @@ export const unknownRenderer: ResponseRenderer = {
   defaultView: 'raw',
   supportsOverride: false,
   render: ({ ctx }) => (
-    <div className="text-sm text-gray-400">
+    <Text variant="caption">
       Could not display response (Content-Type: {ctx.contentType || 'unknown'})
-    </div>
+    </Text>
   ),
 };

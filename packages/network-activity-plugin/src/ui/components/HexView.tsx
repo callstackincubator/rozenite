@@ -1,4 +1,5 @@
 import { Virtuoso } from 'react-virtuoso';
+import { Text } from '@rozenite/ui';
 import { BYTES_PER_HEX_ROW, formatHexRow, rowCountForByteLength } from '../utils/hex';
 
 export type HexViewProps = {
@@ -15,10 +16,10 @@ type HexRowProps = {
 // memoized because the per-row work is dominated by `formatHexRow`
 // which itself is cheap; memoizing wouldn't change cost meaningfully.
 const HexRow = ({ offset, hex, ascii }: HexRowProps) => (
-  <div className="flex gap-4 font-mono text-xs leading-snug whitespace-pre">
-    <span className="text-gray-500">{offset}</span>
-    <span className="text-gray-200">{hex}</span>
-    <span className="text-gray-400">{`|${ascii}|`}</span>
+  <div className="flex gap-4 px-3 font-mono text-xs leading-snug whitespace-pre">
+    <span className="text-faint">{offset}</span>
+    <span className="text-foreground">{hex}</span>
+    <span className="text-muted-foreground">{`|${ascii}|`}</span>
   </div>
 );
 
@@ -30,11 +31,15 @@ export const HexView = ({ bytes }: HexViewProps) => {
   const totalCount = rowCountForByteLength(bytes.byteLength);
 
   if (totalCount === 0) {
-    return <div className="text-xs text-gray-500 italic">No bytes to display.</div>;
+    return (
+      <Text variant="caption" className="italic">
+        No bytes to display.
+      </Text>
+    );
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-700 rounded">
+    <div className="border border-border bg-muted py-2">
       <Virtuoso
         style={{ height: 320 }}
         totalCount={totalCount}

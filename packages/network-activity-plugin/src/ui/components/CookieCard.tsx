@@ -1,56 +1,49 @@
-import { Badge } from './Badge';
+import { Badge, Text } from '@rozenite/ui';
 import { Cookie } from '../../shared/client';
-import { cn } from '../utils/cn';
 
 type CookieCardProps = {
   cookie: Cookie;
-  keyClassName?: string;
 };
 
-export const CookieCard = ({ cookie, keyClassName }: CookieCardProps) => (
-  <div className="bg-gray-800 border border-gray-700 rounded p-3">
-    <div className="flex items-center justify-between mb-2">
-      <span className={cn('text-sm font-medium', keyClassName)}>{cookie.name}</span>
-      <div className="flex items-center gap-2">
+const CookieAttribute = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex min-w-0 flex-col gap-0.5">
+    <Text variant="label" className="text-[10px]">
+      {label}
+    </Text>
+    <Text variant="code" className="wrap-anywhere text-muted-foreground">
+      {value}
+    </Text>
+  </div>
+);
+
+export const CookieCard = ({ cookie }: CookieCardProps) => (
+  <div className="flex flex-col gap-2 border border-border bg-surface p-3">
+    <div className="flex items-center justify-between gap-2">
+      <Text variant="code" className="wrap-anywhere">
+        {cookie.name}
+      </Text>
+      <div className="flex shrink-0 items-center gap-1.5">
         {cookie.secure && (
-          <Badge variant="outline" className="text-xs text-yellow-400 border-yellow-400">
+          <Badge tone="warning" variant="soft" size="sm">
             Secure
           </Badge>
         )}
         {cookie.httpOnly && (
-          <Badge variant="outline" className="text-xs text-gray-300 border-gray-600">
+          <Badge tone="neutral" variant="soft" size="sm">
             HttpOnly
           </Badge>
         )}
       </div>
     </div>
-    <div className="text-sm text-gray-300 mb-2 break-all">{cookie.value}</div>
-    <div className="grid grid-cols-2 gap-4 text-xs text-gray-400">
-      {cookie.domain && (
-        <div>
-          <span className="font-medium">Domain:</span> {cookie.domain}
-        </div>
-      )}
-      {cookie.path && (
-        <div>
-          <span className="font-medium">Path:</span> {cookie.path}
-        </div>
-      )}
-      {cookie.expires && (
-        <div>
-          <span className="font-medium">Expires:</span> {cookie.expires}
-        </div>
-      )}
-      {cookie.maxAge && (
-        <div>
-          <span className="font-medium">Max-Age:</span> {cookie.maxAge}
-        </div>
-      )}
-      {cookie.sameSite && (
-        <div>
-          <span className="font-medium">SameSite:</span> {cookie.sameSite}
-        </div>
-      )}
+    <Text variant="code" className="wrap-anywhere text-muted-foreground">
+      {cookie.value}
+    </Text>
+    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+      {cookie.domain && <CookieAttribute label="Domain" value={cookie.domain} />}
+      {cookie.path && <CookieAttribute label="Path" value={cookie.path} />}
+      {cookie.expires && <CookieAttribute label="Expires" value={cookie.expires} />}
+      {cookie.maxAge && <CookieAttribute label="Max-Age" value={cookie.maxAge} />}
+      {cookie.sameSite && <CookieAttribute label="SameSite" value={cookie.sameSite} />}
     </div>
   </div>
 );

@@ -6,28 +6,33 @@ export type JsonTreeProps = {
   shouldExpandNodeInitially?: () => boolean;
 };
 
+// The theme is made of the panel's own tokens (as CSS variables), so the tree follows the
+// light and dark themes without a second palette. Same reading as `@rozenite/ui`'s
+// `JsonInspector`: keys in the foreground, punctuation faint, strings and numbers in the accent.
+const JSON_TREE_THEME = {
+  base00: 'transparent',
+  base01: 'var(--border)',
+  base02: 'var(--border-strong)',
+  base03: 'var(--faint)', // item counts, `{} 3 keys`
+  base04: 'var(--muted-foreground)',
+  base05: 'var(--foreground)',
+  base06: 'var(--foreground)',
+  base07: 'var(--foreground)',
+  base08: 'var(--muted-foreground)', // null
+  base09: 'var(--primary)', // numbers, booleans
+  base0A: 'var(--muted-foreground)',
+  base0B: 'var(--primary)', // strings
+  base0C: 'var(--muted-foreground)',
+  base0D: 'var(--foreground)', // keys
+  base0E: 'var(--muted-foreground)',
+  base0F: 'var(--muted-foreground)',
+};
+
 export const JsonTree = ({ data, shouldExpandNodeInitially = () => true }: JsonTreeProps) => {
   return (
     <JSONTree
       data={data}
-      theme={{
-        base00: 'transparent',
-        base01: '#1f1f1f', // line
-        base02: '#313131', // line-strong
-        base03: '#858585', // faint
-        base04: '#a3a3a3', // muted
-        base05: '#d4d4d4', // text
-        base06: '#e5e5e5',
-        base07: '#ffffff',
-        base08: '#ff7a50', // danger
-        base09: '#fbbf24', // warning
-        base0A: '#4ade80', // success
-        base0B: '#60a5fa', // info
-        base0C: '#22d3ee', // cyan
-        base0D: '#a3a3a3', // keys: muted
-        base0E: '#d4d4d4',
-        base0F: '#ff7a50', // danger
-      }}
+      theme={JSON_TREE_THEME}
       invertTheme={false}
       shouldExpandNodeInitially={shouldExpandNodeInitially}
       // For objects and arrays

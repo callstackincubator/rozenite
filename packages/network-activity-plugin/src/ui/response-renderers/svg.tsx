@@ -18,7 +18,7 @@ export const svgRenderer: ResponseRenderer = {
         <img
           src={dataUrl}
           alt="SVG response"
-          className="max-w-full max-h-[400px] object-contain bg-gray-800 rounded-md border border-gray-700 p-2"
+          className="max-h-[400px] max-w-full border border-border bg-muted object-contain p-2"
         />
       );
     }

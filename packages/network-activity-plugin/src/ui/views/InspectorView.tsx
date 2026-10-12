@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Toolbar } from '../components/Toolbar';
+import { PluginShell, Split } from '@rozenite/ui';
+import { RequestToolbar } from '../components/RequestToolbar';
 import { RequestList } from '../components/RequestList';
 import { SidePanel } from '../components/SidePanel';
-import { FilterBar } from '../components/FilterBar';
 import { NetworkTimeline } from '../components/NetworkTimeline';
 import { NetworkActivityDevToolsClient } from '../../shared/client';
 import {
@@ -67,28 +67,56 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
     };
   }, [client, clientManagement, actions, overrides]);
 
-  return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
-      <Toolbar />
-      <FilterBar filter={filter} onFilterChange={setFilter} />
+  const hasActiveFilter = filteredRequests.length !== processedRequests.length;
 
-      <div className="flex flex-1 overflow-hidden">
-        <div
-          className={`flex flex-col ${
-            hasSelectedRequest ? 'w-1/2' : 'w-full'
-          } border-r border-gray-700 overflow-hidden`}
-        >
-          <NetworkTimeline
-            requests={filteredRequests}
-            selection={timelineSelection}
-            filteredRequestCount={visibleRequests.length}
-            onSelectionChange={setTimelineSelection}
-          />
-          <RequestList requests={visibleRequests} />
-        </div>
+  const emptyState =
+    processedRequests.length === 0
+      ? undefined
+      : {
+          title: 'No matching requests',
+          description: timelineSelection
+            ? 'No requests in the selected time range. Clear the selection to see them again.'
+            : hasActiveFilter
+              ? 'No requests match the filters. Clear the filters to see every request.'
+              : undefined,
+        };
 
-        {hasSelectedRequest && <SidePanel />}
-      </div>
+  const list = (
+    <div className="flex h-full min-h-0 flex-col">
+      <NetworkTimeline
+        requests={filteredRequests}
+        selection={timelineSelection}
+        filteredRequestCount={visibleRequests.length}
+        onSelectionChange={setTimelineSelection}
+      />
+      <RequestList requests={visibleRequests} emptyState={emptyState} />
     </div>
+  );
+
+  return (
+    <PluginShell>
+      <RequestToolbar
+        filter={filter}
+        onFilterChange={setFilter}
+        visibleCount={visibleRequests.length}
+        totalCount={processedRequests.length}
+      />
+
+      <PluginShell.Body className="overflow-hidden">
+        {hasSelectedRequest ? (
+          <Split direction="horizontal" autoSaveId="network-activity">
+            <Split.Pane id="requests" defaultSize={50} minSize={25}>
+              {list}
+            </Split.Pane>
+            <Split.Handle />
+            <Split.Pane id="details" defaultSize={50} minSize={25}>
+              <SidePanel />
+            </Split.Pane>
+          </Split>
+        ) : (
+          list
+        )}
+      </PluginShell.Body>
+    </PluginShell>
   );
 };

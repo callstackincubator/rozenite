@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
+import { createColumnHelper } from '@tanstack/react-table';
+import { DataTable, DescriptionList, Text } from '@rozenite/ui';
+import { TabContent } from '../components/TabContent';
 import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { ScrollArea } from '../components/ScrollArea';
-import { JsonTree } from '../components/JsonTree';
+  formatMessageTimestamp,
+  MessageContent,
+  MessageDetails,
+} from '../components/MessageDetails';
 import { SSENetworkEntry } from '../state/model';
 
 export type SSEMessagesTabProps = {
@@ -22,72 +22,9 @@ interface SSEMessageRow {
 
 const columnHelper = createColumnHelper<SSEMessageRow>();
 
-const formatPreviewData = (data: string) => {
-  return (
-    <span className="max-w-xs truncate text-gray-400">
-      {data.substring(0, 100) + (data.length > 100 ? '...' : '')}
-    </span>
-  );
-};
-
-const formatTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp);
-  const timeString = date.toLocaleTimeString('en-US', {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-  const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
-  return `${timeString}.${milliseconds}`;
-};
-
-const columns = [
-  columnHelper.accessor('timestamp', {
-    header: 'Timestamp',
-    cell: ({ getValue }) => <div className="text-gray-400">{formatTimestamp(getValue())}</div>,
-    size: 120,
-  }),
-  columnHelper.accessor('type', {
-    header: 'Type',
-    cell: ({ getValue }) => <div className="text-info font-medium">{getValue()}</div>,
-    size: 100,
-  }),
-  columnHelper.accessor('data', {
-    header: 'Data',
-    cell: ({ getValue }) => {
-      const data = getValue();
-      return formatPreviewData(data);
-    },
-    size: 300,
-  }),
-];
-
 export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
   // Capture the selected message, so when it gets removed (message limit), it's still displayed
   const [selectedMessage, setSelectedMessage] = useState<SSEMessageRow | null>(null);
-
-  const formatData = (data: string) => {
-    if (typeof data === 'string') {
-      try {
-        const jsonData = JSON.parse(data);
-        return (
-          <div className="bg-gray-800 p-3 rounded border border-gray-700">
-            <JsonTree data={jsonData} />
-          </div>
-        );
-      } catch {
-        // Fallback to pre tag if JSON parsing fails
-        return (
-          <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-            {data}
-          </pre>
-        );
-      }
-    }
-
-    return 'Invalid data';
-  };
 
   const tableData = useMemo(() => {
     return selectedRequest.messages.map((message): SSEMessageRow => ({
@@ -98,104 +35,82 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
     }));
   }, [selectedRequest.messages]);
 
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+  const selectedMessageId = selectedMessage?.id;
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('timestamp', {
+        header: 'Timestamp',
+        cell: ({ getValue, row }) => (
+          <>
+            {row.original.id === selectedMessageId && <span data-row-selected hidden />}
+            <Text variant="numeric" className="text-muted-foreground">
+              {formatMessageTimestamp(getValue())}
+            </Text>
+          </>
+        ),
+        enableSorting: false,
+      }),
+      columnHelper.accessor('type', {
+        header: 'Type',
+        cell: ({ getValue }) => (
+          <Text variant="code" tone="info">
+            {getValue()}
+          </Text>
+        ),
+        enableSorting: false,
+      }),
+      columnHelper.accessor('data', {
+        header: 'Data',
+        cell: ({ getValue }) => (
+          <Text variant="code" className="block truncate text-muted-foreground">
+            {getValue().substring(0, 100) + (getValue().length > 100 ? '...' : '')}
+          </Text>
+        ),
+        enableSorting: false,
+      }),
+    ],
+    [selectedMessageId],
+  );
 
   if (selectedRequest.messages.length === 0) {
     return (
-      <ScrollArea className="h-full min-h-0 p-4">
-        <div className="text-sm text-gray-400">
+      <TabContent>
+        <Text variant="caption">
           No SSE messages available for this connection. Messages will appear here when the SSE
           connection receives data.
-        </div>
-      </ScrollArea>
+        </Text>
+      </TabContent>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Messages Table */}
-      <div className="flex-1 border border-gray-700 rounded overflow-hidden">
-        <div className="overflow-y-auto h-full">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="text-left p-2 font-medium text-gray-300"
-                      style={{ width: header.getSize() }}
-                    >
-                      <div className="flex items-center gap-1">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className={`border-b border-gray-700 hover:bg-gray-800 cursor-pointer ${
-                    selectedMessage?.id === row.original.id ? 'bg-gray-800' : ''
-                  }`}
-                  onClick={() => setSelectedMessage(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="p-2" style={{ width: cell.column.getSize() }}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="flex h-full flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <DataTable
+          ariaLabel="SSE messages"
+          className="network-selectable-table network-sse-table"
+          columns={columns}
+          data={tableData}
+          getRowId={(row) => row.id}
+          onRowClick={(row) => setSelectedMessage(row)}
+        />
       </div>
 
-      {/* Message Details Panel */}
       {selectedMessage && (
-        <div className="border-t border-gray-700 bg-gray-800">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-gray-300">Message Details</h4>
-              <button
-                onClick={() => setSelectedMessage(null)}
-                className="text-gray-400 hover:text-gray-100 text-sm"
-              >
-                Close
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-400">Type: </span>
-                  <span className="text-info">{selectedMessage.type}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400">Timestamp: </span>
-                  <span className="text-gray-300">
-                    {formatTimestamp(selectedMessage.timestamp)}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <span className="text-gray-400 text-sm">Content:</span>
-                <div className="mt-2 max-h-96 overflow-y-auto">
-                  {formatData(selectedMessage.data)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <MessageDetails
+          onClose={() => setSelectedMessage(null)}
+          content={<MessageContent data={selectedMessage.data} />}
+        >
+          <DescriptionList.Item label="Type">
+            <Text variant="code" tone="info">
+              {selectedMessage.type}
+            </Text>
+          </DescriptionList.Item>
+          <DescriptionList.Item label="Timestamp">
+            <Text variant="numeric">{formatMessageTimestamp(selectedMessage.timestamp)}</Text>
+          </DescriptionList.Item>
+        </MessageDetails>
       )}
     </div>
   );

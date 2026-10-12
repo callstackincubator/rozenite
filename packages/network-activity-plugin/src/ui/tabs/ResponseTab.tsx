@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { ScrollArea } from '../components/ScrollArea';
+import { Pencil } from 'lucide-react';
+import { Button, Text } from '@rozenite/ui';
+import { TabContent } from '../components/TabContent';
 import { HttpNetworkEntry } from '../state/model';
 import { Section } from '../components/Section';
 import { KeyValueGrid } from '../components/KeyValueGrid';
 import { useOverrides } from '../state/hooks';
 import { RequestOverride } from '../../shared/client';
 import { OverrideResponse } from '../components/OverrideResponse';
-import { Button } from '../components/Button';
-import { Pencil } from 'lucide-react';
 import { ViewToggle } from '../components/ViewToggle';
 import { findRenderer, type RenderCtx, type ResponseView } from '../response-renderers';
 
@@ -50,9 +50,7 @@ export const ResponseTab = ({
 
   const renderResponseBody = () => {
     if (!responseBody) {
-      return (
-        <div className="text-sm text-gray-400">No response body available for this request</div>
-      );
+      return <Text variant="caption">No response body available for this request</Text>;
     }
 
     const { type, data } = responseBody;
@@ -83,9 +81,9 @@ export const ResponseTab = ({
     const canOverride = renderer.supportsOverride && supportsOverrides && typeof data === 'string';
     const overrideAction = canOverride ? (
       <Button
+        tone="primary"
         variant="ghost"
-        size="xs"
-        className="text-primary hover:text-primary-hover"
+        size="sm"
         onClick={(e) => {
           e.stopPropagation();
           setInitialOverride({
@@ -94,7 +92,7 @@ export const ResponseTab = ({
           });
         }}
       >
-        <Pencil className="h-2 w-2" />
+        <Pencil />
         Override
       </Button>
     ) : null;
@@ -106,21 +104,21 @@ export const ResponseTab = ({
 
     const sectionAction =
       toggle || overrideAction ? (
-        <div className="flex items-center gap-1">
+        <>
           {toggle}
           {overrideAction}
-        </div>
+        </>
       ) : null;
 
     return (
       <Section title="Response Body" collapsible={false} action={sectionAction}>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <KeyValueGrid
             items={[
               {
                 key: 'Content-Type',
                 value: type,
-                valueClassName: 'text-blue-400',
+                valueClassName: 'font-mono text-xs',
               },
             ]}
           />
@@ -130,9 +128,5 @@ export const ResponseTab = ({
     );
   };
 
-  return (
-    <ScrollArea className="h-full w-full">
-      <div className="p-4">{renderResponseBody()}</div>
-    </ScrollArea>
-  );
+  return <TabContent>{renderResponseBody()}</TabContent>;
 };

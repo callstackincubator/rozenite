@@ -1,7 +1,7 @@
 import { Check, Copy } from 'lucide-react';
 import { MouseEvent, PropsWithChildren } from 'react';
+import { cn } from '@rozenite/ui';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
-import { cn } from '../utils/cn';
 
 type JsonTreeCopyableItemProps = PropsWithChildren<{
   getCopyableValue: () => string;
@@ -24,13 +24,13 @@ export const JsonTreeCopyableItem = ({
   const Icon = isCopied ? Check : Copy;
 
   return (
-    <span className={cn('inline-block group', className)}>
+    <span className={cn('group inline-block', className)}>
       {children}
       <div
-        className="inline-block cursor-pointer opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300 transition-all p-2 -m-2 ml-0 translate-y-0.75"
+        className="-m-2 ml-0 inline-block translate-y-0.75 cursor-pointer p-2 text-faint opacity-0 transition-[color,opacity] duration-[120ms] group-hover:opacity-100 hover:text-foreground"
         onClick={handleCopy}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="size-3.5" />
       </div>
     </span>
   );

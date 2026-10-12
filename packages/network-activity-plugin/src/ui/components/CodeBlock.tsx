@@ -1,6 +1,6 @@
 import { HTMLProps, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { cn } from '../utils/cn';
+import { cn } from '@rozenite/ui';
 
 export type CodeBlockProps = HTMLProps<HTMLPreElement>;
 
@@ -11,7 +11,7 @@ export type CodeBlockProps = HTMLProps<HTMLPreElement>;
 const VIRTUALIZATION_THRESHOLD = 50_000;
 
 const codeBlockClassNames =
-  'text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere';
+  'overflow-x-auto border border-border bg-muted p-3 font-mono text-xs whitespace-pre-wrap text-foreground wrap-anywhere';
 
 export const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => {
   // Only string children are eligible for virtualization. Component

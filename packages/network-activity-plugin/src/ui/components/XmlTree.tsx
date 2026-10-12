@@ -8,7 +8,7 @@ export type XmlTreeProps = {
 
 export const XmlTree = ({ root }: XmlTreeProps) => {
   return (
-    <div className="font-mono text-sm text-gray-200">
+    <div className="pl-5 font-mono text-xs text-foreground">
       <XmlNode node={root} depth={0} />
     </div>
   );
@@ -69,7 +69,7 @@ const XmlElementNode = ({ element, depth }: XmlElementNodeProps) => {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-0.5 mr-1 -ml-5 text-gray-500 hover:text-gray-300 transition-colors"
+            className="mt-0.5 mr-1 -ml-5 text-faint transition-colors duration-[120ms] hover:text-foreground"
             aria-label={expanded ? 'Collapse' : 'Expand'}
           >
             {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
@@ -77,12 +77,12 @@ const XmlElementNode = ({ element, depth }: XmlElementNodeProps) => {
         ) : null}
         <JsonTreeCopyableItem getCopyableValue={serializeSubtree}>
           <span>
-            <span className="text-gray-500">&lt;</span>
-            <span className="text-blue-400">{tagName}</span>
+            <span className="text-faint">&lt;</span>
+            <span className="text-foreground">{tagName}</span>
             {attributes.map((attr) => (
               <XmlAttribute key={attr.name} attr={attr} />
             ))}
-            <span className="text-gray-500">{isSelfClosing ? ' />' : '>'}</span>
+            <span className="text-faint">{isSelfClosing ? ' />' : '>'}</span>
           </span>
         </JsonTreeCopyableItem>
       </div>
@@ -96,11 +96,11 @@ const XmlElementNode = ({ element, depth }: XmlElementNodeProps) => {
           </div>
           {/* Collapsed inline closing tag preview — gives a visual hint
               of what was collapsed. */}
-          {!expanded ? <span className="text-gray-500 ml-1">…</span> : null}
+          {!expanded ? <span className="ml-1 text-faint">…</span> : null}
           <div>
-            <span className="text-gray-500">&lt;/</span>
-            <span className="text-blue-400">{tagName}</span>
-            <span className="text-gray-500">&gt;</span>
+            <span className="text-faint">&lt;/</span>
+            <span className="text-foreground">{tagName}</span>
+            <span className="text-faint">&gt;</span>
           </div>
         </>
       ) : null}
@@ -111,11 +111,11 @@ const XmlElementNode = ({ element, depth }: XmlElementNodeProps) => {
 const XmlAttribute = ({ attr }: { attr: Attr }) => (
   <>
     <span> </span>
-    <span className="text-amber-400">{attr.name}</span>
-    <span className="text-gray-500">=</span>
-    <span className="text-gray-500">&quot;</span>
-    <span className="text-green-400">{attr.value}</span>
-    <span className="text-gray-500">&quot;</span>
+    <span className="text-muted-foreground">{attr.name}</span>
+    <span className="text-faint">=</span>
+    <span className="text-faint">&quot;</span>
+    <span className="text-primary">{attr.value}</span>
+    <span className="text-faint">&quot;</span>
   </>
 );
 
@@ -129,7 +129,7 @@ const XmlTextNode = ({ text, depth }: XmlTextNodeProps) => {
   return (
     <div style={{ paddingLeft: depth === 0 ? 0 : `1rem` }}>
       <JsonTreeCopyableItem getCopyableValue={() => value}>
-        <span className="text-gray-200">{value}</span>
+        <span className="text-foreground">{value}</span>
       </JsonTreeCopyableItem>
     </div>
   );
@@ -146,9 +146,9 @@ const XmlCDataNode = ({ cdata, depth }: XmlCDataNodeProps) => {
     <div style={{ paddingLeft: depth === 0 ? 0 : `1rem` }}>
       <JsonTreeCopyableItem getCopyableValue={() => value}>
         <span>
-          <span className="text-gray-400">&lt;![CDATA[</span>
-          <span className="text-gray-200 whitespace-pre-wrap">{value}</span>
-          <span className="text-gray-400">]]&gt;</span>
+          <span className="text-faint">&lt;![CDATA[</span>
+          <span className="whitespace-pre-wrap text-foreground">{value}</span>
+          <span className="text-faint">]]&gt;</span>
         </span>
       </JsonTreeCopyableItem>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { cn } from '../utils/cn';
+import { ChevronRight } from 'lucide-react';
+import { cn, Text } from '@rozenite/ui';
 
 export type SectionProps = {
   title: string;
@@ -17,23 +18,35 @@ export const Section = ({ title, children, collapsible = true, action }: Section
     setIsCollapsed((prevState) => !prevState);
   };
 
-  const headerClassName = `flex items-center w-full text-left text-sm text-gray-300 mb-2 ${
-    collapsible ? 'hover:text-white' : 'cursor-default'
-  }`;
-
   return (
-    <div>
-      <button
-        onClick={collapsible ? handleCollapseSection : undefined}
-        className={headerClassName}
-        tabIndex={collapsible ? 0 : -1}
-      >
-        {collapsible && <span className={cn('mr-2', { 'rotate-90': !isCollapsed })}>▶</span>}
-        <span className="font-medium me-auto">{title}</span>
-
-        {action}
-      </button>
+    <section className="flex flex-col gap-2">
+      <div className="flex min-h-6 items-center gap-2">
+        {collapsible ? (
+          <button
+            type="button"
+            aria-expanded={!isCollapsed}
+            onClick={handleCollapseSection}
+            className="group flex items-center gap-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ChevronRight
+              className={cn(
+                'size-3 shrink-0 text-faint transition-transform duration-[120ms] group-hover:text-foreground',
+                !isCollapsed && 'rotate-90',
+              )}
+            />
+            <Text
+              variant="label"
+              className="transition-colors duration-[120ms] group-hover:text-foreground"
+            >
+              {title}
+            </Text>
+          </button>
+        ) : (
+          <Text variant="label">{title}</Text>
+        )}
+        {action && <div className="ml-auto flex items-center gap-1">{action}</div>}
+      </div>
       {isChildrenVisible && children}
-    </div>
+    </section>
   );
 };

@@ -1,14 +1,12 @@
-import { useState } from 'react';
-import { Badge } from './Badge';
-import { Button } from './Button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
+import { useState, type ReactNode } from 'react';
+import { X } from 'lucide-react';
+import { Badge, IconButton, IndicatorDot, Tabs, Text, type Tone } from '@rozenite/ui';
 import { HeadersTab } from '../tabs/HeadersTab';
 import { RequestTab } from '../tabs/RequestTab';
 import { ResponseTab } from '../tabs/ResponseTab';
 import { CookiesTab } from '../tabs/CookiesTab';
 import { TimingTab } from '../tabs/TimingTab';
 import { InitiatorTab } from '../tabs/InitiatorTab';
-import { X } from 'lucide-react';
 import {
   useNetworkActivityActions,
   useNetworkActivityStore,
@@ -16,24 +14,15 @@ import {
   useSelectedRequest,
 } from '../state/hooks';
 import { NetworkEntry as OldNetworkEntry } from '../types';
-import { getStatusColor } from '../utils/getStatusColor';
+import { getStatusTone } from '../utils/getStatusTone';
 import { MessagesTab } from '../tabs/MessagesTab';
 import { SSEMessagesTab } from '../tabs/SSEMessagesTab';
 import type { ResponseView } from '../response-renderers';
 
-const getTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    document: 'bg-blue-600',
-    script: 'bg-yellow-600',
-    stylesheet: 'bg-cyan-600',
-    xhr: 'bg-green-600',
-    img: 'bg-gray-500',
-    font: 'bg-orange-600',
-    http: 'bg-green-600',
-    websocket: 'bg-blue-600',
-    sse: 'bg-cyan-600',
-  };
-  return colors[type] || 'bg-gray-500';
+const REQUEST_TYPE_BADGES: Record<string, { label: string; tone: Tone }> = {
+  http: { label: 'HTTP', tone: 'neutral' },
+  websocket: { label: 'WS', tone: 'info' },
+  sse: { label: 'SSE', tone: 'warning' },
 };
 
 // Adapter to convert new model to old format for tab components
@@ -78,6 +67,12 @@ const createLegacyNetworkEntry = (
   }
   return null;
 };
+
+const TabPanel = ({ value, children }: { value: string; children: ReactNode }) => (
+  <Tabs.Panel value={value} className="min-h-0 flex-1 overflow-hidden">
+    {children}
+  </Tabs.Panel>
+);
 
 export const SidePanel = () => {
   const actions = useNetworkActivityActions();
@@ -134,19 +129,31 @@ export const SidePanel = () => {
   const supportsOverrides = httpDetails?.source !== 'nitro' && httpDetails?.source !== 'expo';
   const hasResponseOverride = supportsOverrides && override && override.body ? true : false;
 
+  const typeBadge = REQUEST_TYPE_BADGES[selectedRequest.type];
+
   const getTabsListTriggers = () => {
     if (httpDetails) {
       return (
         <>
-          <TabsTrigger value="headers">Headers</TabsTrigger>
-          <TabsTrigger value="request">Request</TabsTrigger>
-          <TabsTrigger value="response">
+          <Tabs.Tab value="headers" className="flex-1">
+            Headers
+          </Tabs.Tab>
+          <Tabs.Tab value="request" className="flex-1">
+            Request
+          </Tabs.Tab>
+          <Tabs.Tab value="response" className="flex-1 gap-1.5">
             Response
-            {hasResponseOverride && <span className="w-2 h-2 bg-primary ms-2 inline-block"></span>}
-          </TabsTrigger>
-          <TabsTrigger value="cookies">Cookies</TabsTrigger>
-          <TabsTrigger value="initiator">Initiator</TabsTrigger>
-          <TabsTrigger value="timing">Timing</TabsTrigger>
+            {hasResponseOverride && <IndicatorDot aria-label="Overridden" />}
+          </Tabs.Tab>
+          <Tabs.Tab value="cookies" className="flex-1">
+            Cookies
+          </Tabs.Tab>
+          <Tabs.Tab value="initiator" className="flex-1">
+            Initiator
+          </Tabs.Tab>
+          <Tabs.Tab value="timing" className="flex-1">
+            Timing
+          </Tabs.Tab>
         </>
       );
     }
@@ -154,18 +161,26 @@ export const SidePanel = () => {
     if (sseDetails) {
       return (
         <>
-          <TabsTrigger value="headers">Headers</TabsTrigger>
-          <TabsTrigger value="request">Request</TabsTrigger>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="initiator">Initiator</TabsTrigger>
+          <Tabs.Tab value="headers" className="flex-1">
+            Headers
+          </Tabs.Tab>
+          <Tabs.Tab value="request" className="flex-1">
+            Request
+          </Tabs.Tab>
+          <Tabs.Tab value="messages" className="flex-1">
+            Messages
+          </Tabs.Tab>
+          <Tabs.Tab value="initiator" className="flex-1">
+            Initiator
+          </Tabs.Tab>
         </>
       );
     }
 
     return (
-      <>
-        <TabsTrigger value="messages">Messages</TabsTrigger>
-      </>
+      <Tabs.Tab value="messages" className="flex-1">
+        Messages
+      </Tabs.Tab>
     );
   };
 
@@ -173,15 +188,15 @@ export const SidePanel = () => {
     if (httpDetails) {
       return (
         <>
-          <TabsContent value="headers" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="headers">
             <HeadersTab selectedRequest={httpDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="request" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="request">
             <RequestTab selectedRequest={httpDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="response" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="response">
             <ResponseTab
               selectedRequest={httpDetails}
               supportsOverrides={supportsOverrides}
@@ -195,55 +210,53 @@ export const SidePanel = () => {
                 }
               }}
             />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="cookies">
             <CookiesTab selectedRequest={httpDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="initiator">
             <InitiatorTab selectedRequest={httpDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="timing" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="timing">
             <TimingTab selectedRequest={httpDetails} />
-          </TabsContent>
+          </TabPanel>
         </>
       );
     }
 
     if (wsDetails) {
       return (
-        <>
-          <TabsContent value="messages" className="flex-1 m-0 overflow-hidden">
-            <MessagesTab selectedRequest={wsDetails} />
-          </TabsContent>
-        </>
+        <TabPanel value="messages">
+          <MessagesTab selectedRequest={wsDetails} />
+        </TabPanel>
       );
     }
 
     if (sseDetails) {
       return (
         <>
-          <TabsContent value="headers" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="headers">
             <HeadersTab selectedRequest={sseDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="request" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="request">
             <RequestTab selectedRequest={sseDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="messages" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="messages">
             <SSEMessagesTab selectedRequest={sseDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="initiator">
             <InitiatorTab selectedRequest={sseDetails} />
-          </TabsContent>
+          </TabPanel>
 
-          <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
+          <TabPanel value="cookies">
             <CookiesTab selectedRequest={sseDetails} />
-          </TabsContent>
+          </TabPanel>
         </>
       );
     }
@@ -252,51 +265,43 @@ export const SidePanel = () => {
   };
 
   return (
-    <div className="w-1/2 flex flex-col bg-gray-900">
+    <div className="flex h-full min-w-0 flex-col bg-background">
       {/* Side Panel Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className={`w-3 h-3 flex-shrink-0 ${getTypeColor(selectedRequest.type)}`}></div>
-          <span className="font-medium truncate">{requestName}</span>
-          <Badge
-            variant="outline"
-            className={`${getStatusColor(requestStatus)} border-current flex-shrink-0`}
-          >
-            {requestStatus}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-3 py-2">
+        {typeBadge && (
+          <Badge tone={typeBadge.tone} variant="soft" size="sm">
+            {typeBadge.label}
           </Badge>
-        </div>
-        <Button
+        )}
+        <Text variant="code" className="min-w-0 flex-1 truncate" title={requestName}>
+          {requestName}
+        </Text>
+        <Badge tone={getStatusTone(requestStatus)} variant="soft" size="sm">
+          {requestStatus}
+        </Badge>
+        <IconButton
+          label="Close details"
+          tone="neutral"
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-100 flex-shrink-0 ml-2"
         >
-          <X className="h-4 w-4" />
-        </Button>
+          <X />
+        </IconButton>
       </div>
 
       {/* Side Panel Content */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs
-          key={selectedRequest.id}
-          defaultValue={selectedRequest.type === 'websocket' ? 'messages' : 'headers'}
-          className="h-full flex flex-col"
-        >
-          <TabsList
-            className={`grid w-full ${
-              selectedRequest.type === 'http'
-                ? 'grid-cols-6'
-                : selectedRequest.type === 'sse'
-                  ? 'grid-cols-4'
-                  : 'grid-cols-1'
-            } bg-gray-800 rounded-none border-b border-gray-700`}
-          >
-            {getTabsListTriggers()}
-          </TabsList>
+      <Tabs
+        key={selectedRequest.id}
+        defaultValue={selectedRequest.type === 'websocket' ? 'messages' : 'headers'}
+        className="flex min-h-0 flex-1 flex-col"
+      >
+        <Tabs.List className="w-full shrink-0 border-0 border-b border-border">
+          {getTabsListTriggers()}
+        </Tabs.List>
 
-          {getTabsContent()}
-        </Tabs>
-      </div>
+        {getTabsContent()}
+      </Tabs>
     </div>
   );
 };

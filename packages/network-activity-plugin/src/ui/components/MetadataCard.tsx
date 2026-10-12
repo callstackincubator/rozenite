@@ -1,4 +1,5 @@
 import { Download } from 'lucide-react';
+import { Button } from '@rozenite/ui';
 import { KeyValueGrid } from './KeyValueGrid';
 import { base64ToBlob, deriveFilename, downloadBlob, readHeader } from '../utils/download';
 import type { RenderCtx } from '../response-renderers/types';
@@ -51,39 +52,43 @@ export const MetadataCard = ({ body, ctx }: MetadataCardProps) => {
   };
 
   return (
-    <div className="flex items-start justify-between gap-3 bg-gray-800 border border-gray-700 rounded p-3">
+    <div className="flex items-start justify-between gap-3 border border-border bg-surface p-3">
       <div className="flex-1 min-w-0">
         <KeyValueGrid
           items={[
             {
               key: 'Size',
               value: formatBytes(decodedSize),
+              valueClassName: 'font-mono text-xs',
             },
             ...(contentLengthHeader
               ? [
                   {
                     key: 'Content-Length',
                     value: contentLengthHeader,
+                    valueClassName: 'font-mono text-xs',
                   },
                 ]
               : []),
             {
               key: 'Filename',
               value: filename,
+              valueClassName: 'font-mono text-xs',
             },
           ]}
         />
       </div>
-      <button
-        type="button"
+      <Button
+        tone="primary"
+        variant="outline"
+        size="sm"
         onClick={handleDownload}
         disabled={!isDownloadAvailable}
         title={downloadTitle}
-        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-primary text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
       >
-        <Download className="h-3 w-3" />
+        <Download />
         Download
-      </button>
+      </Button>
     </div>
   );
 };
