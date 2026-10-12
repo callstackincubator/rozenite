@@ -3,6 +3,7 @@ import {
   createScopedMiddleware,
   initializeRozenite,
   RozeniteConfig,
+  toRozeniteConfig,
   type MiddlewareHandler,
 } from '@rozenite/middleware';
 import { RepackRspackConfig, type RepackRspackConfigExport } from '@callstack/repack';
@@ -83,9 +84,9 @@ export const withRozenite = (
       resolvedConfig = config;
     }
 
-    return patchConfig(resolvedConfig, {
-      projectRoot: env.context ?? process.cwd(),
-      ...rozeniteConfig,
-    });
+    return patchConfig(
+      resolvedConfig,
+      toRozeniteConfig(rozeniteConfig, { projectRoot: env.context ?? process.cwd() }),
+    );
   };
 };

@@ -19,6 +19,7 @@ import type { RsbuildPlugin } from '@rsbuild/core';
 import {
   createScopedMiddleware,
   initializeRozenite,
+  toRozeniteConfig,
   type RozeniteConfig,
 } from '@rozenite/middleware';
 import { logger } from '@rozenite/tools';
@@ -136,16 +137,10 @@ export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPl
       }
 
       const rozenite = await initializeRozenite(
-        {
+        toRozeniteConfig(options, {
           projectRoot: api.context.rootPath,
           integration: 'lynx',
-          include: options.include,
-          exclude: options.exclude,
-          destroyOnDetachPlugins: options.destroyOnDetachPlugins,
-          projectType: options.projectType,
-          logLevel: options.logLevel,
-          pluginDisplay: options.pluginDisplay,
-        },
+        }),
         // `@rozenite/runtime` is a React Native runtime shim
         // (`packages/runtime`) and is not — and should not become — a
         // dependency of this package: Lynx apps import `@rozenite/lynx`

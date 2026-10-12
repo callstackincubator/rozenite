@@ -86,3 +86,5 @@ export const initializeRozenite = async (
 };
 
 export type { RozeniteConfig, RozenitePluginDisplay };
+export { toRozeniteConfig } from './to-rozenite-config.js';
+export type { BundlerContext } from './to-rozenite-config.js';
