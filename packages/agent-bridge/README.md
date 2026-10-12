@@ -80,7 +80,9 @@ function AppAgentTools() {
 
 - `useRozenitePluginAgentTool`
 - `useRozeniteInAppAgentTool`
-- Agent tool and message types re-exported from `@rozenite/agent-shared`
+- List helpers re-exported from `@rozenite/agent-shared`: `paginateArray`, `encodeCursor`, `decodeCursor`, `normalizePageLimit`, `definePaginatedAgentToolContract`, `defineRowsAgentToolContract`, `isAgentToolPagination`, and `isAgentToolRows`
+- Bounded-read helpers re-exported from `@rozenite/agent-shared`: `boundValue`, `normalizeBoundedValueArgs`, `selectValuePath`, `BOUNDED_VALUE_DEFAULTS`, `BOUNDED_VALUE_LIMITS`, and `sliceUtf8`
+- Agent tool and message types re-exported from `@rozenite/agent-shared`, including `AgentToolPagination`, `AgentToolRows`, `PageResult`, and `PaginateArrayOptions`
 
 ## Made with ❤️ at Callstack
 

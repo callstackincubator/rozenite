@@ -10,6 +10,9 @@
 
 - **Shared Tool Types**: Common `AgentTool` and JSON-schema-like input types
 - **Paginated Tool Contracts**: Typed row fields and a shared page envelope for built-in and third-party tools
+- **One List Pager**: `paginateArray` pages any array with cursors that resume after a row, so a live list never skips or repeats one; runs in Node, browsers, Hermes, and Lynx
+- **Bounded Reads**: `boundValue` cuts any value by depth, string length and items per level, and `sliceUtf8` reads a byte range of text without splitting a character; both run on the device
+- **Non-Paginated Lists**: `rows` metadata so lists that do not page can still declare their columns
 - **Row Shaping**: Frontend-neutral columnar/row-keyed encoding (`shapePaginatedRows`, `shapeToolResult`) shared by the CLI and any other Agent frontend
 - **Message Contracts**: Typed payloads for register, unregister, call, and result messages
 - **Single Protocol Constant**: Shared `AGENT_PLUGIN_ID` for the Agent transport
@@ -29,10 +32,17 @@ This package exports:
 
 - `AGENT_PLUGIN_ID`
 - `AgentTool`
-- `AgentToolPagination`
+- `AgentToolPagination` (with optional `itemsKey` and `meta`) and `isAgentToolPagination`
+- `AgentToolRows` and `isAgentToolRows`
 - `PageEnvelope`
 - `PageResult`
 - `definePaginatedAgentToolContract`
+- `defineRowsAgentToolContract`
+- `paginateArray`, `PaginateArrayOptions`, `CursorKey`, and `CursorPayload` (`keyOf` must return a unique key per row; a duplicate throws)
+- `boundValue`, `normalizeBoundedValueArgs`, `selectValuePath`, `parseValuePath`, `truncateString`, `BOUNDED_VALUE_DEFAULTS`, `BOUNDED_VALUE_LIMITS`, `BoundedValueArgs`, `BoundedValueOptions`, and `BoundedValue`
+- `sliceUtf8`, `SliceUtf8Options`, and `SliceUtf8Result`
+- `encodeCursor` and `decodeCursor`
+- `normalizePageLimit`
 - `DEFAULT_PAGE_LIMIT`
 - `MAX_PAGE_LIMIT`
 - `parseFields`
@@ -51,6 +61,11 @@ This package exports:
 - `ToolCallMessage`
 - `ToolResultMessage`
 - `AgentMessage`
+- `AgentEventMap`
+- `AGENT_MESSAGE_TYPES`
+- `getErrorDetails`
+- `parseAgentTargetsResponse` and `ParsedTargetsResponse`
+- `BUILT_IN_DOMAIN_TOOL_NAMES`, `CONSOLE_TOOL_NAMES`, `REACT_TOOL_NAMES`, `PERFORMANCE_TOOL_NAMES`, `MEMORY_TOOL_NAMES`, `NETWORK_TOOL_NAMES`
 
 ## Usage
 

@@ -1,0 +1,262 @@
+---
+// The home page hero: one running app between its two views, both attached at the same time.
+// On the left React Native DevTools, the human's view, where the Network Activity panel in the
+// Rozenite tab fills with the app's requests. On the right the agent's terminal, where the same
+// failing request comes back from `network · listRequests`.
+import CopyCommand from '../site/CopyCommand.astro';
+import DevTools from '../site/DevTools.astro';
+import Dither from '../site/Dither.astro';
+import Phone from '../site/Phone.astro';
+import Window from '../site/Window.astro';
+import { docs, site } from '../../site/content';
+import { LINES, lineHtml } from './transcript';
+
+const products = [
+  { name: 'Runner Low', price: '$120', art: 'a' },
+  { name: 'Cotton Tee', price: '$32', art: 'b' },
+  { name: 'Field Cap', price: '$24', art: 'c' },
+];
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-top hero-top--split">
+    <div class="hero-copy">
+      <h1 class="h1" id="hero-title">See inside your running app. <em>So can your agent.</em></h1>
+      <p class="lede">
+        Rozenite puts plugin panels in React Native DevTools for you, and gives your coding agent the same data as tools it
+        calls from the terminal: logs, network requests, React profiles and plugin state.
+      </p>
+      <div class="actions">
+        <a class="btn" href={docs.start}>Get started <span aria-hidden="true">→</span></a>
+        <CopyCommand command={site.install} />
+      </div>
+    </div>
+    <Window title="zsh" class="hero-side">
+      <div class="term">
+        <div class="ln"><span class="p">$</span> npx rozenite@latest init</div>
+        <div class="ln"><span class="p">$</span> npm install -D @rozenite/network-activity-plugin</div>
+        <div class="ln dim"># for you: press j to open React Native DevTools</div>
+        <div class="ln"><span class="p">$</span> {site.skill}</div>
+        <div class="ln dim"># for your agent: the rozenite skill</div>
+      </div>
+    </Window>
+  </div>
+
+  <div
+    class="viz"
+    data-hero
+    role="img"
+    aria-label="One running app with two views open at once. In React Native DevTools, the Network Activity panel shows the app's requests, including a failing GET /api/cart. In the terminal, a coding agent lists the same requests, gets the same failing request back and finds the error behind it."
+  >
+    <Dither scene="crystals" focus={0.5} />
+    <div class="rig">
+      <DevTools selected="Network Activity" class="rig-devtools">
+        <div class="pane is-on net">
+          <div class="pane-row pane-head"><span>Request</span><span>Status</span><span class="t">Time</span></div>
+          <div class="pane-row is-on" data-row="n0"><span>GET /api/products</span><span class="mut">200</span><span class="mut t">142 ms</span></div>
+          <div class="pane-row is-on" data-row="n1"><span>GET /api/user</span><span class="mut">200</span><span class="mut t">88 ms</span></div>
+          <div class="pane-row is-on is-picked" data-row="n2"><span>GET /api/cart</span><span>500</span><span class="mut t">212 ms</span></div>
+        </div>
+      </DevTools>
+
+      <div class="duct" data-duct-human><span class="pkt" data-pkt-human></span></div>
+
+      <Phone title="Cart" count={2} class="rig-phone">
+        <div class="view" data-view="home">
+          <ul class="store">
+            {
+              products.map((p) => (
+                <li class="item">
+                  <span class:list={['art', `art-${p.art}`]} />
+                  <span class="item-name">{p.name}</span>
+                  <span class="item-price">{p.price}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div class="view is-on" data-view="cart">
+          <div class="err">
+            <span class="label">Error</span>
+            <p>Couldn’t load your cart.</p>
+          </div>
+        </div>
+      </Phone>
+
+      <div class="duct" data-duct-agent>
+        <span class="pkt" data-pkt-agent></span>
+        <span class="pkt pkt--back" data-pkt-call></span>
+      </div>
+
+      <Window title="agent" class="rig-agent">
+        <div class="term" data-term>
+          {LINES.map((l) => <div class={`ln ${l.cls}`} set:html={lineHtml(l)} />)}
+        </div>
+      </Window>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { whenNear } from '../site/lazy';
+
+  const root = document.querySelector<HTMLElement>('[data-hero]');
+  if (root) whenNear(root, () => void import('./hero').then((m) => m.default(root)));
+</script>
+
+<style>
+  .hero-top--split {
+    grid-template-columns: minmax(0, 1fr) 28.5rem;
+    align-items: center;
+    padding-block: clamp(2rem, 4.5vw, 3.75rem);
+  }
+  .hero-top--split .h1 {
+    max-width: 16ch;
+  }
+  :global(.hero-side) .term {
+    font-size: 0.6875rem;
+    overflow-wrap: normal;
+  }
+  .rig {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(2rem, 5vw, 3.5rem) var(--pad);
+  }
+  .rig :global(.rig-devtools) {
+    flex: 1 1 24rem;
+    max-width: 28rem;
+    height: 16.5rem;
+  }
+  .net {
+    --cols: minmax(0, 1fr) 3rem 3.5rem;
+  }
+  .rig :global(.rig-agent) {
+    flex: 1 1 22rem;
+    max-width: 26rem;
+    min-height: 15rem;
+  }
+  .rig :global(.rig-agent) .term {
+    font-size: 0.6875rem;
+    line-height: 1.65;
+  }
+  .rig .duct {
+    max-width: 4.5rem;
+  }
+  .rig :global(.rig-phone) {
+    --w: 11.5rem;
+  }
+
+  .view {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.28s ease;
+  }
+  .view.is-on {
+    opacity: 1;
+  }
+  .store {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    list-style: none;
+  }
+  .item {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    column-gap: 0.5rem;
+    align-items: center;
+    padding: 0.4375rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.6875rem;
+  }
+  .art {
+    grid-row: span 2;
+    width: 1.5rem;
+    aspect-ratio: 1;
+    background-color: var(--field);
+    background-size: 4px 4px;
+  }
+  .art-a {
+    background-image: radial-gradient(rgb(var(--accent-rgb) / 0.9) 1px, transparent 1.2px);
+  }
+  .art-b {
+    background-image: radial-gradient(rgb(255 255 255 / 0.55) 1px, transparent 1.2px);
+  }
+  .art-c {
+    background-image: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.6) 1.5px, transparent 1.5px);
+  }
+  .item-price {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    color: var(--muted);
+  }
+  /* An error, drawn without the accent: status never borrows the brand colour. */
+  .err {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin: 0.75rem;
+    padding: 0.625rem;
+    border: 1px solid var(--line-strong);
+    background: #0d0d0d;
+    font-size: 0.75rem;
+  }
+  .err .label {
+    font-size: 0.5625rem;
+    color: var(--faint);
+  }
+  .err p {
+    margin: 0;
+  }
+
+  @media (max-width: 30rem) {
+    /* On a phone the table drops its time column, so the request stays readable. */
+    .net {
+      --cols: minmax(0, 1fr) 2.75rem;
+    }
+    .net .t {
+      display: none;
+    }
+  }
+  @media (max-width: 64rem) {
+    .hero-top--split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    :global(.hero-side) {
+      display: none;
+    }
+    /* Too narrow for three across: the two views stack, the app between them. */
+    .rig {
+      flex-direction: column;
+    }
+    .rig :global(.rig-devtools),
+    .rig :global(.rig-agent) {
+      flex: none;
+      width: min(100%, 30rem);
+      max-width: none;
+    }
+    .rig :global(.rig-agent) {
+      min-height: 0;
+    }
+    .rig .duct {
+      flex: 0 0 2.5rem;
+      width: 2.25rem;
+      min-width: 0;
+      height: 2.5rem;
+      max-width: none;
+      background: repeating-linear-gradient(180deg, var(--track) 0 4px, transparent 4px 8px) center / 2px 100% no-repeat;
+    }
+    .rig .duct :global(.pkt) {
+      top: 0;
+      left: 50%;
+    }
+    .rig :global(.rig-devtools) {
+      height: 14rem;
+    }
+    .rig :global(.rig-phone) {
+      --w: 9.5rem;
+    }
+  }
+</style>

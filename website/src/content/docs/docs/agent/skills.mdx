@@ -1,0 +1,49 @@
+---
+title: 'Agent Skills'
+---
+
+If you use Codex or another coding agent that supports the Vercel `skills` CLI, you can install the Rozenite skill so the agent can use Rozenite for Agents efficiently.
+
+Rozenite ships a single skill, `rozenite`. It's a thin router — installing it just points your agent at the `rozenite skills` CLI command, which serves the actual guidance (ground truths, CLI and SDK workflows, one doc per plugin domain) straight from the `rozenite` package. That guarantees the content always matches the version of Rozenite installed in your project.
+
+Because of that, installing the skill is a convenience, not a requirement. If your coding agent doesn't use a skills CLI at all, point it straight at `npx rozenite skills list` and `npx rozenite skills show <id>` and it gets the exact same content.
+
+This skill complements Rozenite; it does not replace it. Your app still needs Rozenite installed and configured because the agent ultimately talks to the running app through the Rozenite agent runtime.
+
+## Install with the Vercel `skills` CLI
+
+Install from this repository using the repo URL:
+
+```bash
+npx skills add https://github.com/callstackincubator/rozenite --skill rozenite --agent codex
+```
+
+By default, the `skills` CLI installs project-local skills. For Codex, that means the skill is linked into `.agents/skills/`. To install it globally for all projects instead, use:
+
+```bash
+npx skills add https://github.com/callstackincubator/rozenite --skill rozenite --agent codex --global
+```
+
+## The `rozenite skills` command
+
+Once the skill is installed, the agent discovers and reads the actual workflow content through two CLI commands, run from the app root where Metro is started (in a monorepo, that's the app package root, not the repository root):
+
+```bash
+npx rozenite skills list
+```
+
+Lists every bundled doc as an id and a one-line description, for example `core`, `cli`, `sdk`, `sdk-patterns`, and one doc per domain such as `storage`, `mmkv`, or `network`.
+
+```bash
+npx rozenite skills show <id>
+```
+
+Prints the raw content of one doc. The agent typically starts with `npx rozenite skills show core` for the ground truths shared by every workflow, then reads `cli` or `sdk` depending on whether it's driving the shell or writing code, and reads a domain doc like `storage` or `react-navigation` only when it needs that domain.
+
+An unknown id fails with a non-zero exit code and a message listing the valid ids.
+
+## Next steps
+
+- Go back to the [Rozenite for Agents](/docs/agent/overview) overview.
+- [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose custom tools from your app for agents to call.
+- [Making your plugin agent-enabled](/docs/agent/making-your-plugin-agent-enabled) – expose tools from your Rozenite plugin to agents.

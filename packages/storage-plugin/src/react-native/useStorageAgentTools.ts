@@ -1,17 +1,13 @@
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
-import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
+import { paginateArray } from '@rozenite/agent-shared';
 import {
   STORAGE_AGENT_PLUGIN_ID,
   storageToolDefinitions,
   type StorageListEntriesArgs,
 } from '../shared/agent-tools';
-import type {
-  StorageEntry,
-  StorageEntryType,
-  StorageEntryValue,
-  StorageTarget,
-} from '../shared/types';
+import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
 import type { StorageView } from './storage-view';
+import { compareKeys } from './entry-preview-pagination';
 
 const parseValueForType = (type: StorageEntryType, value: unknown): StorageEntryValue => {
   if (type === 'string') {
@@ -43,55 +39,6 @@ const parseValueForType = (type: StorageEntryType, value: unknown): StorageEntry
 };
 
 const formatViewRef = (view: StorageView) => `${view.target.adapterId}/${view.target.storageId}`;
-
-const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
-  left.adapterId === right.adapterId && left.storageId === right.storageId;
-
-type ListEntriesCursor = {
-  version: 1;
-  target: StorageTarget;
-  offset: number;
-};
-
-const encodeCursor = (cursor: ListEntriesCursor) =>
-  btoa(encodeURIComponent(JSON.stringify(cursor)));
-
-const decodeCursor = (value: string): ListEntriesCursor => {
-  try {
-    const cursor: unknown = JSON.parse(decodeURIComponent(atob(value)));
-    if (
-      typeof cursor !== 'object' ||
-      cursor == null ||
-      Array.isArray(cursor) ||
-      (cursor as { version?: unknown }).version !== 1 ||
-      typeof (cursor as { target?: { adapterId?: unknown } }).target?.adapterId !== 'string' ||
-      typeof (cursor as { target?: { storageId?: unknown } }).target?.storageId !== 'string' ||
-      !Number.isSafeInteger((cursor as { offset?: unknown }).offset) ||
-      (cursor as { offset: number }).offset < 0
-    ) {
-      throw new Error('Invalid cursor');
-    }
-
-    return cursor as ListEntriesCursor;
-  } catch {
-    throw new Error(
-      'Invalid cursor. Run list-entries again without a cursor to restart pagination.',
-    );
-  }
-};
-
-const sanitizeLimit = (limit: number | undefined) => {
-  if (
-    typeof limit !== 'number' ||
-    !Number.isFinite(limit) ||
-    !Number.isInteger(limit) ||
-    limit < 1
-  ) {
-    return DEFAULT_PAGE_LIMIT;
-  }
-
-  return Math.min(limit, MAX_PAGE_LIMIT);
-};
 
 const sanitizeOffset = (offset: number | undefined) => {
   if (
@@ -149,39 +96,28 @@ const resolveStorage = (views: readonly StorageView[], adapterId?: string, stora
 };
 
 const listStorageKeys = async (view: StorageView, input: StorageListEntriesArgs) => {
-  const limit = sanitizeLimit(input.limit);
   if (input.cursor !== undefined && input.offset !== undefined) {
     throw new Error('Provide either cursor or offset, not both.');
   }
-  const cursor = input.cursor === undefined ? undefined : decodeCursor(input.cursor);
-  if (cursor && !isSameTarget(cursor.target, view.target)) {
-    throw new Error(
-      'Cursor does not match the requested storage. Run list-entries again without a cursor to restart pagination.',
-    );
-  }
 
-  const allKeys = await view.getAllKeys();
-  const offset = cursor?.offset ?? sanitizeOffset(input.offset);
-  const end = Math.min(offset + limit, allKeys.length);
+  // A cursor resumes after a key, so the keys need an order that does not
+  // change between calls: MMKV and AsyncStorage return theirs in hash order,
+  // which a write can reshuffle. Sorted the way the panel sorts them.
+  const rows = [...(await view.getAllKeys())].sort(compareKeys).map((key) => ({ key }));
+  // `offset` is deprecated: it only picks where the first page starts. The
+  // cursor of that page resumes after its last key like any other.
+  const start = input.cursor === undefined ? sanitizeOffset(input.offset) : 0;
 
   return {
     adapterId: view.target.adapterId,
     storageId: view.target.storageId,
-    total: allKeys.length,
-    items: allKeys.slice(offset, end).map((key) => ({ key })),
-    page: {
-      limit,
-      hasMore: end < allKeys.length,
-      ...(end < allKeys.length
-        ? {
-            nextCursor: encodeCursor({
-              version: 1,
-              target: view.target,
-              offset: end,
-            }),
-          }
-        : {}),
-    },
+    total: rows.length,
+    ...paginateArray(start > 0 ? rows.slice(start) : rows, {
+      keyOf: (row) => row.key,
+      limit: input.limit,
+      cursor: input.cursor,
+      scope: formatViewRef(view),
+    }),
   };
 };
 

@@ -16,6 +16,8 @@ const DOMAIN_IDS = [
   'file-system',
   'controls',
   'tanstack-query',
+  'sqlite',
+  'feature-flags',
 ];
 
 describe('SkillsRegistry', () => {

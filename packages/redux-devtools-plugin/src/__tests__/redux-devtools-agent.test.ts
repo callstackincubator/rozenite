@@ -63,7 +63,7 @@ const registerStore = ({
   name = 'App Store',
   maxAge = 50,
   liftedState = createLiftedState(),
-  currentState = { count: 0 },
+  currentState = { count: 0 } as unknown,
 } = {}) => {
   const dispatch = vi.fn();
   const liftedDispatch = vi.fn();
@@ -160,7 +160,37 @@ describe('redux devtools agent helpers', () => {
         hasError: false,
       },
       state: { count: 0 },
+      truncated: false,
     });
+  });
+
+  it('bounds store state by depth and string length and selects a path', () => {
+    registerStore({
+      currentState: {
+        user: { profile: { address: { city: { name: 'Kraków' } } } },
+        bio: 'x'.repeat(600),
+        todos: [{ title: 'first' }, { title: 'second' }],
+      },
+    });
+
+    const result = getReduxStoreStateResult({});
+    expect(result.truncated).toBe(true);
+    expect(result.state).toMatchObject({
+      user: { profile: { address: { city: '[object(1 keys)]' } } },
+      bio: `${'x'.repeat(512)}[+88 chars]`,
+    });
+
+    expect(getReduxStoreStateResult({ path: 'todos.1', maxValueLength: 3 })).toMatchObject({
+      path: 'todos.1',
+      state: { title: 'sec[+3 chars]' },
+      truncated: true,
+    });
+    expect(getReduxStoreStateResult({ path: 'user', maxDepth: 1 }).state).toEqual({
+      profile: '[object(1 keys)]',
+    });
+    expect(() => getReduxStoreStateResult({ path: 'todos.9' })).toThrow(
+      'Path "todos.9" does not exist.',
+    );
   });
 
   it('lists actions newest first with pagination', () => {
@@ -195,10 +225,90 @@ describe('redux devtools agent helpers', () => {
           hasError: false,
         },
       ],
+      page: { limit: 1, hasMore: true, nextCursor: expect.any(String) },
     });
   });
 
-  it('returns action details with computed state', () => {
+  it('pages actions with a default of 20 and a maximum of 100', () => {
+    const count = 150;
+    const ids = Array.from({ length: count }, (_, index) => index);
+    registerStore({
+      liftedState: createLiftedState({
+        nextActionId: count,
+        actionsById: Object.fromEntries(
+          ids.map((id) => [
+            id,
+            { type: 'PERFORM_ACTION', action: { type: `a/${id}` }, timestamp: id },
+          ]),
+        ) as unknown as ReduxDevToolsLiftedState['actionsById'],
+        stagedActionIds: ids,
+        currentStateIndex: count - 1,
+        computedStates: ids.map(() => ({ state: {} })),
+      }),
+    });
+
+    const byDefault = listReduxActionsResult({});
+    expect(byDefault.limit).toBe(20);
+    expect(byDefault.items).toHaveLength(20);
+
+    const capped = listReduxActionsResult({ limit: 5000 });
+    expect(capped.limit).toBe(100);
+    expect(capped.items).toHaveLength(100);
+
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => listReduxActionsResult({ limit: bad })).toThrow(/"limit"/);
+    }
+  });
+
+  it('continues list-actions after the last action, skipping nothing when older ones are dropped', () => {
+    const liftedState = createLiftedState();
+    registerStore({ liftedState });
+
+    const first = listReduxActionsResult({ limit: 1 });
+    expect(first.items.map((item) => item.actionId)).toEqual([2]);
+
+    // A new action arrives on top while paging.
+    liftedState.actionsById[3] = ActionCreators.performAction({ type: 'counter/reset' });
+    liftedState.stagedActionIds = [0, 1, 2, 3];
+    liftedState.computedStates = [...liftedState.computedStates, { state: { count: 0 } }];
+
+    const second = listReduxActionsResult({ limit: 1, cursor: first.page.nextCursor });
+    expect(second).toMatchObject({
+      total: 3,
+      offset: 2,
+      limit: 1,
+      items: [{ actionId: 1 }],
+      page: { limit: 1, hasMore: false },
+    });
+
+    // The action the cursor points at is gone: restart.
+    const restart = listReduxActionsResult({ limit: 1 });
+    liftedState.stagedActionIds = [0, 1, 2];
+    expect(listReduxActionsResult({ cursor: restart.page.nextCursor })).toMatchObject({
+      items: [],
+      page: { reset: true },
+    });
+  });
+
+  it('still starts list-actions at a deprecated offset and defaults to 20 rows', () => {
+    registerStore();
+
+    expect(listReduxActionsResult({ offset: 1 })).toMatchObject({
+      offset: 1,
+      limit: 20,
+      items: [{ actionId: 1 }],
+    });
+    expect(() => listReduxActionsResult({ offset: 1, cursor: 'x' })).toThrow(
+      'either cursor or offset',
+    );
+    expect(reduxDevToolsToolDefinitions.listActions.pagination).toMatchObject({
+      defaultFields: ['actionId', 'type', 'timestamp', 'isCurrent'],
+      meta: ['total'],
+    });
+    expect(reduxDevToolsToolDefinitions.listStores.rows).toMatchObject({ key: 'stores' });
+  });
+
+  it('returns action details with the bounded computed state by default', () => {
     registerStore();
 
     expect(getReduxActionDetailsResult({ actionId: 1 })).toEqual({
@@ -233,7 +343,61 @@ describe('redux devtools agent helpers', () => {
       state: { count: 1 },
       error: null,
       trace: null,
+      truncated: false,
     });
+  });
+
+  it('leaves the computed state out only when include omits it', () => {
+    registerStore();
+
+    expect(getReduxActionDetailsResult({ actionId: 1, include: [] })).not.toHaveProperty('state');
+    expect(getReduxActionDetailsResult({ actionId: 1, include: ['state'] }).state).toEqual({
+      count: 1,
+    });
+    expect(
+      getReduxActionDetailsResult({ actionId: 1, include: [], path: 'state.count' }),
+    ).toMatchObject({ state: 1 });
+    expect(getReduxActionDetailsResult({ actionId: 1, path: 'state.count' })).toMatchObject({
+      path: 'state.count',
+      state: 1,
+    });
+    expect(
+      getReduxActionDetailsResult({ actionId: 1, path: 'liftedAction.action.type' }),
+    ).toMatchObject({ liftedAction: 'counter/increment' });
+    expect(() => getReduxActionDetailsResult({ actionId: 1, path: 'count' })).toThrow(
+      '"path" must start with "liftedAction" or "state".',
+    );
+  });
+
+  it('rejects unknown include values with the accepted ones', () => {
+    registerStore();
+
+    expect(() =>
+      getReduxActionDetailsResult({ actionId: 1, include: ['stat' as 'state'] }),
+    ).toThrow('Unknown "include" value "stat". Use state.');
+    expect(() =>
+      getReduxActionDetailsResult({ actionId: 1, include: 5 as unknown as ['state'] }),
+    ).toThrow('"include" must be an array of state.');
+  });
+
+  it('caps arrays and objects at maxItems entries per level', () => {
+    const byId = Object.fromEntries(
+      Array.from({ length: 5_000 }, (_, id) => [String(id), { id, title: `todo ${id}` }]),
+    );
+    registerStore({ currentState: { todos: { byId } } });
+
+    const result = getReduxStoreStateResult({ maxItems: 2 });
+    expect(result.truncated).toBe(true);
+    expect(result.state).toEqual({
+      todos: {
+        byId: {
+          '0': { id: 0, title: 'todo 0' },
+          '1': { id: 1, title: 'todo 1' },
+          '[+4998 keys]': true,
+        },
+      },
+    });
+    expect(JSON.stringify(getReduxStoreStateResult({}).state).length).toBeLessThan(5_000);
   });
 
   it('dispatches a normal Redux action through the real store', () => {

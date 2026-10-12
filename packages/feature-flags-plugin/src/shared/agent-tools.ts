@@ -1,4 +1,8 @@
-import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+import {
+  defineAgentToolContract,
+  defineRowsAgentToolContract,
+  type AgentToolContract,
+} from '@rozenite/agent-shared';
 
 import type { FeatureFlag, FeatureFlagType, FeatureFlagValue } from './types';
 
@@ -63,7 +67,11 @@ export type FeatureFlagsClearOverridesResult = {
 };
 
 export const featureFlagsToolDefinitions = {
-  listFlags: defineAgentToolContract<FeatureFlagsListFlagsArgs, FeatureFlagsListFlagsResult>({
+  listFlags: defineRowsAgentToolContract<
+    FeatureFlagsListFlagsArgs,
+    FeatureFlagsListFlagsResult,
+    'providers'
+  >({
     name: 'list-flags',
     description:
       'List feature flags across providers, including their type, effective value, and whether they are currently overridden. Flag counts are small (tens to low hundreds), so results are not paginated. Omit providerId to list flags for every registered provider.',
@@ -72,6 +80,11 @@ export const featureFlagsToolDefinitions = {
       properties: {
         providerId: providerIdProperty,
       },
+    },
+    // One row per provider, its flags nested in the `flags` column.
+    rows: {
+      key: 'providers',
+      fields: ['providerId', 'providerName', 'flags'],
     },
   }),
   getFlag: defineAgentToolContract<FeatureFlagsGetFlagArgs, FeatureFlagsGetFlagResult>({

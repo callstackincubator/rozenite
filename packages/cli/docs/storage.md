@@ -15,12 +15,21 @@ A Rozenite plugin for inspecting multiple storage backends in React Native DevTo
 
 ## Tools
 
-- `list-storages` -> `{}`
-- `list-entries` -> `{"adapterId":"<adapterId>","storageId":"<storageId>"}` | `{"adapterId":"<adapterId>","storageId":"<storageId>","offset":0,"limit":100}`
-- `read-entry` -> `{"adapterId":"<adapterId>","storageId":"<storageId>","key":"<key>"}`
-- `create-entry` -> `{"adapterId":"<adapterId>","storageId":"<storageId>","key":"<key>","type":"string","value":"<value>"}`
-- `edit-entry` -> `{"adapterId":"<adapterId>","storageId":"<storageId>","key":"<key>","type":"boolean","value":true}`
-- `remove-entry` -> `{"adapterId":"<adapterId>","storageId":"<storageId>","key":"<key>"}`
+```
+npx rozenite agent storage list-storages
+npx rozenite agent storage list-entries --adapterId mmkv --storageId user
+npx rozenite agent storage read-entry --adapterId mmkv --storageId user --key token
+npx rozenite agent storage create-entry --adapterId mmkv --storageId user --key theme --type string --value dark
+npx rozenite agent storage edit-entry --adapterId mmkv --storageId user --key onboarded --type boolean --value true
+npx rozenite agent storage remove-entry --adapterId mmkv --storageId user --key theme
+```
+
+- `list-storages` lists every adapter and storage with its `adapterId`, `storageId` and supported value types.
+- `list-entries` lists keys only, never values, 20 per page (`--limit` up to 100). When more keys exist the output ends with a `next` command; run it to continue. Paging resumes after the last key returned, so keys added or removed while you page are not skipped or repeated. If that key was removed, the page comes back empty with `reset: true`: list again without `--cursor`.
+- `read-entry` returns one value in full.
+- `create-entry` fails if the key exists; `edit-entry` fails if it does not. `--type` is `string`, `number`, `boolean` or `buffer` and must be one of the storage's supported types. A `buffer` value is a JSON array of bytes: `--value '[1,2,3]'`.
+
+`--adapterId` and `--storageId` can be left out when only one storage matches.
 
 ## Minimal Flow
 
@@ -29,5 +38,3 @@ Read:
 
 Mutation:
 `create-entry` / `edit-entry` / `remove-entry`.
-
-Use `list-storages` first to learn valid `adapterId`, `storageId`, and supported value types.

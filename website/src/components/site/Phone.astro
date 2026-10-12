@@ -1,0 +1,113 @@
+---
+// A phone with pixel-stepped corners and a minimal app inside: a header with the screen title
+// flush left and a count in a small square on the right. The screen content is the slot.
+interface Props {
+  title?: string;
+  count?: number | string;
+  kind?: 'ios' | 'android';
+  class?: string;
+}
+const { title = 'Store', count = 0, kind = 'ios', class: className } = Astro.props;
+---
+
+<div class:list={['device', className]} data-kind={kind} aria-hidden="true">
+  <div class="screen">
+    <span class="island"></span>
+    <div class="app-bar">
+      <span class="app-title" data-title>{title}</span>
+      <b class:list={['app-count', { 'is-full': Number(count) > 0 }]} data-count>{count}</b>
+    </div>
+    <div class="app-body">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style>
+  /*
+   * Pixel-stepped corners. A clip-path would also clip a CSS border at the corners, so the
+   * outline is drawn instead: the stepped shape in the border grey, and the same shape 1px
+   * smaller on top of it in the body colour.
+   */
+  .device {
+    --w: 13.5rem;
+    --steps: polygon(
+      0 8px, 4px 8px, 4px 4px, 8px 4px, 8px 0,
+      calc(100% - 8px) 0, calc(100% - 8px) 4px, calc(100% - 4px) 4px, calc(100% - 4px) 8px, 100% 8px,
+      100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px), calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%,
+      8px 100%, 8px calc(100% - 4px), 4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px)
+    );
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    width: var(--w);
+    aspect-ratio: 9 / 18.5;
+    padding: 0.5rem;
+    background: #313131;
+    clip-path: var(--steps);
+  }
+  .device::before {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    background: #050505;
+    clip-path: var(--steps);
+  }
+  .screen {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #0d0d0d;
+    font-family: var(--font-display);
+    color: var(--text);
+  }
+  .island {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    translate: -50% 0;
+    width: 34%;
+    height: 12px;
+    background: #000;
+    z-index: 3;
+  }
+  .app-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.625rem 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.8125rem;
+  }
+  .app-title {
+    flex: 1;
+  }
+  .app-count {
+    min-width: 1rem;
+    padding: 0 0.1875rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 400;
+    text-align: center;
+    line-height: 1rem;
+    background: var(--field);
+    color: var(--muted);
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+  .app-count.is-full {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .app-body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+</style>

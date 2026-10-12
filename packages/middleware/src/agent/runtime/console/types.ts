@@ -15,30 +15,33 @@ export interface ConsoleLogFilters {
   levels?: ConsoleLogLevel[];
   text?: string;
   since?: number;
-  /** Exclusive upper bound, decoded from the `before` anchor cursor. */
+  /** Exclusive upper bound, decoded from the `before` anchor (a seq). */
   beforePosition?: number;
-  /** Exclusive lower bound, decoded from the `after` anchor cursor. */
+  /** Exclusive lower bound, decoded from the `after` anchor (a seq). */
   afterPosition?: number;
 }
 
 /**
  * A returned entry carries an anchor cursor so any row can bound a later range,
  * which is what makes "the ten entries before this error" a single follow-up
- * call rather than a scan.
+ * call rather than a scan. The cursor is the row's `seq` as a string, so the
+ * `seq` column alone is enough to resume or anchor.
  */
 export interface ConsoleLogRow extends ConsoleLogEntry {
   cursor: string;
 }
 
-export interface ConsoleMessagesRequest extends PageRequest {
+export interface ConsoleMessagesRequest extends Omit<PageRequest, 'cursor'> {
+  /** A `seq` (number or numeric string) or a cursor from a previous page. */
+  cursor?: string | number;
   order?: PageOrder;
   levels?: ConsoleLogLevel[];
   text?: string;
   since?: number;
-  /** Anchor cursor from a previous row; returns entries strictly older than it. */
-  before?: string;
-  /** Anchor cursor from a previous row; returns entries strictly newer than it. */
-  after?: string;
+  /** A row's `seq` (or cursor); returns entries strictly older than it. */
+  before?: string | number;
+  /** A row's `seq` (or cursor); returns entries strictly newer than it. */
+  after?: string | number;
 }
 
 export interface ConsoleMessagesMeta {

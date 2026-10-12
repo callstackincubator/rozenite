@@ -1,19 +1,29 @@
 import { useCallback } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import { paginateArray, sliceUtf8 } from '@rozenite/agent-shared';
 import type { FileSystemAdapter, UseFileSystemDevToolsOptions } from './fileSystemProvider';
 import {
   resolveAgentFileTransferCapabilities,
   resolveFileSystemAdapter,
 } from './fileSystemProvider';
 import { exportFileTransfer, importFileTransfer } from './fileTransfer';
+import { normalizeByteArg } from './byte-range';
 import {
   FILE_SYSTEM_AGENT_PLUGIN_ID,
+  FILE_SYSTEM_DEFAULT_EXPORT_BYTES,
+  FILE_SYSTEM_DEFAULT_INLINE_IMAGE_BYTES,
+  FILE_SYSTEM_DEFAULT_TEXT_BYTES,
+  FILE_SYSTEM_MAX_TEXT_BYTES,
   fileSystemToolDefinitions,
   type FileSystemExportFileArgs,
   type FileSystemImportFileArgs,
   type FileSystemListEntriesArgs,
+  type FileSystemListEntriesResult,
   type FileSystemPathArgs,
-  type FileSystemReadFileArgs,
+  type FileSystemReadImageFileArgs,
+  type FileSystemReadImageFileResult,
+  type FileSystemReadTextFileArgs,
+  type FileSystemReadTextFileResult,
 } from '../shared/agent-tools';
 import type { FileSystemAgentTransferCapabilities } from '../shared/protocol';
 
@@ -85,19 +95,45 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  listEntries: async ({ path, offset = 0, limit = 100 }: FileSystemListEntriesArgs) => {
+  listEntries: async ({
+    path,
+    limit,
+    cursor,
+    offset,
+  }: FileSystemListEntriesArgs): Promise<FileSystemListEntriesResult> => {
+    if (cursor !== undefined && offset !== undefined) {
+      throw new Error('Provide either cursor or offset, not both.');
+    }
+
     const provider = await getProviderOrThrow(resolveProvider);
     const allEntries = await provider.listDir(path);
-    const safeOffset = Math.max(0, Math.floor(offset));
-    const safeLimit = Math.max(1, Math.floor(limit));
+    // `offset` is deprecated: it only picks where the first page starts.
+    const start =
+      cursor === undefined && typeof offset === 'number' && Number.isFinite(offset)
+        ? Math.max(0, Math.floor(offset))
+        : 0;
+    const { items, page } = paginateArray(allEntries.slice(start), {
+      keyOf: (entry) => entry.path,
+      limit,
+      cursor,
+      scope: path,
+    });
 
     return {
       provider: provider.provider,
       path,
       total: allEntries.length,
-      offset: safeOffset,
-      limit: safeLimit,
-      entries: allEntries.slice(safeOffset, safeOffset + safeLimit),
+      offset:
+        items.length > 0
+          ? allEntries.indexOf(items[0])
+          : page.reset
+            ? 0
+            : cursor !== undefined
+              ? allEntries.length
+              : Math.min(start, allEntries.length),
+      limit: page.limit,
+      entries: items,
+      page,
     };
   },
 
@@ -112,7 +148,16 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  readTextFile: async ({ path, maxBytes = 10_000_000 }: FileSystemReadFileArgs) => {
+  readTextFile: async ({
+    path,
+    offset: rawOffset,
+    maxBytes: rawMaxBytes,
+  }: FileSystemReadTextFileArgs): Promise<FileSystemReadTextFileResult> => {
+    const offset = normalizeByteArg(rawOffset, 'offset', 0, { min: 0 });
+    // 0 kept its old meaning: the whole file.
+    const maxBytes = normalizeByteArg(rawMaxBytes, 'maxBytes', FILE_SYSTEM_DEFAULT_TEXT_BYTES, {
+      min: 0,
+    });
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
 
@@ -120,16 +165,42 @@ export const createFileSystemAgentHandlers = (
       throw new Error(`Path "${entry.path}" is a directory, not a file.`);
     }
 
+    // Providers refuse a file above the limit they are given rather than cut
+    // it, so they read the whole file and the range is taken here. 10 MB is
+    // the ceiling for ranges inside it; a range reaching past it (or
+    // `maxBytes: 0`) lifts the ceiling, so every byte of a larger file stays
+    // reachable.
+    const providerLimit =
+      maxBytes === 0 || offset + maxBytes > FILE_SYSTEM_MAX_TEXT_BYTES
+        ? 0
+        : FILE_SYSTEM_MAX_TEXT_BYTES;
+    const content = await provider.readTextFile(entry.path, providerLimit);
+    const { slice, ...range } = sliceUtf8(content, {
+      offset,
+      maxBytes: maxBytes === 0 ? Number.MAX_SAFE_INTEGER : maxBytes,
+    });
+
     return {
       provider: provider.provider,
       path: entry.path,
       mimeTypeHint: entry.mimeTypeHint ?? null,
       size: entry.size ?? null,
-      content: await provider.readTextFile(entry.path, maxBytes),
+      content: slice,
+      ...range,
     };
   },
 
-  readImageFile: async ({ path, maxBytes = 10_000_000 }: FileSystemReadFileArgs) => {
+  readImageFile: async ({
+    path,
+    inline = false,
+    maxBytes: rawMaxBytes,
+  }: FileSystemReadImageFileArgs): Promise<FileSystemReadImageFileResult> => {
+    const maxBytes = normalizeByteArg(
+      rawMaxBytes,
+      'maxBytes',
+      FILE_SYSTEM_DEFAULT_INLINE_IMAGE_BYTES,
+      { max: FILE_SYSTEM_MAX_TEXT_BYTES },
+    );
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
 
@@ -137,21 +208,28 @@ export const createFileSystemAgentHandlers = (
       throw new Error(`Path "${entry.path}" is a directory, not a file.`);
     }
 
-    const preview = await provider.readImageBase64(entry.path, maxBytes);
-
-    return {
+    const metadata = {
       provider: provider.provider,
       path: entry.path,
       mimeTypeHint: entry.mimeTypeHint ?? null,
       size: entry.size ?? null,
+    };
+    if (!inline) {
+      return metadata;
+    }
+
+    const preview = await provider.readImageBase64(entry.path, maxBytes);
+    return {
+      ...metadata,
       dataUri: `data:${preview.mime};base64,${preview.base64}`,
     };
   },
 
-  exportFile: async ({ path }: FileSystemExportFileArgs) => {
+  exportFile: async ({ path, maxBytes: rawMaxBytes }: FileSystemExportFileArgs) => {
     assertAgentTransferEnabled(agentFileTransfer, 'export');
+    const maxBytes = normalizeByteArg(rawMaxBytes, 'maxBytes', FILE_SYSTEM_DEFAULT_EXPORT_BYTES);
     const provider = await getProviderOrThrow(resolveProvider);
-    const result = await exportFileTransfer(provider, path);
+    const result = await exportFileTransfer(provider, path, { maxBytes });
 
     return {
       ...result,

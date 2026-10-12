@@ -16,24 +16,39 @@ A Rozenite plugin for fallback network inspection when the built-in `network` do
 ## Precedence
 
 - Prefer the built-in `network` domain first.
-- If `network` is missing from `rozenite agent domains --session <sessionId>`, or it fails to initialize/use for the current app, fall back to this plugin domain.
+- If `network` is missing from `npx rozenite agent domains`, or it fails to initialize or work for the current app, fall back to this plugin domain.
 
 ## HTTP Parity Tools
 
-- `startRecording` -> `{}`
-- `stopRecording` -> `{}`
-- `getRecordingStatus` -> `{}`
-- `listRequests` -> `{}` | `{"cursor":"<cursor>"}` | `{"limit":50}`
-- `getRequestDetails` -> `{"requestId":"<requestId>"}`
-- `getRequestBody` -> `{"requestId":"<requestId>"}`
-- `getResponseBody` -> `{"requestId":"<requestId>"}`
+```
+npx rozenite agent network-activity startRecording
+npx rozenite agent network-activity stopRecording
+npx rozenite agent network-activity getRecordingStatus
+npx rozenite agent network-activity listRequests
+npx rozenite agent network-activity getRequestDetails --requestId <requestId>
+npx rozenite agent network-activity getRequestBody --requestId <requestId>
+npx rozenite agent network-activity getResponseBody --requestId <requestId>
+npx rozenite agent network-activity getResponseBody --requestId <requestId> --offset 16384 --maxBytes 65536
+```
 
 ## Realtime Extras
 
-- `listRealtimeConnections` -> `{}` | `{"cursor":"<cursor>"}` | `{"limit":50}`
-- `getRealtimeConnectionDetails` -> `{"requestId":"<requestId>"}`
+```
+npx rozenite agent network-activity listRealtimeConnections
+npx rozenite agent network-activity getRealtimeConnectionDetails --requestId <requestId>
+```
 
 `listRequests` and `getRequestDetails` stay HTTP-focused for fallback compatibility. Use the realtime tools only when you need WebSocket or SSE traffic.
+
+## Lists
+
+`listRequests` and `listRealtimeConnections` return the newest 20 rows per page (`--limit` up to 100). When more rows exist the output ends with a `next` command; run it to continue. Paging resumes after the last request returned, so traffic captured while you page does not shift the next page. If that request was evicted from the buffer, or a new recording started, the page comes back empty with `reset: true`: list again without `--cursor`. Recording state and buffer counters are one `getRecordingStatus` away.
+
+Rows show identifiers, status and duration by default. Pass `--fields` with column names, or `--fields all`, for more.
+
+## Bodies
+
+`getRequestBody` and `getResponseBody` return the first 16 KB of the body by default. The result says how big the whole body is (`totalBytes`) and whether more remains (`truncated`); when it does, `nextOffset` is where the next slice starts. Read the rest with `--offset <nextOffset>`, and raise `--maxBytes` to take more at once. For a `base64Encoded` body, byte counts refer to the base64 string.
 
 ## Minimal Flow
 
@@ -42,11 +57,3 @@ HTTP fallback:
 
 Realtime:
 `startRecording` -> reproduce traffic -> `listRealtimeConnections` -> `getRealtimeConnectionDetails`.
-
-CLI discovery listings and paginated calls use columnar `cols` and `rows`
-output when two or more rows are returned. Tool metadata remains present, and
-`next` replaces the page envelope when another page is available.
-
-`listRequests` and `listRealtimeConnections` return a trimmed default column
-set (identifiers, status, and duration, not every field). Pass `--fields` or
-`--verbose` to widen the projection.

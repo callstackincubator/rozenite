@@ -1,4 +1,11 @@
-import { AGENT_PLUGIN_ID, type AgentToolPagination } from '@rozenite/agent-shared';
+import {
+  AGENT_MESSAGE_TYPES,
+  AGENT_PLUGIN_ID,
+  CONSOLE_TOOL_NAMES,
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
+  type AgentToolPagination,
+} from '@rozenite/agent-shared';
 import { createToolRegistry } from './tool-registry.js';
 import type {
   DevToolsPluginMessage,
@@ -20,16 +27,17 @@ import type { ConsoleMessageInput, ConsoleLogRow } from './console/types.js';
 const cursorPagination = <TRow>(config: {
   fields: readonly Extract<keyof TRow, string>[];
   defaultFields?: readonly Extract<keyof TRow, string>[];
+  /**
+   * Result keys besides `items` and `page` worth printing with every page.
+   * The SDK result keeps every key; this only steers what a frontend shows.
+   */
+  meta: readonly string[];
 }): AgentToolPagination => ({
   kind: 'cursor',
   fields: config.fields,
   ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
+  meta: config.meta,
 });
-
-const CONSOLE_TOOL_NAMES = {
-  getMessages: 'getMessages',
-  clearMessages: 'clearMessages',
-} as const;
 
 const CONSOLE_TOOLS: AgentTool[] = [
   {
@@ -54,11 +62,12 @@ const CONSOLE_TOOLS: AgentTool[] = [
       properties: {
         limit: {
           type: 'integer',
-          description: 'Page size. Default 50, max 200.',
+          description: `Page size. Default ${DEFAULT_PAGE_LIMIT}, max ${MAX_PAGE_LIMIT}.`,
         },
         cursor: {
           type: 'string',
-          description: 'Opaque cursor returned by the previous page.',
+          description:
+            'Resume after this row: a "seq" from a previous response (the page\'s nextCursor is the last row\'s seq). Also accepts a number.',
         },
         order: {
           type: 'string',
@@ -84,20 +93,22 @@ const CONSOLE_TOOLS: AgentTool[] = [
         before: {
           type: 'string',
           description:
-            'Anchor cursor from an item\'s "cursor" field. Returns only entries older than it, so pairing it with order "desc" reads the entries leading up to that item.',
+            'An item\'s "seq". Returns only entries older than it, so pairing it with order "desc" reads the entries leading up to that item. Also accepts a number.',
         },
         after: {
           type: 'string',
           description:
-            'Anchor cursor from an item\'s "cursor" field. Returns only entries newer than it, so pairing it with order "asc" reads the entries that followed it.',
+            'An item\'s "seq". Returns only entries newer than it, so pairing it with order "asc" reads the entries that followed it. Also accepts a number.',
         },
       },
     },
     pagination: cursorPagination<ConsoleLogRow>({
+      // The buffer counters (droppedCount, lastSeq, bufferSize) live under `meta`.
+      meta: ['meta'],
       fields: ['seq', 'timestamp', 'level', 'source', 'text', 'context', 'cursor'],
-      // Drop the heaviest column from the default projection; it remains
-      // available via --fields/--verbose.
-      defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
+      // `context` is the heaviest column, `source` is "console" on nearly every
+      // row, and `cursor` repeats `seq`. All three stay reachable via --fields.
+      defaultFields: ['seq', 'timestamp', 'level', 'text'],
     }),
   },
 ];
@@ -249,19 +260,19 @@ export const createAgentMessageHandler = () => {
     }
 
     switch (message.type) {
-      case 'register-tool': {
+      case AGENT_MESSAGE_TYPES.registerTool: {
         const payload = message.payload as RegisterToolPayload;
         registry.registerTools(deviceId, payload.tools);
         notifyToolsChanged();
         break;
       }
-      case 'unregister-tool': {
+      case AGENT_MESSAGE_TYPES.unregisterTool: {
         const payload = message.payload as UnregisterToolPayload;
         registry.unregisterTools(deviceId, payload.toolNames);
         notifyToolsChanged();
         break;
       }
-      case 'tool-result': {
+      case AGENT_MESSAGE_TYPES.toolResult: {
         const payload = message.payload as ToolResultPayload;
         const pending = pendingCalls.get(payload.callId);
         if (!pending) {
@@ -335,7 +346,7 @@ export const createAgentMessageHandler = () => {
 
     const message: DevToolsPluginMessage = {
       pluginId: AGENT_PLUGIN_ID,
-      type: 'tool-call',
+      type: AGENT_MESSAGE_TYPES.toolCall,
       payload: {
         callId,
         toolName,

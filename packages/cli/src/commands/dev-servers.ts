@@ -1,8 +1,8 @@
 import {
   AGENT_TARGETS_ROUTE,
   DEFAULT_AGENT_PORT,
-  type AgentResponseEnvelope,
-  type GetAgentTargetsResponse,
+  getErrorDetails,
+  parseAgentTargetsResponse,
   type MetroTarget,
 } from '@rozenite/agent-shared';
 import type { RozeniteHostIntegration } from '@rozenite/tools/integration';
@@ -77,20 +77,6 @@ export type DevServerDiscovery = {
   failures: DevServerFailure[];
 };
 
-const getErrorDetails = (error: unknown): string | null => {
-  if (!error) {
-    return null;
-  }
-
-  if (error instanceof AggregateError && error.errors.length > 0) {
-    return error.errors
-      .map((entry) => (entry instanceof Error ? entry.message : String(entry)))
-      .join('; ');
-  }
-
-  return error instanceof Error ? error.message : String(error);
-};
-
 /**
  * Thrown when the dev server itself could not be reached at all (the
  * transport failed) -- as opposed to `fetchTargets`' plain `Error`, which
@@ -123,47 +109,29 @@ const fetchTargets = async (host: string, port: number): Promise<MetroTarget[]> 
     throw new DevServerUnreachableError(unreachableMessage(getErrorDetails(error)));
   }
 
-  // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
-  // or 404 (`packages/middleware/src/agent/routes.ts`), so the body has to
-  // be parsed before the status is allowed to decide anything -- otherwise
-  // a real error envelope's own message (e.g. "No connected device is
-  // available") is discarded in favour of a bare "responded with status
-  // 400". The status only gets the final word when the body turns out not
-  // to be a usable envelope at all (a non-JSON body, or JSON of some other
-  // shape -- an older middleware, or `/rozenite` not mounted here).
-  const unexpectedResponseError = (): Error =>
-    new Error(
-      response.ok
-        ? `Dev server at ${url} returned an unexpected response.`
-        : `Dev server at ${url} responded with status ${response.status}.`,
-    );
-
   let raw: unknown;
   try {
     raw = await response.json();
   } catch {
-    throw unexpectedResponseError();
+    raw = undefined;
   }
 
-  if (typeof raw !== 'object' || raw === null || !('ok' in raw)) {
-    throw unexpectedResponseError();
-  }
+  const parsed = parseAgentTargetsResponse(response.status, raw);
 
-  const body = raw as AgentResponseEnvelope<GetAgentTargetsResponse>;
-
-  if (!body.ok) {
-    const message =
-      typeof body.error?.message === 'string'
-        ? body.error.message
-        : `Dev server at ${url} reported an error.`;
+  if (parsed.kind === 'error-envelope') {
+    const message = parsed.message ?? `Dev server at ${url} reported an error.`;
     throw new Error(`${message} (${url})`);
   }
 
-  if (!Array.isArray(body.result?.targets)) {
-    throw unexpectedResponseError();
+  if (parsed.kind === 'unexpected') {
+    throw new Error(
+      parsed.httpOk
+        ? `Dev server at ${url} returned an unexpected response.`
+        : `Dev server at ${url} responded with status ${response.status}.`,
+    );
   }
 
-  return body.result.targets;
+  return parsed.targets;
 };
 
 /**

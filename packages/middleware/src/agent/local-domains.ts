@@ -1,4 +1,16 @@
-import type { JSONSchema7, AgentTool, AgentToolPagination } from '@rozenite/agent-shared';
+import {
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
+  MEMORY_TOOL_NAMES,
+  NETWORK_TOOL_NAMES,
+  PERFORMANCE_TOOL_NAMES,
+  REACT_TOOL_NAMES,
+  type AgentTool,
+  type AgentToolPagination,
+  type JSONSchema7,
+  paginateArray,
+  sliceUtf8,
+} from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
 import { CdpEventTimeoutError } from './cdp-errors.js';
 import type { ArtifactBucket, ArtifactFileWriter } from './artifacts.js';
@@ -20,10 +32,16 @@ import type {
 const cursorPagination = <TRow>(config: {
   fields: readonly Extract<keyof TRow, string>[];
   defaultFields?: readonly Extract<keyof TRow, string>[];
+  /**
+   * Result keys besides `items` and `page` worth printing with every page.
+   * The SDK result keeps every key; this only steers what a frontend shows.
+   */
+  meta: readonly string[];
 }): AgentToolPagination => ({
   kind: 'cursor',
   fields: config.fields,
   ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
+  meta: config.meta,
 });
 
 type CDPCommandSender = (
@@ -149,8 +167,26 @@ type NetworkBodyResult = {
   base64Encoded?: boolean;
   decoded?: boolean;
   mimeType?: string;
+  /** Size of the whole body in bytes, before `offset`/`maxBytes` were applied. */
+  totalBytes?: number;
+  /** True when bytes remain after the returned slice. */
+  truncated?: boolean;
+  /** Where the next slice starts; present only when `truncated` is true. */
+  nextOffset?: number;
   reason?: string;
 };
+
+const DEFAULT_BODY_MAX_BYTES = 16_384;
+
+const NETWORK_DETAIL_SECTIONS = [
+  'headers',
+  'timing',
+  'initiator',
+  'cookies',
+  'redirectChain',
+] as const;
+type NetworkDetailSection = (typeof NETWORK_DETAIL_SECTIONS)[number];
+const DEFAULT_NETWORK_DETAIL_SECTIONS: readonly NetworkDetailSection[] = ['headers'];
 
 const DEFAULT_RN_DEVTOOLS_TRACE_CATEGORIES = [
   '-*',
@@ -205,8 +241,6 @@ const NAME_HINT_SCHEMA: JSONSchema7 = {
 const TRACE_COMPLETION_TIMEOUT_MS = 60_000;
 const HEAP_SNAPSHOT_TIMEOUT_MS = 120_000;
 
-const DEFAULT_DOMAIN_PAGE_LIMIT = 20;
-const MAX_DOMAIN_PAGE_LIMIT = 100;
 const NETWORK_BUFFER_CAPACITY = 500;
 
 const getRecord = (value: unknown): Record<string, unknown> => {
@@ -236,14 +270,6 @@ const getOptionalNumber = (value: unknown): number | undefined => {
 
 const getOptionalBoolean = (value: unknown): boolean | undefined => {
   return typeof value === 'boolean' ? value : undefined;
-};
-
-const getOptionalPositiveInteger = (value: unknown): number | undefined => {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
-    return undefined;
-  }
-
-  return value;
 };
 
 const getOptionalRecord = (value: unknown): Record<string, unknown> | undefined => {
@@ -288,102 +314,94 @@ const isTextLikeMimeType = (mimeType: string | undefined): boolean => {
   );
 };
 
-/**
- * Generic offset-cursor pagination for local domain listings.
- *
- * `generation` is an optional stamp a caller can bump whenever the
- * underlying buffer is invalidated out from under any outstanding cursors
- * (e.g. the network domain's capture buffer is wiped on disconnect). When a
- * presented cursor's generation doesn't match the current one, the rows it
- * indexes into no longer correspond to what the caller had in mind, so this
- * returns `page.reset: true` with an empty page instead of silently
- * resuming into the new buffer at the same numeric offset — which could
- * return unrelated rows, or an empty page indistinguishable from "no more
- * results". This is intentionally narrow (a single caller-supplied
- * generation counter), not the general shared cursor engine tracked by
- * issue #320 — that issue's scope is a cross-domain cursor abstraction,
- * which this function does not attempt to be.
- */
-const paginateRows = <T>(
-  rows: T[],
-  options: {
-    scope: string;
-    limit: number;
-    cursor?: string;
-    generation?: number;
-  },
-): {
-  items: T[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-    reset?: boolean;
-  };
-} => {
-  let startIndex = 0;
-  if (options.cursor) {
-    let decoded: {
-      v: 1;
-      scope: string;
-      index: number;
-      generation?: number;
-    };
-    try {
-      decoded = JSON.parse(
-        Buffer.from(options.cursor, 'base64url').toString('utf8'),
-      ) as typeof decoded;
-      if (
-        decoded.v !== 1 ||
-        decoded.scope !== options.scope ||
-        !Number.isInteger(decoded.index) ||
-        decoded.index < 0
-      ) {
-        throw new Error('Invalid cursor payload');
-      }
-    } catch {
-      throw new Error(
-        'Invalid "cursor". Run the command again without cursor to restart pagination.',
-      );
-    }
-
-    if (options.generation !== undefined && decoded.generation !== options.generation) {
-      return {
-        items: [],
-        page: {
-          limit: options.limit,
-          hasMore: false,
-          reset: true,
-        },
-      };
-    }
-
-    startIndex = decoded.index;
+const readBodyWindow = (input: Record<string, unknown>): { maxBytes: number; offset: number } => {
+  const { maxBytes, offset } = input;
+  if (
+    maxBytes !== undefined &&
+    (typeof maxBytes !== 'number' || !Number.isInteger(maxBytes) || maxBytes < 1)
+  ) {
+    throw new Error('"maxBytes" must be a positive integer');
+  }
+  if (
+    offset !== undefined &&
+    (typeof offset !== 'number' || !Number.isInteger(offset) || offset < 0)
+  ) {
+    throw new Error('"offset" must be a non-negative integer');
   }
 
-  const endIndex = Math.min(startIndex + options.limit, rows.length);
-  const items = rows.slice(startIndex, endIndex);
-  const hasMore = endIndex < rows.length;
-  const nextCursor = hasMore
-    ? Buffer.from(
-        JSON.stringify({
-          v: 1,
-          scope: options.scope,
-          index: endIndex,
-          ...(options.generation !== undefined ? { generation: options.generation } : {}),
-        }),
-        'utf8',
-      ).toString('base64url')
-    : undefined;
-
   return {
-    items,
-    page: {
-      limit: options.limit,
-      hasMore,
-      ...(nextCursor ? { nextCursor } : {}),
-    },
+    maxBytes: (maxBytes as number | undefined) ?? DEFAULT_BODY_MAX_BYTES,
+    offset: (offset as number | undefined) ?? 0,
   };
+};
+
+/**
+ * Cut one window out of a body with the shared `sliceUtf8`, so `offset` and
+ * `nextOffset` mean the same as in the network-activity plugin: an offset
+ * inside a character moves forward to the next one, and the window ends on
+ * the last whole character that fits in `maxBytes`.
+ */
+const sliceBody = (
+  body: string,
+  window: { maxBytes: number; offset: number },
+): Pick<NetworkBodyResult, 'body' | 'totalBytes' | 'truncated' | 'nextOffset'> => {
+  const { slice, ...range } = sliceUtf8(body, window);
+  return { body: slice, ...range };
+};
+
+/**
+ * The same window over a body that stays base64-encoded (binary content):
+ * `offset`, `maxBytes`, `totalBytes` and `nextOffset` count the decoded
+ * bytes, and the returned window is re-encoded, so the units match the text
+ * case instead of counting base64 characters (64 of which are 48 bytes).
+ */
+const sliceBase64Body = (
+  base64: string,
+  window: { maxBytes: number; offset: number },
+): Pick<NetworkBodyResult, 'body' | 'totalBytes' | 'truncated' | 'nextOffset'> => {
+  const bytes = Buffer.from(base64, 'base64');
+  const start = Math.min(window.offset, bytes.length);
+  const end = Math.min(start + window.maxBytes, bytes.length);
+  const truncated = end < bytes.length;
+  return {
+    body: bytes.subarray(start, end).toString('base64'),
+    totalBytes: bytes.length,
+    truncated,
+    ...(truncated ? { nextOffset: end } : {}),
+  };
+};
+
+const readDetailSections = (value: unknown): Set<NetworkDetailSection> => {
+  if (value === undefined) {
+    return new Set(DEFAULT_NETWORK_DETAIL_SECTIONS);
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`"include" must be an array of ${NETWORK_DETAIL_SECTIONS.join(', ')}`);
+  }
+
+  const sections = new Set<NetworkDetailSection>();
+  for (const entry of value) {
+    if (!NETWORK_DETAIL_SECTIONS.includes(entry as NetworkDetailSection)) {
+      throw new Error(
+        `Unknown "include" value ${JSON.stringify(entry)}. Use ${NETWORK_DETAIL_SECTIONS.join(', ')}.`,
+      );
+    }
+    sections.add(entry as NetworkDetailSection);
+  }
+
+  return sections;
+};
+
+/** Drop keys whose value is `undefined` or `null`, so absent data costs nothing. */
+const omitNullish = <T extends Record<string, unknown>>(value: T): Partial<T> => {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined && entry !== null),
+  ) as Partial<T>;
+};
+
+const getInitiatorType = (initiator: unknown): string | undefined => {
+  return getString(getOptionalRecord(initiator)?.type);
 };
 
 const createArtifactMetadata = (
@@ -580,7 +598,7 @@ export const createPerformanceDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
-      name: 'startTrace',
+      name: PERFORMANCE_TOOL_NAMES.startTrace,
       description: 'Start a CDP performance trace for the current session target.',
       inputSchema: {
         type: 'object',
@@ -598,7 +616,7 @@ export const createPerformanceDomainService = (deps: {
       },
     },
     {
-      name: 'stopTrace',
+      name: PERFORMANCE_TOOL_NAMES.stopTrace,
       description: 'Stop the active trace and write the result to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
@@ -785,7 +803,7 @@ export const createReactDomainService = (deps: {
   };
   const tools: AgentTool[] = [
     {
-      name: 'getTree',
+      name: REACT_TOOL_NAMES.getTree,
       description:
         'Get the current React component tree with optional depth limiting and cursor-based ' +
         'pagination. With noHost, parentId, childIds and depth describe the filtered tree, so ' +
@@ -794,8 +812,8 @@ export const createReactDomainService = (deps: {
         type: 'object',
         properties: {
           root: {
-            type: 'integer',
-            description: 'Optional root node ID to scope the tree to a subtree.',
+            ...nodeIdentifierSchema,
+            description: 'Optional node ID or component label to scope the tree to a subtree.',
           },
           depth: {
             type: 'integer',
@@ -808,6 +826,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactTreeNode>({
+        meta: ['roots', 'totalCount'],
         fields: [
           'nodeId',
           'label',
@@ -822,20 +841,13 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-          'depth',
-          'errorCount',
-          'warningCount',
-        ],
+        // `label` identifies the node as well as `nodeId` does and every React
+        // tool accepts it; the rest stay reachable through --fields.
+        defaultFields: ['label', 'displayName', 'childCount', 'depth'],
       }),
     },
     {
-      name: 'getComponent',
+      name: REACT_TOOL_NAMES.getComponent,
       description:
         'Get a React node summary plus inspected props, state, and hooks in one response.',
       inputSchema: {
@@ -867,7 +879,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'getNode',
+      name: REACT_TOOL_NAMES.getNode,
       description: 'Get a single React node summary by node ID or label.',
       inputSchema: {
         type: 'object',
@@ -885,7 +897,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'getChildren',
+      name: REACT_TOOL_NAMES.getChildren,
       description:
         "Get a node's direct children by node ID or label with cursor-based pagination. With " +
         'noHost, a hidden host is replaced by its own children.',
@@ -907,6 +919,7 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactNodeSummary>({
+        meta: [],
         fields: [
           'nodeId',
           'label',
@@ -919,19 +932,11 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-          'errorCount',
-          'warningCount',
-        ],
+        defaultFields: ['label', 'displayName', 'childCount'],
       }),
     },
     {
-      name: 'getProps',
+      name: REACT_TOOL_NAMES.getProps,
       description: 'Get inspected props for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
@@ -951,12 +956,13 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactInspectableEntry>({
+        meta: [],
         // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
       }),
     },
     {
-      name: 'getState',
+      name: REACT_TOOL_NAMES.getState,
       description: 'Get inspected state for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
@@ -976,12 +982,13 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactInspectableEntry>({
+        meta: [],
         // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
       }),
     },
     {
-      name: 'getHooks',
+      name: REACT_TOOL_NAMES.getHooks,
       description: 'Get inspected hooks for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
@@ -1008,12 +1015,13 @@ export const createReactDomainService = (deps: {
         ...nodeIdentifierRequirement,
       },
       pagination: cursorPagination<ReactInspectableEntry>({
+        meta: [],
         // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
       }),
     },
     {
-      name: 'searchNodes',
+      name: REACT_TOOL_NAMES.searchNodes,
       description: 'Search React component tree nodes by display name or key.',
       inputSchema: {
         type: 'object',
@@ -1038,6 +1046,7 @@ export const createReactDomainService = (deps: {
         required: ['query'],
       },
       pagination: cursorPagination<ReactNodeSummary>({
+        meta: [],
         fields: [
           'nodeId',
           'label',
@@ -1050,20 +1059,11 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-          'parentLabel',
-          'errorCount',
-          'warningCount',
-        ],
+        defaultFields: ['label', 'displayName', 'childCount', 'parentLabel'],
       }),
     },
     {
-      name: 'getErrors',
+      name: REACT_TOOL_NAMES.getErrors,
       description:
         'List the components React logged errors or warnings against, most errors first. ' +
         'Covers warnings as well as errors; counts are cumulative and reset when a component ' +
@@ -1080,6 +1080,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactNodeSummary>({
+        meta: ['totalCount', 'summary'],
         fields: [
           'nodeId',
           'label',
@@ -1092,11 +1093,11 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: ['nodeId', 'label', 'displayName', 'errorCount', 'warningCount'],
+        defaultFields: ['label', 'displayName', 'errorCount', 'warningCount'],
       }),
     },
     {
-      name: 'startProfiling',
+      name: REACT_TOOL_NAMES.startProfiling,
       description: 'Start React profiling or request reload-and-profile when supported.',
       inputSchema: {
         type: 'object',
@@ -1109,7 +1110,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'isProfilingStarted',
+      name: REACT_TOOL_NAMES.isProfilingStarted,
       description: 'Get current React profiling status and recorded data availability.',
       inputSchema: {
         type: 'object',
@@ -1117,7 +1118,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'stopProfiling',
+      name: REACT_TOOL_NAMES.stopProfiling,
       description: 'Stop React profiling and return a compact summary of the captured session.',
       inputSchema: {
         type: 'object',
@@ -1132,7 +1133,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'getComponentRenders',
+      name: REACT_TOOL_NAMES.getComponentRenders,
       description:
         'Get per-component render totals aggregated across every commit of the captured ' +
         'profiling session: render count, total/average/max render time, and why each ' +
@@ -1171,6 +1172,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactComponentRenderItem>({
+        meta: ['totalCount', 'summary'],
         fields: [
           'rootId',
           'fiberId',
@@ -1186,20 +1188,20 @@ export const createReactDomainService = (deps: {
           'changeTypeHints',
           'changedKeys',
         ],
+        // avgDurationMs is totalDurationMs / renderCount; request it with --fields.
         defaultFields: [
           'fiberId',
           'label',
           'displayName',
           'renderCount',
           'totalDurationMs',
-          'avgDurationMs',
           'maxDurationMs',
           'changeTypeHints',
         ],
       }),
     },
     {
-      name: 'getProfileTimeline',
+      name: REACT_TOOL_NAMES.getProfileTimeline,
       description:
         'List every commit in the captured profiling session with its duration and how many ' +
         'fibers rendered, chronologically or slowest first. Use it to pick a commitIndex for ' +
@@ -1224,6 +1226,7 @@ export const createReactDomainService = (deps: {
         },
       },
       pagination: cursorPagination<ReactProfileTimelineItem>({
+        meta: ['totalCount', 'summary'],
         fields: [
           'rootId',
           'commitIndex',
@@ -1241,7 +1244,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getRenderData',
+      name: REACT_TOOL_NAMES.getRenderData,
       description:
         'Get a paged summary of a single React commit by rootId and commitIndex. Each ' +
         'item is a fiber that rendered, with its displayName, timing, and why it rendered ' +
@@ -1272,6 +1275,7 @@ export const createReactDomainService = (deps: {
         required: ['rootId', 'commitIndex'],
       },
       pagination: cursorPagination<ReactRenderDataItem>({
+        meta: ['commit', 'summary'],
         fields: [
           'fiberId',
           'displayName',
@@ -1364,7 +1368,7 @@ export const createMemoryDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
-      name: 'takeHeapSnapshot',
+      name: MEMORY_TOOL_NAMES.takeHeapSnapshot,
       description: 'Capture a heap snapshot and write it to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
@@ -1374,7 +1378,7 @@ export const createMemoryDomainService = (deps: {
       },
     },
     {
-      name: 'startSampling',
+      name: MEMORY_TOOL_NAMES.startSampling,
       description: 'Start heap allocation sampling for the current session target.',
       inputSchema: {
         type: 'object',
@@ -1395,7 +1399,7 @@ export const createMemoryDomainService = (deps: {
       },
     },
     {
-      name: 'stopSampling',
+      name: MEMORY_TOOL_NAMES.stopSampling,
       description:
         'Stop heap allocation sampling and write the profile to a Metro-managed artifact path.',
       inputSchema: {
@@ -1590,7 +1594,7 @@ export const createNetworkDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
-      name: 'startRecording',
+      name: NETWORK_TOOL_NAMES.startRecording,
       description: 'Start recording raw CDP network activity for the current session target.',
       inputSchema: {
         type: 'object',
@@ -1598,7 +1602,7 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'stopRecording',
+      name: NETWORK_TOOL_NAMES.stopRecording,
       description: 'Stop recording network activity without clearing the captured request buffer.',
       inputSchema: {
         type: 'object',
@@ -1606,7 +1610,7 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'getRecordingStatus',
+      name: NETWORK_TOOL_NAMES.getRecordingStatus,
       description: 'Return network recording state and buffer metadata for the current session.',
       inputSchema: {
         type: 'object',
@@ -1614,14 +1618,14 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'listRequests',
+      name: NETWORK_TOOL_NAMES.listRequests,
       description: 'List captured network request summaries with cursor pagination.',
       inputSchema: {
         type: 'object',
         properties: {
           limit: {
             type: 'number',
-            description: `Maximum number of requests to return. Defaults to ${DEFAULT_DOMAIN_PAGE_LIMIT}, max ${MAX_DOMAIN_PAGE_LIMIT}.`,
+            description: `Maximum number of requests to return. Defaults to ${DEFAULT_PAGE_LIMIT}, max ${MAX_PAGE_LIMIT}.`,
           },
           cursor: {
             type: 'string',
@@ -1630,6 +1634,9 @@ export const createNetworkDomainService = (deps: {
         },
       },
       pagination: cursorPagination<NetworkRequestSummary>({
+        // The `recording` block stays in the result for SDK callers, but it is
+        // the same on every page and one getRecordingStatus call away.
+        meta: [],
         fields: [
           'requestId',
           'method',
@@ -1647,8 +1654,10 @@ export const createNetworkDomainService = (deps: {
       }),
     },
     {
-      name: 'getRequestDetails',
-      description: 'Return detailed metadata for a captured network request without bodies.',
+      name: NETWORK_TOOL_NAMES.getRequestDetails,
+      description:
+        'Return detailed metadata for a captured network request without bodies. Keys with no ' +
+        'value are omitted; initiator carries only its type unless include names "initiator".',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1656,12 +1665,23 @@ export const createNetworkDomainService = (deps: {
             type: 'string',
             description: 'Captured CDP requestId to inspect.',
           },
+          include: {
+            type: 'array',
+            items: {
+              type: 'string',
+              enum: [...NETWORK_DETAIL_SECTIONS],
+            },
+            description:
+              'Optional sections to include. Defaults to ["headers"]. "timing" adds response.timing, ' +
+              '"initiator" the full initiator with its stack, "cookies" the associated and blocked ' +
+              'cookies, "redirectChain" the redirects that led here.',
+          },
         },
         required: ['requestId'],
       },
     },
     {
-      name: 'getRequestBody',
+      name: NETWORK_TOOL_NAMES.getRequestBody,
       description:
         'Fetch the request body for a captured network request when supported by the target.',
       inputSchema: {
@@ -1671,20 +1691,39 @@ export const createNetworkDomainService = (deps: {
             type: 'string',
             description: 'Captured CDP requestId to inspect.',
           },
+          maxBytes: {
+            type: 'integer',
+            description: `Maximum bytes of body to return. Defaults to ${DEFAULT_BODY_MAX_BYTES}. The result reports totalBytes, truncated and, when truncated, nextOffset.`,
+          },
+          offset: {
+            type: 'integer',
+            description:
+              'Byte offset to start reading from, for reading a large body in slices. Defaults to 0.',
+          },
         },
         required: ['requestId'],
       },
     },
     {
-      name: 'getResponseBody',
+      name: NETWORK_TOOL_NAMES.getResponseBody,
       description:
-        'Fetch the response body for a captured network request when supported by the target.',
+        'Fetch the response body for a captured network request when supported by the target. ' +
+        'Text bodies the target sent base64-encoded are decoded; byte counts then refer to the decoded text.',
       inputSchema: {
         type: 'object',
         properties: {
           requestId: {
             type: 'string',
             description: 'Captured CDP requestId to inspect.',
+          },
+          maxBytes: {
+            type: 'integer',
+            description: `Maximum bytes of body to return. Defaults to ${DEFAULT_BODY_MAX_BYTES}. The result reports totalBytes, truncated and, when truncated, nextOffset.`,
+          },
+          offset: {
+            type: 'integer',
+            description:
+              'Byte offset to start reading from, for reading a large body in slices. Defaults to 0.',
           },
         },
         required: ['requestId'],
@@ -1965,20 +2004,17 @@ export const createNetworkDomainService = (deps: {
 
   const listRequests = async (args: unknown) => {
     const input = getRecord(args);
-    const limit = Math.min(
-      getOptionalPositiveInteger(input.limit) ?? DEFAULT_DOMAIN_PAGE_LIMIT,
-      MAX_DOMAIN_PAGE_LIMIT,
-    );
-    const cursor = getString(input.cursor);
     const rows = state.requestOrder
       .map((requestId) => state.requests.get(requestId))
       .filter((record): record is NetworkRequestRecord => Boolean(record))
       .reverse()
       .map(createNetworkSummary);
-    const page = paginateRows(rows, {
-      scope: 'network:requests',
-      limit,
-      cursor,
+    // The capture buffer is wiped on disconnect and on a new recording, which
+    // bumps the generation, so a cursor from before then answers `reset`.
+    const page = paginateArray(rows, {
+      keyOf: (row) => row.requestId,
+      limit: input.limit,
+      cursor: input.cursor,
       generation: state.generation,
     });
 
@@ -1996,35 +2032,67 @@ export const createNetworkDomainService = (deps: {
       throw new Error('"requestId" is required');
     }
 
+    const include = readDetailSections(input.include);
     const record = getRecordById(requestId);
+
+    let request: Record<string, unknown> | undefined;
+    if (record.request) {
+      const { headers, ...rest } = record.request;
+      request = include.has('headers') ? { ...rest, headers } : rest;
+    }
+
+    let response: Record<string, unknown> | undefined;
+    if (record.response) {
+      const { headers, timing, ...rest } = record.response;
+      response = {
+        ...rest,
+        ...(include.has('headers') ? { headers } : {}),
+        ...(include.has('timing') ? { timing } : {}),
+      };
+    }
+
+    const initiatorType = getInitiatorType(record.initiator);
+    const initiator = include.has('initiator')
+      ? record.initiator
+      : initiatorType !== undefined
+        ? { type: initiatorType }
+        : undefined;
 
     return {
       ...createNetworkStatus(state),
-      request: {
+      request: omitNullish({
         requestId: record.requestId,
-        method: record.method || record.request?.method || null,
-        url: record.url || record.request?.url || null,
-        type: record.type ?? null,
-        priority: record.priority ?? null,
-        initiator: record.initiator ?? null,
-        startTimeMs: record.startTimeMs ?? null,
-        wallTimeMs: record.wallTimeMs ?? null,
-        endTimeMs: record.endTimeMs ?? null,
-        durationMs: record.durationMs ?? null,
-        request: record.request ?? null,
-        requestHeadersExtra: record.requestHeadersExtra ?? null,
-        requestAssociatedCookies: record.requestAssociatedCookies ?? null,
-        response: record.response ?? null,
-        responseHeadersExtra: record.responseHeadersExtra ?? null,
-        responseBlockedCookies: record.responseBlockedCookies ?? null,
-        redirectChain: record.redirectChain ?? [],
+        method: record.method || record.request?.method,
+        url: record.url || record.request?.url,
+        type: record.type,
+        priority: record.priority,
+        initiator,
+        startTimeMs: record.startTimeMs,
+        wallTimeMs: record.wallTimeMs,
+        endTimeMs: record.endTimeMs,
+        durationMs: record.durationMs,
+        request,
+        ...(include.has('headers')
+          ? {
+              requestHeadersExtra: record.requestHeadersExtra,
+              responseHeadersExtra: record.responseHeadersExtra,
+            }
+          : {}),
+        ...(include.has('cookies')
+          ? {
+              requestAssociatedCookies: record.requestAssociatedCookies,
+              responseBlockedCookies: record.responseBlockedCookies,
+            }
+          : {}),
+        response,
+        ...(include.has('redirectChain') ? { redirectChain: record.redirectChain ?? [] } : {}),
         servedFromCache: record.servedFromCache ?? false,
         loadingFinished: record.loadingFinished ?? false,
         loadingFailed: record.loadingFailed ?? false,
-        failureText: record.failureText ?? null,
-        blockedReason: record.blockedReason ?? null,
-        corsErrorStatus: record.corsErrorStatus ?? null,
-      },
+        failureText: record.failureText,
+        blockedReason: record.blockedReason,
+        corsErrorStatus: record.corsErrorStatus,
+      }),
     };
   };
 
@@ -2035,6 +2103,7 @@ export const createNetworkDomainService = (deps: {
       throw new Error('"requestId" is required');
     }
 
+    const window = readBodyWindow(input);
     const record = getRecordById(requestId);
     if (!record.request?.hasPostData) {
       return {
@@ -2061,8 +2130,8 @@ export const createNetworkDomainService = (deps: {
       return {
         requestId,
         available: true,
-        body,
         base64Encoded: false,
+        ...sliceBody(body, window),
       };
     } catch (error) {
       return {
@@ -2080,6 +2149,7 @@ export const createNetworkDomainService = (deps: {
       throw new Error('"requestId" is required');
     }
 
+    const window = readBodyWindow(input);
     const record = getRecordById(requestId);
     if (record.loadingFailed) {
       return {
@@ -2117,10 +2187,10 @@ export const createNetworkDomainService = (deps: {
           return {
             requestId,
             available: true,
-            body: Buffer.from(body, 'base64').toString('utf8'),
             base64Encoded: false,
             decoded: true,
             mimeType,
+            ...sliceBody(Buffer.from(body, 'base64').toString('utf8'), window),
           };
         } catch (error) {
           return {
@@ -2134,10 +2204,10 @@ export const createNetworkDomainService = (deps: {
       return {
         requestId,
         available: true,
-        body,
         base64Encoded,
         decoded: false,
         mimeType,
+        ...(base64Encoded ? sliceBase64Body(body, window) : sliceBody(body, window)),
       };
     } catch (error) {
       return {

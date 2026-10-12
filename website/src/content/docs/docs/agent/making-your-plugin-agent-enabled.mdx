@@ -1,0 +1,360 @@
+---
+title: 'Making your plugin agent-enabled'
+---
+
+import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+Rozenite plugins can expose **agent tools** so coding agents (CLI, Cursor, Codex) can inspect and control your plugin’s domain via Rozenite for Agents. Tools are grouped under a domain that matches your plugin’s ID, and agents discover them the same way they use built-in domains like `console` or `network`.
+
+This page describes what you need to expose tools from your plugin package.
+
+## Prerequisites
+
+- You have a Rozenite plugin with an **app side** (code that runs inside the app, from its `react-native.ts` entry point). See [Plugin Development](/docs/plugin-development/overview) if you are new to plugins.
+- Your plugin is already integrated so its app entry runs when the app is in development.
+
+## Add the agent bridge dependency
+
+In your plugin package, install `@rozenite/agent-bridge`:
+
+<PackageManagerTabs command="install @rozenite/agent-bridge" />
+
+The bridge provides the same message protocol and tool lifecycle as in-app tools, but registers tools under your **plugin ID** instead of the `app` domain.
+
+## Use the plugin agent tool hook
+
+From your plugin’s app-side code, call `useRozenitePluginAgentTool` with:
+
+- **pluginId** – Your plugin’s public ID (e.g. `@rozenite/react-navigation-plugin`). This becomes the **domain** agents use to list and call your tools.
+- **tool** – An `AgentTool`: `name`, `description`, and `inputSchema` (JSON Schema–style).
+- **handler** – A function that receives the tool’s arguments and returns a serializable result (or throws).
+
+Each tool is qualified as `{pluginId}.{tool.name}`. The hook registers the tool when the component mounts and unregisters it on unmount.
+
+### Example: echo tool
+
+```tsx
+import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+
+const PLUGIN_ID = '@my-org/my-rozenite-plugin';
+
+const echoTool: AgentTool = {
+  name: 'echo',
+  description: 'Return the provided value.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      value: { type: 'string' },
+    },
+    required: ['value'],
+  },
+};
+
+export function MyPluginAgentTools() {
+  useRozenitePluginAgentTool({
+    pluginId: PLUGIN_ID,
+    tool: echoTool,
+    handler: ({ value }: { value: string }) => ({ value }),
+  });
+
+  return null;
+}
+```
+
+Mount `MyPluginAgentTools` from your plugin’s app entry (e.g. next to your DevTools panel registration) so it runs when the app is connected. Agents will see a domain equal to `PLUGIN_ID` and a tool named `echo` (qualified as `@my-org/my-rozenite-plugin.echo`).
+
+### Example: plugin-specific tool
+
+The React Navigation plugin exposes tools such as `get-root-state`, `navigate`, and `go-back`. Each is defined as an `AgentTool` and registered with `useRozenitePluginAgentTool` using `pluginId: '@rozenite/react-navigation-plugin'`. The handler calls into the plugin’s refs and callbacks (e.g. navigation ref, state getters). For example:
+
+```tsx
+useRozenitePluginAgentTool({
+  pluginId: '@rozenite/react-navigation-plugin',
+  tool: getRootStateTool,
+  handler: () => {
+    const state = getCurrentState();
+    return { state, hasState: !!state };
+  },
+});
+```
+
+Other official plugins that expose agent tools include:
+
+- **@rozenite/storage-plugin** – Generic storage adapter inspection and mutation
+- **@rozenite/controls-plugin** – Controls inspection and interaction
+- **@rozenite/redux-devtools-plugin** – Redux store inspection and curated history control
+
+You can mirror this pattern: define one or more `AgentTool` objects, then register each with `useRozenitePluginAgentTool` in a component that is mounted when your plugin is active.
+
+## Tool shape and lifecycle
+
+- **pluginId**: Must match the plugin ID you use in Rozenite.
+- **name**: Use kebab-case. The full tool name seen by agents is `{pluginId}.{name}`.
+- **description** and **inputSchema**: Same as for [in-app tools](/docs/agent/adding-tools-to-your-application). Good descriptions and schema help agents call your tools correctly.
+- **readOnly**, **destructive**, and **idempotent**: Optional tool traits that help agents choose and safely retry tools. Omit a trait when its value is unknown; agents must not assume an omitted trait is `false`.
+- **handler**: Can be async. Return serializable data; on throw, the bridge sends an error result to the agent.
+
+Tools are registered when the component that calls `useRozenitePluginAgentTool` mounts, and unregistered when it unmounts. If your plugin’s UI or logic is conditional, keep the agent tools in a component that stays mounted whenever the plugin is “active” so the domain and tools remain visible to agents.
+
+## Optional: publish typed SDK descriptors
+
+Your plugin does **not** need this to be agent-enabled. Agents can already
+discover and call your tools through the plugin domain. Publishing `./sdk` is a
+TypeScript convenience for users of
+[`@rozenite/agent-sdk`](/docs/agent/sdk), so they can write:
+
+```ts
+await session.tools.call(myPluginTools.echo, { value: 'hello' });
+```
+
+instead of manually spelling out the plugin domain and tool name.
+
+The pattern used by Rozenite's official plugins is:
+
+1. Put the **public tool contract** in a non-React module such as `src/shared/agent-tools.ts`.
+2. Define each tool with `defineAgentToolContract<TArgs, TResult>(...)` from `@rozenite/agent-shared`.
+3. Reuse those shared definitions both in your app-side registration hook and in `sdk.ts`.
+4. In `sdk.ts`, call `defineAgentToolDescriptors(pluginId, toolDefinitions)` and export the resulting descriptor object.
+
+That split keeps one source of truth for:
+
+- the plugin ID
+- tool names and descriptions
+- input schemas
+- public argument/result types
+
+### 1. Define shared tool contracts
+
+```ts
+import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+
+export const MY_PLUGIN_ID = '@my-org/my-rozenite-plugin';
+
+export type EchoArgs = {
+  value: string;
+};
+
+export type EchoResult = {
+  value: string;
+};
+
+export const myToolDefinitions = {
+  echo: defineAgentToolContract<EchoArgs, EchoResult>({
+    name: 'echo',
+    description: 'Return the provided value.',
+    readOnly: true,
+    idempotent: true,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        value: { type: 'string' },
+      },
+      required: ['value'],
+    },
+  }),
+} as const satisfies Record<string, AgentToolContract<unknown, unknown>>;
+```
+
+### 2. Reuse the same contracts at runtime
+
+```tsx
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import { MY_PLUGIN_ID, myToolDefinitions } from '../shared/agent-tools';
+
+export function MyPluginAgentTools() {
+  useRozenitePluginAgentTool({
+    pluginId: MY_PLUGIN_ID,
+    tool: myToolDefinitions.echo,
+    handler: ({ value }) => ({ value }),
+  });
+
+  return null;
+}
+```
+
+### 3. Publish typed descriptors from `sdk.ts`
+
+```ts
+import { defineAgentToolDescriptors } from '@rozenite/agent-shared';
+import { MY_PLUGIN_ID, myToolDefinitions } from './src/shared/agent-tools.js';
+
+export { MY_PLUGIN_ID, myToolDefinitions };
+
+export const myPluginTools = defineAgentToolDescriptors(MY_PLUGIN_ID, myToolDefinitions);
+
+export type { EchoArgs, EchoResult } from './src/shared/agent-tools.js';
+```
+
+Recommended conventions:
+
+- Use `undefined` for tools that take no arguments, so SDK users can write `session.tools.call(myPluginTools.ping)` without passing `{}`.
+- Export any shared value/model types referenced by your public results from `sdk.ts`, not just the descriptor object.
+- Keep the tool `name`, `description`, and `inputSchema` in the shared contract module so your runtime registration and published SDK surface cannot drift.
+
+### Paginated tools
+
+Use the shared paginated contract for tools that return cursor-paginated rows.
+The declaration travels with the registered tool, so the CLI can validate
+`--fields` and use compact columnar output without knowing your plugin ID or
+tool name.
+
+```ts
+import { definePaginatedAgentToolContract, type PageResult } from '@rozenite/agent-bridge';
+
+type ListEntriesArgs = {
+  limit?: number;
+  cursor?: string;
+};
+
+type EntryRow = {
+  key: string;
+  type: string;
+  size?: number;
+};
+
+type ListEntriesResult = PageResult<EntryRow> & { total: number };
+
+export const listEntriesTool = definePaginatedAgentToolContract<ListEntriesArgs, ListEntriesResult>(
+  {
+    name: 'list-entries',
+    description: 'List entries with cursor pagination.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number' },
+        cursor: { type: 'string' },
+      },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: ['key', 'type', 'size'],
+      defaultFields: ['key', 'type'],
+      meta: ['total'],
+    },
+  },
+);
+```
+
+`fields` is the stable set available to agents, while `defaultFields` is the
+smaller projection used unless the caller passes `--fields` (`--fields all`
+selects every field).
+Both arrays are validated against the row type, and the CLI never infers
+columns from observed values. Tools without pagination metadata keep their
+original output unchanged.
+
+Page the rows in the handler with `paginateArray`. Give it the full list and
+a `keyOf` function that returns each row's stable identity:
+
+```tsx
+import { paginateArray, useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+
+useRozenitePluginAgentTool({
+  pluginId: PLUGIN_ID,
+  tool: listEntriesTool,
+  handler: ({ limit, cursor }) => {
+    const rows = readEntries();
+    return {
+      ...paginateArray(rows, { keyOf: (row) => row.key, limit, cursor }),
+      total: rows.length,
+    };
+  },
+});
+```
+
+`paginateArray` applies the shared limit rules (20 rows by default, at most 100) and returns `{ items, page }`. Its cursor points after the last row
+returned, not at an index, so rows added or removed while an agent pages
+through a live app are never skipped or repeated. If that row no longer
+exists, the next call answers an empty page with `page.reset: true`, which
+tells the agent to start the listing again. Pass `scope` (for example a key
+built from the filters) to reject a cursor reused with different filters,
+and `generation` to reset cursors after the whole collection is replaced.
+
+Two optional fields describe what surrounds the rows:
+
+- `itemsKey` names the result key that holds the rows when it is not
+  `items`. Pass the key as the third type argument too, for example
+  `definePaginatedAgentToolContract<Args, Result, 'entries'>`, so the fields
+  are checked against the right rows.
+- `meta` lists the other top-level result keys the CLI prints with each
+  page, such as `total`. Leave it out to print every key, or pass `[]` to
+  print only the rows. It changes only what the CLI shows; SDK callers
+  still receive the full result.
+
+### Lists without pagination
+
+A tool that returns a short list in one go can still declare its rows, so
+agents get the same compact columns and `--fields` projection. Use
+`defineRowsAgentToolContract` and name the key that holds the rows:
+
+```ts
+import { defineRowsAgentToolContract } from '@rozenite/agent-bridge';
+
+type StorageRow = { id: string; name: string; adapter: string };
+type ListStoragesResult = { storages: StorageRow[] };
+
+export const listStoragesTool = defineRowsAgentToolContract<
+  Record<string, never>,
+  ListStoragesResult,
+  'storages'
+>({
+  name: 'list-storages',
+  description: 'List the configured storages.',
+  inputSchema: { type: 'object', properties: {} },
+  rows: {
+    key: 'storages',
+    fields: ['id', 'name', 'adapter'],
+    defaultFields: ['id', 'name'],
+  },
+});
+```
+
+`key` defaults to `items`. The handler returns its result as before;
+`rows` only describes it.
+
+:::tip
+You do not need to hand-maintain the `./sdk` export in `package.json`. If your plugin has `sdk.ts`, `rozenite build` will detect it and publish the `./sdk` subpath automatically.
+:::
+
+## Optional: enable/disable
+
+You can conditionally register tools with the `enabled` option:
+
+```tsx
+useRozenitePluginAgentTool({
+  pluginId: PLUGIN_ID,
+  tool: echoTool,
+  handler: ({ value }) => ({ value }),
+  enabled: isPluginReady,
+});
+```
+
+When `enabled` is false, the tool is not registered and will not appear under your plugin’s domain.
+
+## How agents see your plugin tools
+
+Agents discover domains and tools at runtime:
+
+```bash
+rozenite agent domains
+rozenite agent my-org/my-rozenite
+rozenite agent my-org/my-rozenite echo --value hello
+```
+
+Each `--<name>` flag comes from your tool's `inputSchema`, so `echo` above
+takes `--value`. The session for the connected device is created on first
+use.
+
+Rozenite derives a short, stable domain name from your `pluginId` alone (for example, `@my-org/my-rozenite-plugin` becomes `my-org/my-rozenite`; an official `@rozenite/*` plugin drops the scope entirely, e.g. `@rozenite/storage-plugin` becomes `storage`). The full `pluginId` always works as a domain token too, so `rozenite agent @my-org/my-rozenite-plugin echo --value hello` is equally valid — the derived name is just shorter and computable by an agent without a lookup. Document your plugin’s agent tools (names, arguments, and return shapes) so agent users know what they can call.
+
+## Summary
+
+1. Add **@rozenite/agent-bridge** to your plugin.
+2. In your plugin’s app-side code, call **useRozenitePluginAgentTool** with a stable **pluginId**, a **tool** (name, description, inputSchema), and a **handler**.
+3. Mount the component that registers these tools so it runs when the plugin is active.
+4. Agents will see your plugin as a domain and can list your tools with `rozenite agent <domain>` and call one with `rozenite agent <domain> <tool> --<arg> <value>`.
+
+## Next steps
+
+- [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose app-owned tools under the `app` domain.
+- [Rozenite for Agents](/docs/agent/overview) – how agents use domains and tools.
+- [Plugin Development](/docs/plugin-development/overview) for general plugin structure and app-side integration.

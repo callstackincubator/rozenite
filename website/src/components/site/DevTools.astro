@@ -1,0 +1,164 @@
+---
+// A diagram of React Native DevTools with Rozenite in it, the way it looks today: the DevTools
+// tab row with one Rozenite tab selected, and inside it a narrow sidebar (the mark, then the
+// installed plugins, the selected one picked out) beside the selected plugin's panel, which is
+// the slot. Our design language, not a copy of Chrome or of the Rozenite UI theme.
+import Mark from './Mark.astro';
+import Window from './Window.astro';
+
+interface Props {
+  /** The plugin whose panel is shown. */
+  selected: string;
+  /** Your own plugins, listed after the official ones. */
+  extra?: string[];
+  title?: string;
+  class?: string;
+}
+const { selected, extra = [], title = 'React Native DevTools', class: className } = Astro.props;
+
+// The official plugins as the Rozenite sidebar lists them. The list starts two above the
+// selected plugin, so it is always in view, and is clipped by the window's height, so it reads
+// as a longer list rather than ending on an empty slot.
+const installed = [
+  'Controls',
+  'Expo Atlas',
+  'Feature Flags',
+  'File System',
+  'Network Activity',
+  'Overlay',
+  'Performance Monitor',
+  'React Navigation',
+  'Redux DevTools',
+  'Require Profiler',
+  'React Hook Form',
+  'SQLite',
+  'Storage',
+  'TanStack Query',
+  ...extra,
+];
+// Near the end of the list it starts earlier instead, so the list still fills the sidebar.
+const from = Math.max(0, Math.min(installed.indexOf(selected) - 2, installed.length - 4));
+const shown = installed.slice(from);
+const tabs = ['Console', 'Sources', 'Network', 'Memory'];
+---
+
+<Window title={title} class:list={['devtools', className]}>
+  <div class="dt">
+    <div class="dt-tabs label">
+      {tabs.map((t) => <span class="dt-tab">{t}</span>)}
+      <span class="dt-tab dt-tab--rz"><Mark height={10} />Rozenite</span>
+    </div>
+    <div class="dt-main">
+      <nav class="dt-side" aria-hidden="true">
+        <span class="dt-brand"><Mark height={10} class="accent" />Rozenite</span>
+        <ul>
+          {shown.map((p) => <li class:list={{ 'is-on': p === selected }}>{p}</li>)}
+        </ul>
+      </nav>
+      <div class="dt-body">
+        <slot />
+      </div>
+    </div>
+  </div>
+</Window>
+
+<style>
+  .dt {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .dt-tabs {
+    display: flex;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+  }
+  .dt-tab {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5625rem 0.6875rem;
+    border-right: 1px solid var(--line);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+  .dt-tab--rz {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+  .dt-tab--rz :global(svg) {
+    color: var(--accent);
+  }
+  .dt-main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 7.75rem minmax(0, 1fr);
+  }
+  .dt-side {
+    min-width: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--line);
+    font-size: 0.6875rem;
+  }
+  .dt-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5625rem 0.625rem;
+    border-bottom: 1px solid var(--line);
+    font-weight: 500;
+    color: var(--text);
+  }
+  .dt-side ul {
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+  }
+  .dt-side li {
+    position: relative;
+    padding: 0.3125rem 0.625rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dt-side li.is-on {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .dt-side li.is-on::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--accent);
+  }
+  .dt-body {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+  }
+  /* On a phone only Console stays of the built-in tabs, and the sidebar narrows. */
+  @media (max-width: 40rem) {
+    .dt-tab:not(.dt-tab--rz):not(:first-child) {
+      display: none;
+    }
+    .dt-main {
+      grid-template-columns: 6.25rem minmax(0, 1fr);
+    }
+    .dt-side {
+      font-size: 0.625rem;
+    }
+    .dt-side li,
+    .dt-brand {
+      padding-inline: 0.5rem;
+    }
+  }
+</style>

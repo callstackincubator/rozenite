@@ -13,9 +13,13 @@ export const reactNavigationTools = defineAgentToolDescriptors(
 
 export type {
   NavigationActionHistoryEntry,
+  ReactNavigationActionDetails,
+  ReactNavigationActionRow,
   ReactNavigationDispatchActionArgs,
   ReactNavigationDispatchActionResult,
   ReactNavigationFocusedRoute,
+  ReactNavigationGetActionDetailsArgs,
+  ReactNavigationGetActionDetailsResult,
   ReactNavigationGetFocusedRouteArgs,
   ReactNavigationGetFocusedRouteResult,
   ReactNavigationGetRootStateArgs,
@@ -23,6 +27,7 @@ export type {
   ReactNavigationGoBackArgs,
   ReactNavigationGoBackResult,
   ReactNavigationListActionsArgs,
+  ReactNavigationListActionsInclude,
   ReactNavigationListActionsResult,
   ReactNavigationNavigateArgs,
   ReactNavigationNavigateResult,

@@ -1,6 +1,6 @@
 import { Dialog } from '@rozenite/ui';
-import lightLogo from '../../../website/src/public/logo-light.svg';
-import darkLogo from '../../../website/src/public/logo-dark.svg';
+import lightLogo from '../../../website/public/logo-light.svg';
+import darkLogo from '../../../website/public/logo-dark.svg';
 
 const METRO_CONFIGURATION_URL =
   'https://github.com/callstackincubator/rozenite/tree/main/packages/metro#configuration';

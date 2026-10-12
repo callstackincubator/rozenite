@@ -1,4 +1,9 @@
-import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+import {
+  defineAgentToolContract,
+  definePaginatedAgentToolContract,
+  type AgentToolContract,
+  type PageEnvelope,
+} from '@rozenite/agent-shared';
 import type { NavigationAction, NavigationState } from './index';
 import type { ActionOrigin } from '../react-native/symbolication/types';
 
@@ -22,10 +27,55 @@ export type NavigationActionHistoryEntry = {
   origin?: ActionOrigin;
 };
 
+export type ReactNavigationListActionsInclude = 'state' | 'origin';
+
 export type ReactNavigationListActionsArgs = {
-  offset?: number;
+  /** Page size. Defaults to 20, max 100. */
   limit?: number;
+  /** Opaque cursor from a previous page. */
+  cursor?: string;
+  /** @deprecated Use `cursor`. Index the first page starts at. */
+  offset?: number;
+  /** Heavy row fields to add: the state after each action and its dispatch origin. */
+  include?: ReactNavigationListActionsInclude[];
 };
+
+/**
+ * A `list-actions` row. `state` and `origin` are present only when asked
+ * for with `include`; `get-action-details` always returns them.
+ */
+export type ReactNavigationActionRow = {
+  id: number;
+  timestamp: number;
+  type: string;
+  /** Target route name from the action payload, else the focused route after it. */
+  routeName: string | null;
+  action: NavigationAction;
+  state?: NavigationState | undefined;
+  origin?: ActionOrigin;
+};
+
+/**
+ * A navigation action as `get-action-details` returns it: the full history
+ * entry, plus the action `type` and target `routeName` that `list-actions`
+ * rows carry.
+ */
+export type ReactNavigationActionDetails = NavigationActionHistoryEntry & {
+  type: string;
+  /** Target route name from the action payload, else the focused route after it. */
+  routeName: string | null;
+};
+
+export type ReactNavigationGetActionDetailsArgs = {
+  id: number;
+  /**
+   * Accepted for symmetry with `list-actions`: details always carry `state`
+   * and `origin`. An unknown value is an error.
+   */
+  include?: ReactNavigationListActionsInclude[];
+};
+
+export type ReactNavigationGetActionDetailsResult = ReactNavigationActionDetails;
 
 export type ReactNavigationResetRootArgs = {
   state: NavigationState;
@@ -74,9 +124,11 @@ export type ReactNavigationGetFocusedRouteResult = {
 
 export type ReactNavigationListActionsResult = {
   total: number;
+  /** Index of the first returned action in the newest-first history. */
   offset: number;
   limit: number;
-  items: NavigationActionHistoryEntry[];
+  items: ReactNavigationActionRow[];
+  page: PageEnvelope;
 };
 
 export type ReactNavigationResetRootResult = {
@@ -127,24 +179,67 @@ export const reactNavigationToolDefinitions = {
       properties: {},
     },
   }),
-  listActions: defineAgentToolContract<
+  listActions: definePaginatedAgentToolContract<
     ReactNavigationListActionsArgs,
     ReactNavigationListActionsResult
   >({
     name: 'list-actions',
-    description: 'List recorded navigation actions with states using pagination.',
+    description:
+      'List recorded navigation actions, newest first, using cursor pagination. Rows carry id, timestamp, type and target routeName; use include or get-action-details for the state after an action and its dispatch origin.',
     inputSchema: {
       type: 'object',
       properties: {
-        offset: {
-          type: 'number',
-          description: 'Pagination offset. Defaults to 0.',
-        },
         limit: {
           type: 'number',
-          description: 'Pagination size. Defaults to 100. Maximum 100.',
+          description: 'Pagination size. Defaults to 20, max 100.',
+        },
+        cursor: {
+          type: 'string',
+          description:
+            'Opaque cursor from a previous list-actions page; the next page starts after the last action returned.',
+        },
+        offset: {
+          type: 'number',
+          description:
+            '@deprecated Use cursor. Index the first page starts at; cannot be combined with cursor.',
+        },
+        include: {
+          type: 'array',
+          items: { type: 'string', enum: ['state', 'origin'] },
+          description:
+            'Heavy fields to add to each row: "state" (navigation state after the action) and "origin" (captured dispatch stack). Unknown values are rejected.',
         },
       },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: ['id', 'timestamp', 'type', 'routeName', 'action', 'state', 'origin'],
+      defaultFields: ['id', 'timestamp', 'type', 'routeName'],
+      meta: ['total'],
+    },
+  }),
+  getActionDetails: defineAgentToolContract<
+    ReactNavigationGetActionDetailsArgs,
+    ReactNavigationGetActionDetailsResult
+  >({
+    name: 'get-action-details',
+    description:
+      'Get one recorded navigation action by id, including the navigation state after it and the captured dispatch origin.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'number',
+          description: 'Action id from list-actions.',
+        },
+        include: {
+          type: 'array',
+          items: { type: 'string', enum: ['state', 'origin'] },
+          description:
+            'Accepted for symmetry with list-actions; details always include "state" and "origin". Unknown values are rejected.',
+        },
+      },
+      required: ['id'],
     },
   }),
   resetRoot: defineAgentToolContract<ReactNavigationResetRootArgs, ReactNavigationResetRootResult>({

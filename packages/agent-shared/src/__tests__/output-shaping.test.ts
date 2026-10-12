@@ -4,6 +4,7 @@ import {
   parseLimit,
   projectRows,
   shapePaginatedRows,
+  shapeRowsResult,
   shapeToolResult,
 } from '../output-shaping.js';
 
@@ -266,6 +267,199 @@ describe('agent output shaping', () => {
       page: { reset: true },
       items: [{ id: 'a' }],
       next: 'npx rozenite agent react call --cursor cursor',
+    });
+  });
+
+  it('treats --fields all as every declared field unless a field is named all', () => {
+    expect(parseFields('all', ['id', 'name', 'extra'] as const, ['id'] as const, false)).toEqual([
+      'id',
+      'name',
+      'extra',
+    ]);
+    expect(parseFields('all', ['id', 'all'] as const, ['id'] as const, false)).toEqual(['all']);
+  });
+
+  describe('pagination.itemsKey', () => {
+    it('reads rows from the declared key and keeps it for expanded output', () => {
+      expect(
+        shapeToolResult(
+          {
+            path: '/docs',
+            entries: [{ name: 'a.txt', type: 'file', size: 1 }],
+            page: { limit: 20, hasMore: false },
+          },
+          ['name', 'type'],
+          undefined,
+          { itemsKey: 'entries' },
+        ),
+      ).toEqual({ path: '/docs', entries: [{ name: 'a.txt', type: 'file' }] });
+    });
+
+    it('encodes declared-key rows as columns at two or more rows', () => {
+      expect(
+        shapeToolResult(
+          {
+            entries: [{ name: 'a' }, { name: 'b' }],
+            page: { limit: 20, hasMore: false },
+          },
+          ['name'],
+          undefined,
+          { itemsKey: 'entries' },
+        ),
+      ).toEqual({ cols: ['name'], rows: [['a'], ['b']] });
+    });
+
+    it('leaves the result alone when the declared key holds no rows', () => {
+      const result = { items: [{ name: 'a' }], page: { limit: 20, hasMore: false } };
+      expect(shapeToolResult(result, ['name'], undefined, { itemsKey: 'entries' })).toBe(result);
+    });
+  });
+
+  describe('pagination.meta', () => {
+    const result = {
+      total: 3,
+      recording: { isRecording: true, droppedCount: 0 },
+      truncated: false,
+      items: [{ id: 'a' }],
+      page: { limit: 20, hasMore: false },
+    };
+
+    it('prints every metadata key when meta is undeclared', () => {
+      expect(shapeToolResult(result, ['id'], undefined)).toEqual({
+        total: 3,
+        recording: { isRecording: true, droppedCount: 0 },
+        truncated: false,
+        items: [{ id: 'a' }],
+      });
+    });
+
+    it('prints only the declared metadata keys, in declared order, skipping absent ones', () => {
+      expect(
+        shapeToolResult(result, ['id'], undefined, { meta: ['truncated', 'total', 'missing'] }),
+      ).toEqual({ truncated: false, total: 3, items: [{ id: 'a' }] });
+    });
+
+    it('prints no metadata when meta is empty', () => {
+      expect(shapeToolResult(result, ['id'], undefined, { meta: [] })).toEqual({
+        items: [{ id: 'a' }],
+      });
+    });
+
+    it('does not degrade on a colliding key the tool did not declare worth printing', () => {
+      expect(
+        shapeToolResult(
+          { cols: 'tool-owned', items: [{ id: 'a' }], page: { limit: 20, hasMore: false } },
+          ['id'],
+          undefined,
+          { meta: [] },
+        ),
+      ).toEqual({ items: [{ id: 'a' }] });
+    });
+  });
+
+  describe('sparse-column elision', () => {
+    const page = { limit: 20, hasMore: false };
+
+    it('drops a column that is null or absent on every row of the page', () => {
+      expect(
+        shapePaginatedRows(
+          {
+            items: [
+              { name: 'a', readOnly: true, destructive: null },
+              { name: 'b', readOnly: null },
+            ],
+            page,
+          },
+          ['name', 'readOnly', 'destructive', 'idempotent'],
+          undefined,
+          { elideNullColumns: true },
+        ),
+      ).toEqual({
+        cols: ['name', 'readOnly'],
+        rows: [
+          ['a', true],
+          ['b', null],
+        ],
+      });
+    });
+
+    it('drops null values from an expanded row', () => {
+      expect(
+        shapePaginatedRows(
+          { items: [{ id: 'a', fallback: null }], page },
+          ['id', 'fallback'],
+          undefined,
+          {
+            elideNullColumns: true,
+          },
+        ),
+      ).toEqual({ items: [{ id: 'a' }] });
+    });
+
+    it('keeps null columns when elision is off, as for columns the caller named', () => {
+      expect(
+        shapeToolResult(
+          { items: [{ id: 'a', status: null }, { id: 'b' }], page },
+          ['id', 'status'],
+          undefined,
+          { elideNullColumns: false },
+        ),
+      ).toEqual({
+        cols: ['id', 'status'],
+        rows: [
+          ['a', null],
+          ['b', null],
+        ],
+      });
+    });
+
+    it('elides on tool pages when asked', () => {
+      expect(
+        shapeToolResult(
+          { items: [{ id: 'a', status: null }, { id: 'b' }], page },
+          ['id', 'status'],
+          undefined,
+          { elideNullColumns: true },
+        ),
+      ).toEqual({ cols: ['id'], rows: [['a'], ['b']] });
+    });
+  });
+
+  describe('rows-declared results', () => {
+    it('projects the declared key and encodes two or more rows as columns', () => {
+      const result = {
+        storages: [
+          { id: 'mmkv', name: 'MMKV', adapter: 'mmkv', extra: 1 },
+          { id: 'async', name: 'AsyncStorage', adapter: 'async-storage', extra: 2 },
+        ],
+        count: 2,
+      };
+      expect(shapeRowsResult(result, ['id', 'name'], { key: 'storages' })).toEqual({
+        count: 2,
+        cols: ['id', 'name'],
+        rows: [
+          ['mmkv', 'MMKV'],
+          ['async', 'AsyncStorage'],
+        ],
+      });
+      expect(
+        shapeToolResult(result, ['id', 'name'], undefined, { paged: false, itemsKey: 'storages' }),
+      ).toEqual(shapeRowsResult(result, ['id', 'name'], { key: 'storages' }));
+    });
+
+    it('keeps one row expanded under its own key', () => {
+      expect(shapeRowsResult({ items: [{ id: 'a', name: 'A' }] }, ['id'])).toEqual({
+        items: [{ id: 'a' }],
+      });
+    });
+
+    it('leaves results without rows, or with colliding keys, unchanged', () => {
+      const noRows = { storages: 'not a list' };
+      expect(shapeRowsResult(noRows, ['id'], { key: 'storages' })).toBe(noRows);
+      const notRecords = { items: [1, 2] };
+      expect(shapeRowsResult(notRecords, ['id'])).toBe(notRecords);
+      const colliding = { rows: 1, items: [{ id: 'a' }] };
+      expect(shapeRowsResult(colliding, ['id'])).toBe(colliding);
     });
   });
 });

@@ -1,0 +1,44 @@
+---
+title: 'Official Plugins'
+---
+
+import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+We maintain a set of plugins that cover the most common debugging needs, each one a thin bridge between a library you're probably already using and a DevTools panel.
+
+:::note[Beta]
+Rozenite and its official plugins are in beta. If something doesn't work, please [report it](https://github.com/callstackincubator/rozenite/issues) or [contribute a fix](https://github.com/callstackincubator/rozenite).
+:::
+
+## Available plugins
+
+- **[Expo Atlas](/docs/official-plugins/expo-atlas)** — visualize your Metro bundle to find large dependencies and duplicate code.
+- **[TanStack Query](/docs/official-plugins/tanstack-query)** — monitor and manage TanStack Query's cache and queries.
+- **[Network Activity Inspector](/docs/official-plugins/network-activity)** — a Chrome-DevTools-style network panel for your app's HTTP and WebSocket traffic.
+- **[Redux DevTools](/docs/official-plugins/redux-devtools)** — inspect state, actions, and diffs for a Redux store.
+- **[Performance Monitor](/docs/official-plugins/performance-monitor)** — track startup timing and custom performance marks.
+- **[Storage](/docs/official-plugins/storage)** — one panel for MMKV, AsyncStorage, and Expo SecureStore.
+- **[Feature Flags](/docs/official-plugins/feature-flags)** — inspect and override flags from a custom store, LaunchDarkly, or Statsig.
+- **[File System](/docs/official-plugins/file-system)** — browse app-accessible directories and preview file contents.
+- **[Controls](/docs/official-plugins/controls)** — build a custom panel of toggles, inputs, and buttons for your own app.
+- **[React Navigation](/docs/official-plugins/react-navigation)** — track navigation actions and inspect navigation state.
+- **[React Hook Form](/docs/official-plugins/react-hook-form)** — inspect field values, validation, and form state.
+- **[SQLite](/docs/official-plugins/sqlite)** — browse tables and run queries against your app's databases.
+- **[Overlay](/docs/official-plugins/overlay)** — grid and reference-image overlays for pixel-perfect UI work.
+- **[Require Profiler](/docs/official-plugins/require-profiler)** — a flame graph of your app's startup `require()` calls.
+
+## Installing a plugin
+
+Each plugin installs as a dev dependency, since it's only needed during development:
+
+<PackageManagerTabs command="install -D @rozenite/network-activity-plugin" />
+
+Swap in the package name for the plugin you want — see its page for the exact setup steps, since most plugins also need a small hook added to your app.
+
+## Community plugins
+
+Beyond what we maintain, the community builds and shares its own Rozenite plugins. They aren't officially supported, but many are worth a look for specific use cases.
+
+## Building your own
+
+If none of the above fit, see the [Plugin Development guide](/docs/plugin-development/plugin-development) to build your own.

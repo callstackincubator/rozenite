@@ -151,38 +151,60 @@ rozenite open --deviceId <id>
 rozenite open --host 192.168.1.10 --port 8082
 ```
 
+### `rozenite agent`
+
+Inspect a running app from the terminal: list its domains and tools, and call
+them. The first command creates the agent session for the connected device
+(or reuses the running one); stop it when you are done, since it holds the
+device's only debugger connection.
+
+```bash
+rozenite agent domains                               # list domains
+rozenite agent console                               # list a domain's tools
+rozenite agent console getMessages --help            # a tool's arguments
+rozenite agent console getMessages --levels error    # call a tool
+rozenite agent session stop                          # stop the session
+```
+
+A tool's arguments are flags derived from its input schema; `--args '<json>'`
+passes them as one JSON object instead. With several devices connected, add
+`--device <id>` (or set `ROZENITE_DEVICE`); `rozenite agent targets` lists
+them. Output is JSON: compact when piped, indented on a terminal or with
+`--pretty`. See the [Agent docs](https://rozenite.dev/docs/agent/overview).
+
 ### `rozenite agent tap`
 
 Stream a Rozenite Agent session's plugin messages to stdout, in both
 directions, without opening a browser or React Native DevTools. Because it's
 bidirectional, it also doubles as a minimal stand-in for DevTools: send one
-message from the terminal with `--type`/`--payload`, then keep watching for
+message from the terminal with `--send`/`--payload`, then keep watching for
 what comes back. A device serves only one debugger connection at a time, so
 a tap **replaces** React Native DevTools if it's already attached — the same
 tradeoff `rozenite agent` makes. Stop the tap (Ctrl-C) to free the connection
-back up. Requires an existing session; create one with
-`rozenite agent session create`.
+back up. It uses the same session as every other `rozenite agent` command.
 
-**Options:**
+**Arguments and options:**
 
-- `-s, --session <id>` - Target Agent session ID (required)
-- `-p, --plugin <id>` - Filter the stream to this plugin ID; required with `--type`
-- `-t, --type <name>` - Send one message of this type before watching (requires `--plugin`)
-- `-a, --payload <json>` - JSON payload for the sent message (defaults to `{}`)
-- `--json` - Newline-delimited JSON output, one message per line
-- `--host <host>` / `--port <port>` - Metro host/port, inherited from `rozenite agent`, so they go before `tap` (defaults to `127.0.0.1:8081`)
+- `[plugin]` - Only stream this plugin ID; required with `--send`
+- `--send <type>` - Send one message of this type, then keep watching
+- `--payload <json>` - JSON payload for the sent message (defaults to `{}`)
+- `--session <id>` / `--device <id>` - Which session to use, as for every `rozenite agent` command
+- `--host <host>` / `--port <port>` - Metro host/port (defaults to `127.0.0.1:8081`)
+
+Output is one arrow line per message on a terminal, and newline-delimited
+JSON when piped.
 
 **Examples:**
 
 ```bash
 # Watch a plugin's traffic
-rozenite agent tap --session <id> --plugin @acme/sqlite-plugin
+rozenite agent tap @acme/sqlite-plugin
 
 # Poke a plugin and watch what comes back
-rozenite agent tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
+rozenite agent tap @acme/sqlite-plugin --send sqlite:query --payload '{"sql":"select 1"}'
 
 # Newline-delimited JSON, for scripts and agents
-rozenite agent tap --session <id> --json
+rozenite agent tap | your-script
 ```
 
 See the [Tap docs](https://rozenite.dev/docs/agent/tap) for the full output

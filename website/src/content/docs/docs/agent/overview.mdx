@@ -1,0 +1,67 @@
+---
+title: 'Rozenite for Agents'
+---
+
+Rozenite for Agents is the agent-facing way to interact with your running app and its Rozenite plugins. It gives coding agents a reliable interface for inspecting a running app through Rozenite, including logs, network activity, React profiling data, and plugin-specific tooling.
+
+You can access this workflow through the `rozenite agent` CLI or, if you need direct programmatic access, through [`@rozenite/agent-sdk`](/docs/agent/sdk). For most users, the CLI is still the recommended starting point.
+
+## What coding agents use it for
+
+- Read app logs while debugging a failure
+- Capture and inspect network requests during a user flow
+- Run React profiling when investigating slow renders
+- Use tools exposed by installed Rozenite plugins
+- Use app-defined custom tools registered directly by the running app
+- Work against the connected app target without inventing custom instrumentation
+
+## Before you start
+
+Make sure:
+
+- Rozenite is installed and configured for the app
+- your app is running in development mode
+- Metro is running
+- at least one target is connected
+
+If you have more than one simulator, emulator, or device connected, you will need to choose which one to inspect: pass `--device <id>` to `rozenite agent`, or set `ROZENITE_DEVICE`. `rozenite agent targets` lists the connected ones.
+
+Rozenite for Agents requires a project with Rozenite already installed and configured. The agent skills teach your coding agent how to use that setup effectively.
+
+Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly with `npx rozenite`, but the intended use is for an agent to drive it while debugging or implementing changes in your app.
+
+## How agents usually work with it
+
+The typical flow is:
+
+1. Find the domain and tool for the job, from the bundled docs or with `rozenite agent domains` and `rozenite agent <domain>`.
+2. Call the tool: `rozenite agent console getMessages --levels error`. Its arguments are flags taken from the tool's input schema, and `rozenite agent <domain> <tool> --help` lists them.
+3. Stop the session with `rozenite agent session stop` when done.
+
+The first command creates the agent session for the connected app, or reuses the running one. An open session holds the device's only debugger connection, which is why it should be stopped at the end.
+
+Built-in domains include `console`, `network`, `react`, `performance`, and `memory`.
+
+Runtime domains can also come from installed Rozenite plugins. At the moment, the documented agent-capable plugin domains include:
+
+- `@rozenite/controls-plugin`
+- `@rozenite/file-system-plugin`
+- `@rozenite/react-navigation-plugin`
+- `@rozenite/network-activity-plugin`
+- `@rozenite/redux-devtools-plugin`
+- `@rozenite/storage-plugin`
+- `@rozenite/tanstack-query-plugin`
+
+Prefer the built-in `network` domain first when it is available. `@rozenite/network-activity-plugin` is the documented fallback plugin domain for apps where the built-in network domain is unavailable.
+
+Apps can also expose in-app custom tools. These are runtime tools registered directly by the app instead of by a separate Rozenite plugin package.
+
+If you want to give a coding agent this workflow directly, install the [`rozenite` skill](/docs/agent/skills). It routes the agent to `npx rozenite skills list` and `npx rozenite skills show <id>` to discover and read the CLI and SDK workflow docs on demand.
+
+## Next steps
+
+- Install the [Agent Skill](/docs/agent/skills) (`rozenite`) if you want Codex or another coding agent to use Rozenite effectively.
+- [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose custom tools from your app for agents to call.
+- [Making your plugin agent-enabled](/docs/agent/making-your-plugin-agent-enabled) – expose tools from your Rozenite plugin to agents.
+- [Agent SDK](/docs/agent/sdk) – build custom tooling or automation on top of the agent workflow.
+- [Tap](/docs/agent/tap) – stream a plugin's messages to the terminal, both directions, without opening a browser.

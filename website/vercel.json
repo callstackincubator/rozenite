@@ -18,8 +18,8 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/404.html"
+      "source": "/sitemap.xml",
+      "destination": "/sitemap-index.xml"
     }
   ],
   "outputDirectory": "build",

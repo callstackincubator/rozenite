@@ -1,6 +1,7 @@
 import type { AgentTool, UnsupportedDomainInfo } from '@rozenite/agent-shared';
 import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import {
+  CLI_COMMAND_NAMES,
   RESERVED_DOMAIN_NAMES,
   STATIC_DOMAIN_TOOL_NAMES,
   STATIC_DOMAIN_TOOL_PREFIXES,
@@ -196,12 +197,15 @@ export const buildRuntimePluginDomains = (tools: AgentTool[]): DomainDefinition[
     }
 
     // Scoped package names already fall back to their full pluginId when
-    // they would shadow a built-in domain (see deriveDomainName). An
-    // unscoped package literally named e.g. "console" has no alternate
-    // representation to fall back to, so guard against that here.
+    // they would shadow a built-in domain or a CLI command (see
+    // deriveDomainName). An unscoped package literally named e.g.
+    // "console" or "tap" has no alternate representation to fall back to,
+    // so guard against that here.
     if (RESERVED_DOMAIN_NAMES.has(domainName)) {
       throw new Error(
-        `Plugin "${collidingIds[0]}" derives the domain name "${domainName}", which shadows the built-in "${domainName}" domain. Rename the package to avoid the collision.`,
+        `Plugin "${collidingIds[0]}" derives the domain name "${domainName}", which shadows the built-in "${domainName}" ${
+          CLI_COMMAND_NAMES.includes(domainName) ? 'command' : 'domain'
+        }. Rename the package to avoid the collision.`,
       );
     }
   }
@@ -365,30 +369,78 @@ export const isToolUnavailable = (domain: DomainDefinition, toolName: string): b
   return domain.unavailableTools?.some((tool) => tool.name === toolName) ?? false;
 };
 
+/**
+ * Folds the spellings an agent is likely to guess onto one key: case is
+ * ignored, and so are `-` and `_`. `getMessages`, `get-messages` and
+ * `GET_MESSAGES` all fold to `getmessages`; built-in tools are camelCase
+ * and plugin tools kebab-case, so an agent that learned one convention
+ * still reaches the other.
+ */
+const foldToolName = (value: string): string => value.toLowerCase().replace(/[-_]/g, '');
+
+const formatAmbiguousToolError = (
+  toolName: string,
+  domainLabel: string,
+  matches: AgentTool[],
+): Error =>
+  new Error(
+    `Ambiguous tool "${toolName}" for domain "${domainLabel}". Matches: ${formatLimitedList(
+      matches.map((tool) => tool.name),
+    )}.`,
+  );
+
+/**
+ * Resolves a tool token within one domain. In order, the first rule that
+ * matches wins:
+ *
+ * 1. the qualified name, exactly;
+ * 2. the short name, exactly (several matches are ambiguous);
+ * 3. the qualified or short name, ignoring case, `-` and `_` (several
+ *    matching tools are ambiguous).
+ *
+ * No tool is renamed by this: descriptor names stay public API.
+ */
 export const resolveDomainTool = (
   domainTools: AgentTool[],
   domainLabel: string,
   toolName: string,
 ): AgentTool => {
   const exactMatch = domainTools.find((tool) => tool.name === toolName);
-  const shortMatches = domainTools.filter((tool) => inferToolShortName(tool.name) === toolName);
-
-  const selectedTool = exactMatch || (shortMatches.length === 1 ? shortMatches[0] : null);
-  if (!selectedTool) {
-    if (shortMatches.length > 1) {
-      const fullNames = formatLimitedList(shortMatches.map((tool) => tool.name));
-      throw new Error(
-        `Ambiguous tool "${toolName}" for domain "${domainLabel}". Matches: ${fullNames}.`,
-      );
-    }
-
-    const available = formatLimitedList(domainTools.map((tool) => tool.name));
-    throw new Error(
-      `Tool "${toolName}" not found for domain "${domainLabel}". Available: ${available || 'none'}. Hint: rozenite agent ${domainLabel} tools`,
-    );
+  if (exactMatch) {
+    return exactMatch;
   }
 
-  return selectedTool;
+  const shortMatches = domainTools.filter((tool) => inferToolShortName(tool.name) === toolName);
+  if (shortMatches.length === 1) {
+    return shortMatches[0]!;
+  }
+  if (shortMatches.length > 1) {
+    throw formatAmbiguousToolError(toolName, domainLabel, shortMatches);
+  }
+
+  const folded = foldToolName(toolName);
+  const foldedMatches = domainTools.filter(
+    (tool) =>
+      foldToolName(tool.name) === folded || foldToolName(inferToolShortName(tool.name)) === folded,
+  );
+  if (foldedMatches.length === 1) {
+    return foldedMatches[0]!;
+  }
+  if (foldedMatches.length > 1) {
+    throw formatAmbiguousToolError(toolName, domainLabel, foldedMatches);
+  }
+
+  const shortNames = domainTools.map((tool) => inferToolShortName(tool.name));
+  const available = formatLimitedList(
+    domainTools.map((tool, index) =>
+      shortNames.indexOf(shortNames[index]!) === shortNames.lastIndexOf(shortNames[index]!)
+        ? shortNames[index]!
+        : tool.name,
+    ),
+  );
+  throw new Error(
+    `Tool "${toolName}" not found for domain "${domainLabel}". Available: ${available || 'none'}. Run \`rozenite agent ${domainLabel}\` to list its tools.`,
+  );
 };
 
 export const toAgentDomainTool = (tool: AgentTool, domainId: string): AgentDomainTool => ({
@@ -405,4 +457,5 @@ export const toAgentToolSchema = (tool: AgentTool): AgentToolSchema => ({
   ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
   ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
   ...(tool.pagination ? { pagination: tool.pagination } : {}),
+  ...(tool.rows ? { rows: tool.rows } : {}),
 });

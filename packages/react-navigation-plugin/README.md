@@ -92,7 +92,8 @@ Available tools:
 - `go-back`: high-level back navigation (`count` defaults to `1`).
 - `get-root-state`: returns `{ state, hasState }`.
 - `get-focused-route`: returns focused route details (`routePath`, `focusedRoute`, `navigatorPath`, `params`).
-- `list-actions`: returns paginated action history (`offset`, `limit`, `total`, `items`).
+- `list-actions`: returns action history newest first, paged with `limit` and `cursor` (`total`, `items`, `page`). Rows carry `id`, `timestamp`, `type`, `routeName` and `action`; `include: ["state", "origin"]` adds the state after each action and its dispatch origin.
+- `get-action-details`: returns one recorded action by `id`, including the state after it and its dispatch origin.
 - `reset-root`: resets navigation state to a provided snapshot.
 - `open-link`: opens a deep link URL.
 - `dispatch-action`: low-level arbitrary React Navigation action dispatch (for example `NAVIGATE` or `JUMP_TO`).

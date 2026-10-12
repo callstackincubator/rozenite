@@ -1,16 +1,27 @@
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { createAgentTransport } from '@rozenite/agent-sdk/transport';
 import type { AgentTapStreamHandle } from '@rozenite/agent-sdk';
 import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
 import { formatTapEventLine, formatTapEventNdjson } from './tap-format.js';
 import { getErrorMessage } from './error-message.js';
+import { isStdoutTTY } from './output.js';
+import { resolveAgentSession, type SessionSelection } from './session-resolution.js';
 
 type TapOptions = {
-  session: string;
+  /** Explicit session; when absent the session is resolved like any agent command. */
+  session?: string;
+  device?: string;
+  deviceId?: string;
   plugin?: string;
   type?: string;
   payload: string;
+  /**
+   * Forces newline-delimited JSON. Without it, the output follows the
+   * stream: NDJSON to a pipe, arrow lines to a terminal.
+   */
   json?: boolean;
+  /** Whether stdout is a terminal; defaults to asking `process.stdout`. */
+  tty?: boolean;
 };
 
 type TapCommandOptions = TapOptions & {
@@ -37,7 +48,7 @@ const reportTapError = (error: unknown, asJson: boolean): void => {
 };
 
 export const runTapCommand = async (options: TapCommandOptions): Promise<void> => {
-  const asJson = !!options.json;
+  const asJson = !!options.json || !(options.tty ?? isStdoutTTY());
 
   let payload: unknown;
   try {
@@ -48,7 +59,12 @@ export const runTapCommand = async (options: TapCommandOptions): Promise<void> =
   }
 
   if (options.type && !options.plugin) {
-    reportTapError(new Error('--plugin is required when --type is provided'), asJson);
+    reportTapError(
+      new Error(
+        'A plugin is required to send a message: rozenite agent tap <plugin> --send <type>',
+      ),
+      asJson,
+    );
     return;
   }
 
@@ -56,6 +72,20 @@ export const runTapCommand = async (options: TapCommandOptions): Promise<void> =
     host: options.host,
     port: Number(options.port),
   });
+
+  let sessionId: string;
+  try {
+    sessionId = (
+      await resolveAgentSession(transport, {
+        session: options.session,
+        device: options.device,
+        deviceId: options.deviceId,
+      })
+    ).sessionId;
+  } catch (error) {
+    reportTapError(error, asJson);
+    return;
+  }
 
   await new Promise<void>((resolve) => {
     let settled = false;
@@ -76,10 +106,10 @@ export const runTapCommand = async (options: TapCommandOptions): Promise<void> =
     };
 
     const handle: AgentTapStreamHandle = transport.openSessionTap(
-      options.session,
-      // `--type` names the outbound message being sent, not a display
+      sessionId,
+      // `--send` names the outbound message being sent, not a display
       // filter — filtering on it would hide the very response the poke is
-      // meant to surface. Only `--plugin` narrows what's streamed.
+      // meant to surface. Only the plugin narrows what's streamed.
       { pluginId: options.plugin },
       {
         onOpen: () => {
@@ -88,7 +118,7 @@ export const runTapCommand = async (options: TapCommandOptions): Promise<void> =
           }
 
           transport
-            .sendSessionTapMessage(options.session, {
+            .sendSessionTapMessage(sessionId, {
               pluginId: options.plugin,
               type: options.type,
               payload,
@@ -119,31 +149,59 @@ export const runTapCommand = async (options: TapCommandOptions): Promise<void> =
   });
 };
 
+type TapCliOptions = {
+  send?: string;
+  type?: string;
+  plugin?: string;
+  payload: string;
+  a?: string;
+};
+
 export const registerTapCommand = (agentCommand: Command): void => {
   agentCommand
     .command('tap')
+    // `rozenite agent` turns its help option off for tool help; turn it back on.
+    .helpOption('-h, --help', 'Display help')
     .description(
-      "Stream a session's Rozenite plugin messages to stdout in both directions, and optionally send one",
+      "Stream a session's plugin messages in both directions (NDJSON when piped), and optionally send one",
     )
-    .requiredOption('-s, --session <id>', 'Target Agent session ID')
-    .option('-p, --plugin <id>', 'Filter the stream to this plugin ID; required with --type')
-    .option(
-      '-t, --type <name>',
-      'Send one message of this type before watching the stream (requires --plugin)',
-    )
-    .option('-a, --payload <json>', 'JSON payload for the sent message', '{}')
-    .option('--json', 'Newline-delimited JSON output, one message per line')
-    // `--host`/`--port` are inherited from `rozenite agent`, the same way
-    // `rozenite agent targets` reads them, rather than redeclared here.
-    .action(async (options: TapOptions, command: Command) => {
-      const globals = command.optsWithGlobals<{
-        host?: string;
-        port?: string;
-      }>();
-      await runTapCommand({
-        ...options,
-        host: globals.host ?? DEFAULT_AGENT_HOST,
-        port: String(globals.port ?? DEFAULT_AGENT_PORT),
-      });
-    });
+    .argument('[plugin]', 'Only stream this plugin; required with --send')
+    .option('--send <type>', 'Send one message of this type to the plugin, then keep streaming')
+    .option('--payload <json>', 'JSON payload for the sent message', '{}')
+    // Spellings from before the plugin became a positional (ADR 0005,
+    // decision 7). Accepted, no longer documented.
+    .addOption(new Option('-p, --plugin <id>', 'Same as the plugin argument').hideHelp())
+    .addOption(new Option('-t, --type <name>', 'Same as --send').hideHelp())
+    .addOption(new Option('-a <json>', 'Same as --payload').hideHelp())
+    .addOption(new Option('--json', 'Newline-delimited JSON on a terminal too').hideHelp())
+    .addOption(new Option('-s, --session <id>', 'Session to use').hideHelp())
+    // `--host`/`--port`/`--session`/`--device` are inherited from
+    // `rozenite agent`, the same way `rozenite agent targets` reads them,
+    // rather than redeclared here.
+    .action(
+      async (pluginArgument: string | undefined, options: TapCliOptions, command: Command) => {
+        const globals = command.optsWithGlobals<
+          SessionSelection & { host?: string; port?: string; json?: boolean }
+        >();
+        if (pluginArgument && options.plugin && pluginArgument !== options.plugin) {
+          process.stderr.write(
+            `Plugin given twice: "${pluginArgument}" and --plugin "${options.plugin}".\n`,
+          );
+          process.exitCode = 1;
+          return;
+        }
+
+        await runTapCommand({
+          session: globals.session,
+          device: globals.device,
+          deviceId: globals.deviceId,
+          plugin: pluginArgument ?? options.plugin,
+          type: options.send ?? options.type,
+          payload: options.a ?? options.payload,
+          json: globals.json,
+          host: globals.host ?? DEFAULT_AGENT_HOST,
+          port: String(globals.port ?? DEFAULT_AGENT_PORT),
+        });
+      },
+    );
 };

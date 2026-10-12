@@ -1,0 +1,79 @@
+---
+// Shown inside React Native DevTools when Rozenite loads (`/welcome?withPluginsInstalled=true`
+// when plugins are installed). Links open in a new tab, since the page sits inside DevTools.
+import Site from '../layouts/Site.astro';
+import Dither from '../components/site/Dither.astro';
+import Footer from '../components/site/Footer.astro';
+import Mark from '../components/site/Mark.astro';
+import Nav from '../components/site/Nav.astro';
+import { docs } from '../site/content';
+---
+
+<Site
+  title="Rozenite loaded · Rozenite"
+  description="Rozenite is running in React Native DevTools. Find your first plugin in the plugin directory."
+  noindex
+>
+  <Nav />
+  <main class="frame">
+    <section class="welcome">
+      <Dither scene="crystals" focus={0.82} />
+      <div class="welcome-copy">
+        <Mark height={40} class="accent" />
+        <h1 class="h1">Rozenite <em>loaded successfully.</em></h1>
+        <p class="lede" data-with-plugins hidden>You should see your installed plugins as tabs at the end of the tab list.</p>
+        <p class="lede" data-without-plugins>
+          You are ready to install your first plugin. Find one in the plugin directory.
+        </p>
+        <div class="actions">
+          <a class="btn" href={docs.start} target="_blank" rel="noopener">Documentation</a>
+          <a class="btn btn--dark" href={docs.directory} target="_blank" rel="noopener">Plugin directory</a>
+        </div>
+        <a class="label more" href="https://forms.gle/vUCVUmnZ883sfzoS8" target="_blank" rel="noopener"
+          >Want to shape the future of Rozenite? Share your feedback <span aria-hidden="true">→</span></a
+        >
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Site>
+
+<script>
+  // The page sits inside DevTools: every link, nav and footer included, opens a new tab.
+  for (const a of document.querySelectorAll('a')) {
+    a.target = '_blank';
+    a.rel = 'noopener';
+  }
+  if (new URLSearchParams(location.search).get('withPluginsInstalled') === 'true') {
+    document.querySelector<HTMLElement>('[data-with-plugins]')!.hidden = false;
+    document.querySelector<HTMLElement>('[data-without-plugins]')!.hidden = true;
+  }
+</script>
+
+<style>
+  .welcome {
+    position: relative;
+    min-height: calc(100dvh - 3.75rem - 4rem);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  .welcome-copy {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    max-width: 36rem;
+    margin: var(--pad);
+    padding: var(--pad);
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+  }
+  .welcome-copy .h1 {
+    max-width: 14ch;
+  }
+  .actions {
+    margin-top: 0.25rem;
+  }
+</style>

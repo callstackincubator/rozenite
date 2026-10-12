@@ -14,7 +14,7 @@ export type FeatureFlagsSnapshot = {
 
 /**
  * RPC methods exposed by the device peer, called by the panel via
- * `createRozeniteRpc`. See `website/src/docs/plugin-development/rpc.md`.
+ * `createRozeniteRpc`. See `website/src/content/docs/docs/plugin-development/rpc.md`.
  */
 export type FeatureFlagsMethods = {
   getSnapshot: () => Promise<FeatureFlagsSnapshot>;

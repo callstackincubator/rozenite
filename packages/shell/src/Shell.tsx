@@ -10,9 +10,9 @@ import {
   Split,
   type SplitPaneHandle,
 } from '@rozenite/ui';
-import compactLogo from '../../../website/src/public/logo.svg';
-import lightLogo from '../../../website/src/public/logo-light.svg';
-import darkLogo from '../../../website/src/public/logo-dark.svg';
+import compactLogo from '../../../website/public/logo.svg';
+import lightLogo from '../../../website/public/logo-light.svg';
+import darkLogo from '../../../website/public/logo-dark.svg';
 import {
   closePluginsScreen,
   getInitialSelectionState,

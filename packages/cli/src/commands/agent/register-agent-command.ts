@@ -1,66 +1,76 @@
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { createAgentClient } from '@rozenite/agent-sdk';
 import { createAgentTransport } from '@rozenite/agent-sdk/transport';
 import {
   DEFAULT_AGENT_HOST,
   DEFAULT_AGENT_PORT,
-  isAgentToolPagination,
   parseFields,
   parseLimit,
-  shapePaginatedRows,
   shapeToolResult,
-  type AgentToolPagination,
+  type JSONSchema7,
+  type PageResult,
   type ToolAvailability,
 } from '@rozenite/agent-shared';
 import { printOutput } from './output.js';
-import { formatAgentCommand, paginateRows } from './output-shaping.js';
+import { formatAgentCommand, paginateListing } from './output-shaping.js';
 import { getErrorMessage } from './error-message.js';
 import { registerTapCommand } from './register-tap-command.js';
-import { getPackageJSON } from '../../package-json.js';
+import {
+  createOrReuseSession,
+  findSessionToStop,
+  getRequestedDevice,
+  resolveAgentSession,
+  type SessionSelection,
+} from './session-resolution.js';
+import {
+  assertNoToolTokens,
+  buildToolArguments,
+  formatToolHelp,
+  parseArgsJson,
+  parseDomainInvocation,
+  parseToolFlags,
+  renderToolArguments,
+  type DomainCliOptions,
+} from './tool-flags.js';
+import { getToolListMetadata, type ToolFieldSet } from './tool-metadata.js';
 
 const REMOVED_ROZENITE_DOMAIN_HINT =
-  'The `rozenite agent rozenite ...` path was removed. Use `rozenite agent <domain> ...`; run `rozenite agent domains -j`.';
+  'The `rozenite agent rozenite ...` path was removed. Use `rozenite agent <domain> ...`; run `rozenite agent domains` to list domains.';
 
-const DOMAIN_ACTION_ALIASES = {
-  'list-tools': 'list-tools',
-  tools: 'list-tools',
-  'get-tool-schema': 'get-tool-schema',
-  schema: 'get-tool-schema',
-  'call-tool': 'call-tool',
-  call: 'call-tool',
-} as const;
+/**
+ * Discovery and call verbs from the previous grammar. They still parse
+ * exactly as before (ADR 0005, decision 11) but are no longer documented.
+ */
+const LEGACY_LIST_VERBS = new Set(['tools', 'list-tools']);
+const LEGACY_SCHEMA_VERBS = new Set(['schema', 'get-tool-schema']);
+const LEGACY_CALL_VERBS = new Set(['call', 'call-tool']);
+const isLegacyVerb = (token: string): boolean => {
+  const normalized = token.trim().toLowerCase();
+  return (
+    LEGACY_LIST_VERBS.has(normalized) ||
+    LEGACY_SCHEMA_VERBS.has(normalized) ||
+    LEGACY_CALL_VERBS.has(normalized)
+  );
+};
 
-const DOMAIN_ACTION_HINT = 'list-tools|tools, get-tool-schema|schema, call-tool|call';
+type AgentGlobalOptions = SessionSelection & {
+  host?: string;
+  port?: string | number;
+  pretty?: boolean;
+  json?: boolean;
+};
 
-type DomainAction = 'list-tools' | 'get-tool-schema' | 'call-tool';
+type ListingOptions = {
+  fields?: string;
+  limit?: string;
+  cursor?: string;
+  verbose?: boolean;
+};
 
-type CommonOptions = {
+type Connection = {
   host: string;
   port: number;
-  json?: boolean;
-  pretty?: boolean;
-  session?: string;
-};
-
-type ListDomainsOptions = CommonOptions & {
-  fields?: string;
-  limit?: string;
-  cursor?: string;
-  verbose?: boolean;
-};
-
-type DynamicDomainCommandOptions = CommonOptions & {
-  tool?: string;
-  args?: string;
-  fields?: string;
-  limit?: string;
-  cursor?: string;
-  verbose?: boolean;
-  session?: string;
-};
-
-type SessionCommandOptions = CommonOptions & {
-  deviceId?: string;
+  pretty: boolean;
 };
 
 type ToolListRow = {
@@ -81,18 +91,7 @@ type DomainListRow = {
   description: string;
 };
 
-type AgentSessionOutput = {
-  id: string;
-  deviceName: string;
-  status: string;
-  versionCheck?: string;
-};
-
-const DEFAULT_METRO_HOST = DEFAULT_AGENT_HOST;
-const DEFAULT_METRO_PORT = DEFAULT_AGENT_PORT;
-
 const TOOL_LIST_FIELDS = ['name', 'description', 'readOnly', 'destructive', 'idempotent'] as const;
-const TOOL_LIST_DEFAULT_FIELDS = TOOL_LIST_FIELDS;
 const DOMAIN_LIST_FIELDS = [
   'id',
   'kind',
@@ -103,148 +102,97 @@ const DOMAIN_LIST_FIELDS = [
   'description',
 ] as const;
 // `availability` is a default field, not an opt-in one: an agent that has
-// to pass `--verbose` to learn a domain does not work on this target will
-// not pass it, and will spend a turn finding out the hard way.
+// to ask for it to learn a domain does not work on this target will not
+// ask, and will spend a turn finding out the hard way.
 const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind', 'availability', 'fallback'] as const;
+
+/** `rows` metadata for the CLI's own `targets` listing (ADR 0004, decision 5). */
+const TARGET_ROWS = {
+  fields: ['id', 'name', 'integration', 'deviceId', 'appId', 'pageId', 'title', 'description'],
+  defaultFields: ['id', 'name', 'integration'],
+} as const satisfies ToolFieldSet;
+
+/** `rows` metadata for the CLI's own `session list` listing. */
+const SESSION_ROWS = {
+  fields: [
+    'id',
+    'deviceName',
+    'status',
+    'deviceId',
+    'appId',
+    'pageId',
+    'integration',
+    'createdAt',
+    'lastActivityAt',
+    'toolCount',
+    'lastError',
+  ],
+  defaultFields: ['id', 'deviceName', 'status'],
+} as const satisfies ToolFieldSet;
+
+const FIELDS_DESCRIPTION = 'Columns to print, comma-separated, or `all`';
 
 const projectSessionOutput = (
   session: Record<string, unknown>,
   versionCheck?: unknown,
-): AgentSessionOutput => ({
+): Record<string, unknown> => ({
   id: String(session.id ?? ''),
   deviceName: String(session.deviceName ?? ''),
   status: String(session.status ?? ''),
-  ...(versionCheck
-    ? {
-        versionCheck: String(versionCheck),
-      }
-    : {}),
+  ...(versionCheck ? { versionCheck: String(versionCheck) } : {}),
 });
 
-const getConnectionOptions = (cmd: Command): CommonOptions => {
-  const options = cmd.optsWithGlobals<CommonOptions>();
+const getGlobals = (command: Command): AgentGlobalOptions =>
+  command.optsWithGlobals<AgentGlobalOptions>();
+
+const getConnection = (command: Command): Connection => {
+  const options = getGlobals(command);
   return {
-    host: options.host ?? DEFAULT_METRO_HOST,
-    port: Number(options.port ?? DEFAULT_METRO_PORT),
+    host: options.host ?? DEFAULT_AGENT_HOST,
+    port: Number(options.port ?? DEFAULT_AGENT_PORT),
     pretty: options.pretty ?? false,
-    session: options.session,
   };
 };
 
-const getConnectionCommandArgs = (options: CommonOptions): string[] => [
-  '--host',
-  options.host,
-  '--port',
-  String(options.port),
-];
-
-const getListingOptionArgs = (
-  options: Pick<DynamicDomainCommandOptions, 'fields' | 'verbose'>,
-  limit: number,
-  cursor: string,
-  pretty: boolean,
-): string[] => [
-  ...(options.verbose ? ['--verbose'] : options.fields ? ['--fields', options.fields] : []),
-  '--limit',
-  String(limit),
-  '--cursor',
-  cursor,
-  ...(pretty ? ['--pretty'] : []),
-];
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-type ToolPaginationResolution = {
-  pagination?: AgentToolPagination;
-  warning?: string;
+const getSessionSelection = (command: Command): SessionSelection => {
+  const options = getGlobals(command);
+  return { session: options.session, device: options.device, deviceId: options.deviceId };
 };
 
 /**
- * Reads a tool's declared pagination metadata. Malformed metadata (e.g. from
- * a third-party plugin) degrades to "non-paginated" with a warning rather
- * than failing the call outright, per the documented contract: undeclared,
- * malformed, and non-row results remain unchanged.
+ * The global options a `next` command repeats (ADR 0005, decision 4): each
+ * one the user typed, as typed, so the next page goes to the same server,
+ * session and device. A value that came from a default or from the
+ * environment is left out, since it still applies to the next run.
  */
-const getToolPagination = (value: unknown): ToolPaginationResolution => {
-  if (!isRecord(value) || !isRecord(value.pagination)) {
-    return {};
+const getTypedGlobalArgs = (command: Command): string[] => {
+  const options = getGlobals(command);
+  const typed = (key: keyof AgentGlobalOptions): boolean =>
+    command.getOptionValueSourceWithGlobals(key) === 'cli';
+  const args: string[] = [];
+
+  if (typed('session') && options.session) {
+    args.push('--session', options.session);
   }
-
-  if (!isAgentToolPagination(value.pagination)) {
-    return {
-      warning: 'Warning: tool exposes invalid pagination metadata; returning its result unshaped.',
-    };
+  if (typed('device') && options.device) {
+    args.push('--device', options.device);
+  } else if (typed('deviceId') && options.deviceId) {
+    args.push('--device', options.deviceId);
   }
-
-  return { pagination: value.pagination };
-};
-
-const getToolCallCommand = (
-  domain: string,
-  tool: string,
-  args: Record<string, unknown>,
-  cursor: string,
-  options: DynamicDomainCommandOptions,
-  connection: CommonOptions,
-  sessionId: string,
-): string =>
-  formatAgentCommand([
-    domain,
-    'call',
-    ...getConnectionCommandArgs(connection),
-    '--session',
-    sessionId,
-    '--tool',
-    tool,
-    '--args',
-    JSON.stringify({ ...args, cursor }),
-    ...(options.verbose ? ['--verbose'] : options.fields ? ['--fields', options.fields] : []),
-    ...(connection.pretty ? ['--pretty'] : []),
-  ]);
-
-const getSessionId = (cmd: Command): string => {
-  const options = cmd.optsWithGlobals<CommonOptions>();
-  if (!options.session) {
-    throw new Error(
-      'Missing required --session <id>. Create one with `rozenite agent session create`.',
-    );
+  if (typed('host') && options.host) {
+    args.push('--host', options.host);
   }
-  return options.session;
-};
-
-const getActionCommand = (args: unknown[]): Command => {
-  const candidate = args[args.length - 1];
-  if (!(candidate instanceof Command)) {
-    throw new Error('Failed to resolve CLI command context');
+  if (typed('port') && options.port !== undefined) {
+    args.push('--port', String(options.port));
   }
-
-  return candidate;
-};
-
-const parseJsonArgs = (rawArgs?: string): unknown => {
-  if (!rawArgs) {
-    return {};
+  if (typed('pretty') && options.pretty) {
+    args.push('--pretty');
   }
-
-  try {
-    return JSON.parse(rawArgs);
-  } catch {
-    throw new Error('--args must be valid JSON');
-  }
+  return args;
 };
 
 const outputAgentError = (command: Command, error: unknown): void => {
-  const options = getConnectionOptions(command);
-  printOutput(
-    {
-      error: {
-        message: getErrorMessage(error),
-      },
-    },
-    true,
-    !!options.pretty,
-  );
+  printOutput({ error: { message: getErrorMessage(error) } }, true, getConnection(command).pretty);
   process.exitCode = 1;
 };
 
@@ -256,384 +204,570 @@ const runAgentAction = async (command: Command, action: () => Promise<void>): Pr
   }
 };
 
-const toDomainAction = (value: string): DomainAction | null => {
-  const normalized = value.trim().toLowerCase();
-  return (DOMAIN_ACTION_ALIASES as Record<string, DomainAction>)[normalized] || null;
+const getActionCommand = (args: unknown[]): Command => {
+  const candidate = args[args.length - 1];
+  if (!(candidate instanceof Command)) {
+    throw new Error('Failed to resolve CLI command context');
+  }
+
+  return candidate;
 };
 
-const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
-  mcpCommand
-    .command('* [action] [rest...]')
-    .description('Domain commands')
-    .option('-t, --tool <name>', 'Tool name or short tool name')
-    .option('-a, --args <json>', 'Tool arguments as JSON object', '{}')
-    .option(
-      '-f, --fields <csv>',
-      'Comma-separated output fields; allowed fields depend on the listing or declared paginated tool',
-    )
-    .option('-v, --verbose', 'Include all supported fields')
-    .option('-n, --limit <n>', 'CLI-owned domain/tool listing page size (default 20, max 100)')
-    .option('-c, --cursor <token>', 'Cursor for a CLI-owned domain/tool listing')
-    .requiredOption('-s, --session <id>', 'Target Agent session ID')
-    .action(
-      async (domainToken: string, actionToken?: string | string[], ...actionArgs: unknown[]) => {
-        const activeCommand = actionArgs[actionArgs.length - 1] as Command;
-        await runAgentAction(activeCommand, async () => {
-          const normalizedActionToken = Array.isArray(actionToken) ? actionToken[0] : actionToken;
-          const actionTokenString = normalizedActionToken
-            ? String(normalizedActionToken).trim()
-            : '';
-          if (domainToken === 'rozenite') {
-            throw new Error(REMOVED_ROZENITE_DOMAIN_HINT);
-          }
+/** Whether `--fields` itself was typed with a value. */
+const hasTypedFields = (options: ListingOptions): boolean =>
+  options.fields !== undefined && options.fields.trim().length > 0;
 
-          if (!actionTokenString) {
-            const actionInDomainPosition = toDomainAction(domainToken);
-            if (actionInDomainPosition) {
-              throw new Error(
-                `Missing domain before action "${domainToken}". Use: rozenite agent <domain> ${domainToken}`,
-              );
-            }
+/** Whether the caller chose the columns, which turns off sparse-column elision. */
+const hasExplicitFields = (options: ListingOptions): boolean =>
+  !!options.verbose || hasTypedFields(options);
 
-            throw new Error(
-              `Missing action for domain "${domainToken}". Expected: ${DOMAIN_ACTION_HINT}.`,
-            );
-          }
+/** `--fields`/`--limit` as the user typed them, for a listing's `next` command. */
+const getListingNextArgs = (options: ListingOptions, nextCursor: string): string[] => [
+  ...(options.verbose
+    ? ['--fields', 'all']
+    : options.fields !== undefined
+      ? ['--fields', options.fields]
+      : []),
+  ...(options.limit !== undefined ? ['--limit', options.limit] : []),
+  '--cursor',
+  nextCursor,
+];
 
-          const action = actionTokenString ? toDomainAction(actionTokenString) : null;
-          if (!action) {
-            throw new Error(
-              `Unknown domain action "${actionTokenString}". Expected: ${DOMAIN_ACTION_HINT}.`,
-            );
-          }
+/**
+ * Pages, projects and prints a listing the CLI builds itself. Its `next`
+ * command is `commandArgs` with `--cursor` appended.
+ */
+const shapeListing = <T extends Record<string, unknown>>(
+  rows: T[],
+  input: {
+    keyOf: (row: T) => string;
+    scope: string;
+    fieldSet: ToolFieldSet;
+    options: ListingOptions;
+    commandArgs: string[];
+  },
+): unknown => {
+  const fields = parseFields(
+    input.options.fields,
+    input.fieldSet.fields,
+    input.fieldSet.defaultFields ?? input.fieldSet.fields,
+    !!input.options.verbose,
+  );
+  const paged: PageResult<T> = paginateListing(rows, {
+    keyOf: input.keyOf,
+    scope: input.scope,
+    limit: parseLimit(input.options.limit),
+    cursor: input.options.cursor,
+  });
 
-          const dynamicOptions = activeCommand.optsWithGlobals<DynamicDomainCommandOptions>();
-          const options = getConnectionOptions(activeCommand);
-          const sessionId = getSessionId(activeCommand);
-          const client = createAgentClient({
-            host: options.host,
-            port: options.port,
-          });
-          const session = await client.attachSession(sessionId);
+  return shapeToolResult(
+    paged,
+    fields,
+    paged.page.nextCursor
+      ? formatAgentCommand([
+          ...input.commandArgs,
+          ...getListingNextArgs(input.options, paged.page.nextCursor),
+        ])
+      : undefined,
+    { elideNullColumns: !hasExplicitFields(input.options) },
+  );
+};
 
-          const result = await (async () => {
-            if (action === 'list-tools') {
-              const fields = parseFields(
-                dynamicOptions.fields,
-                TOOL_LIST_FIELDS,
-                TOOL_LIST_DEFAULT_FIELDS,
-                !!dynamicOptions.verbose,
-              );
-              const limit = parseLimit(dynamicOptions.limit);
-              const domainTools = await session.tools.list({
-                domain: domainToken,
-              });
-              const domainId = domainTools[0]?.domainId ?? domainToken;
-              const rows = domainTools
-                .map<ToolListRow>((tool) => ({
-                  name: tool.name,
-                  description: tool.description,
-                  ...(tool.readOnly !== undefined ? { readOnly: tool.readOnly } : {}),
-                  ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
-                  ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
-                }))
-                .sort((a, b) => a.name.localeCompare(b.name));
-              const paged = paginateRows(rows, {
-                kind: 'tools',
-                scope: `domain:${domainId}`,
-                limit,
-                cursor: dynamicOptions.cursor,
-              });
+const addListingOptions = (command: Command): Command =>
+  command
+    .option('-f, --fields <csv>', FIELDS_DESCRIPTION)
+    .option('-n, --limit <n>', 'Page size (default 20, max 100)')
+    .option('-c, --cursor <token>', 'Continue from a previous page')
+    .addOption(new Option('-v, --verbose', 'Same as --fields all').hideHelp());
 
-              return shapePaginatedRows(
-                paged,
-                fields,
-                paged.page.nextCursor
-                  ? formatAgentCommand([
-                      domainId,
-                      'tools',
-                      ...getConnectionCommandArgs(options),
-                      '--session',
-                      sessionId,
-                      ...getListingOptionArgs(
-                        dynamicOptions,
-                        limit,
-                        paged.page.nextCursor,
-                        !!options.pretty,
-                      ),
-                    ])
-                  : undefined,
-              );
-            }
+/**
+ * `rozenite agent` turns its own help option off so a tool can answer
+ * `--help`; subcommands inherit that setting and turn theirs back on.
+ */
+const withHelp = (command: Command): Command => command.helpOption('-h, --help', 'Display help');
 
-            if (!dynamicOptions.tool) {
-              throw new Error('--tool is required for schema/get-tool-schema and call/call-tool');
-            }
+const openSession = async (command: Command) => {
+  const connection = getConnection(command);
+  const transport = createAgentTransport({ host: connection.host, port: connection.port });
+  const { sessionId } = await resolveAgentSession(transport, getSessionSelection(command));
+  return await createAgentClient({ host: connection.host, port: connection.port }).attachSession(
+    sessionId,
+  );
+};
 
-            if (action === 'get-tool-schema') {
-              return await session.tools.getSchema({
-                domain: domainToken,
-                tool: dynamicOptions.tool,
-              });
-            }
+const DOMAIN_USAGE = [
+  'Usage: rozenite agent <domain> [tool] [options]',
+  '',
+  "  rozenite agent <domain>                           List the domain's tools",
+  '  rozenite agent <domain> <tool> [--<arg> <value>]  Call a tool',
+  "  rozenite agent <domain> <tool> --help             Show a tool's arguments",
+  "  rozenite agent <domain> <tool> --schema           Print a tool's input schema",
+  '',
+  'Run `rozenite agent domains` to list domains.',
+  '',
+].join('\n');
 
-            const parsedArgs = parseJsonArgs(dynamicOptions.args);
-            const resolvedTool = await session.tools.resolve({
-              domain: domainToken,
-              tool: dynamicOptions.tool,
-            });
-            const { pagination, warning } = getToolPagination(resolvedTool.schema);
-            if (warning) {
-              process.stderr.write(`${warning}\n`);
-            }
+const LISTING_USAGE =
+  'rozenite agent <domain> [--fields <csv|all>] [--limit <n>] [--cursor <token>]';
 
-            if (pagination && !isRecord(parsedArgs)) {
-              throw new Error('--args must be a JSON object');
-            }
+type DomainMode =
+  | { kind: 'list' }
+  | { kind: 'schema'; tool: string }
+  | { kind: 'call'; tool: string }
+  | { kind: 'help'; tool?: string };
 
-            const paginatedToolArgs: Record<string, unknown> | undefined = pagination
-              ? (parsedArgs as Record<string, unknown>)
-              : undefined;
-            const fields = pagination
-              ? parseFields(
-                  dynamicOptions.fields,
-                  pagination.fields,
-                  pagination.defaultFields ?? pagination.fields,
-                  !!dynamicOptions.verbose,
-                )
-              : undefined;
-            const toolResult = await resolvedTool.call(paginatedToolArgs ?? parsedArgs);
+const getDomainMode = (actionToken: string | undefined, cli: DomainCliOptions): DomainMode => {
+  const verb = actionToken?.trim().toLowerCase();
+  let mode: DomainMode;
 
-            if (!pagination || !paginatedToolArgs || !fields) {
-              return toolResult;
-            }
+  if (actionToken === undefined) {
+    mode = cli.tool ? { kind: cli.schema ? 'schema' : 'call', tool: cli.tool } : { kind: 'list' };
+  } else if (verb && LEGACY_LIST_VERBS.has(verb)) {
+    mode = { kind: 'list' };
+  } else if (verb && LEGACY_SCHEMA_VERBS.has(verb) && cli.tool) {
+    mode = { kind: 'schema', tool: cli.tool };
+  } else if (verb && LEGACY_CALL_VERBS.has(verb) && cli.tool) {
+    mode = { kind: cli.schema ? 'schema' : 'call', tool: cli.tool };
+  } else {
+    if (cli.tool && cli.tool !== actionToken) {
+      throw new Error(
+        `Tool given twice: "${actionToken}" and --tool "${cli.tool}". Use: rozenite agent <domain> <tool>`,
+      );
+    }
+    mode = { kind: cli.schema ? 'schema' : 'call', tool: actionToken };
+  }
 
-            const nextCursor =
-              isRecord(toolResult) &&
-              isRecord(toolResult.page) &&
-              toolResult.page.hasMore === true &&
-              typeof toolResult.page.nextCursor === 'string'
-                ? toolResult.page.nextCursor
-                : undefined;
+  if (cli.help) {
+    return { kind: 'help', tool: mode.kind === 'list' ? undefined : mode.tool };
+  }
+  return mode;
+};
 
-            return shapeToolResult(
-              toolResult,
-              fields,
-              nextCursor
-                ? getToolCallCommand(
-                    resolvedTool.domainId,
-                    dynamicOptions.tool,
-                    paginatedToolArgs,
-                    nextCursor,
-                    dynamicOptions,
-                    options,
-                    sessionId,
-                  )
-                : undefined,
-            );
-          })();
+const listDomainTools = async (
+  command: Command,
+  domainToken: string,
+  cli: DomainCliOptions,
+  toolTokens: string[],
+): Promise<unknown> => {
+  assertNoToolTokens(toolTokens, LISTING_USAGE);
+  const session = await openSession(command);
+  const domainTools = await session.tools.list({ domain: domainToken });
+  const domainId = domainTools[0]?.domainId ?? domainToken;
 
-          printOutput(result, true, !!options.pretty);
-        });
-      },
+  // Listings print short names; a short name two tools share keeps its
+  // qualified form so every printed name still resolves to one tool.
+  const shortNameCounts = new Map<string, number>();
+  for (const tool of domainTools) {
+    shortNameCounts.set(tool.shortName, (shortNameCounts.get(tool.shortName) ?? 0) + 1);
+  }
+  const rows = domainTools
+    .map<ToolListRow>((tool) => ({
+      name: shortNameCounts.get(tool.shortName) === 1 ? tool.shortName : tool.name,
+      description: tool.description,
+      ...(tool.readOnly !== undefined ? { readOnly: tool.readOnly } : {}),
+      ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
+      ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return shapeListing(rows, {
+    keyOf: (row) => row.name,
+    scope: `domain:${domainId}`,
+    fieldSet: { fields: TOOL_LIST_FIELDS },
+    options: cli,
+    commandArgs: [domainId, ...getTypedGlobalArgs(command)],
+  });
+};
+
+const getProperties = (inputSchema: JSONSchema7 | undefined): Record<string, unknown> =>
+  inputSchema && typeof inputSchema.properties === 'object' && inputSchema.properties !== null
+    ? inputSchema.properties
+    : {};
+
+const callDomainTool = async (
+  command: Command,
+  domainToken: string,
+  toolToken: string,
+  cli: DomainCliOptions,
+  toolTokens: string[],
+  help: boolean,
+): Promise<{ text: string } | { result: unknown }> => {
+  const session = await openSession(command);
+  const resolvedTool = await session.tools.resolve({ domain: domainToken, tool: toolToken });
+  const schema = resolvedTool.schema;
+  const { pagination, rows, warning } = getToolListMetadata(schema);
+  const fieldSet: ToolFieldSet | undefined = pagination ?? rows;
+
+  if (help) {
+    return {
+      text: formatToolHelp({
+        domain: resolvedTool.domainId,
+        tool: schema.shortName,
+        // A resolved schema carries no description; the listing does.
+        description: (await session.tools.list({ domain: domainToken })).find(
+          (tool) => tool.name === schema.name,
+        )?.description,
+        inputSchema: schema.inputSchema,
+        fields: fieldSet,
+        paged: !!pagination,
+      }),
+    };
+  }
+
+  if (warning) {
+    process.stderr.write(`${warning}\n`);
+  }
+
+  const properties = getProperties(schema.inputSchema);
+  const flagArgs = parseToolFlags(toolTokens, {
+    toolLabel: toolToken,
+    inputSchema: schema.inputSchema,
+  });
+  const toolArgs = buildToolArguments({
+    argsJson: parseArgsJson(cli.args),
+    flagArgs,
+    limit: cli.limit,
+    cursor: cli.cursor,
+    acceptsPaging: {
+      limit: !!pagination || 'limit' in properties,
+      cursor: !!pagination || 'cursor' in properties,
+    },
+    toolLabel: toolToken,
+    requireObject: !!pagination,
+    onIgnored: (flag) => {
+      process.stderr.write(`Note: ${toolToken} does not page; ${flag} was ignored.\n`);
+    },
+  });
+
+  // `--fields` is new grammar and never worked here, so silently printing
+  // everything would hide the mistake. `-v`/`--verbose` meant "all fields"
+  // and was ignored for such a tool before; it still is (ADR 0005, decision 11).
+  if (!fieldSet && hasTypedFields(cli)) {
+    throw new Error(`Tool "${toolToken}" does not declare row fields; --fields does not apply.`);
+  }
+
+  // Validated before the call, so a typo in --fields costs no device round trip.
+  const fields = fieldSet
+    ? parseFields(
+        cli.fields,
+        fieldSet.fields,
+        fieldSet.defaultFields ?? fieldSet.fields,
+        !!cli.verbose,
+      )
+    : undefined;
+  const toolResult = await resolvedTool.call(toolArgs);
+
+  if (!fieldSet || !fields) {
+    return { result: toolResult };
+  }
+
+  const elideNullColumns = !hasExplicitFields(cli);
+  if (!pagination) {
+    return {
+      result: shapeToolResult(toolResult, fields, undefined, {
+        paged: false,
+        itemsKey: rows?.key,
+        elideNullColumns,
+      }),
+    };
+  }
+
+  const page =
+    typeof toolResult === 'object' && toolResult !== null
+      ? (toolResult as { page?: { hasMore?: unknown; nextCursor?: unknown } }).page
+      : undefined;
+  const nextCursor =
+    page?.hasMore === true && typeof page.nextCursor === 'string' ? page.nextCursor : undefined;
+
+  return {
+    result: shapeToolResult(
+      toolResult,
+      fields,
+      nextCursor
+        ? formatAgentCommand([
+            resolvedTool.domainId,
+            toolToken,
+            ...renderToolArguments(toolArgs as Record<string, unknown>, schema.inputSchema),
+            ...(cli.verbose
+              ? ['--fields', 'all']
+              : cli.fields !== undefined
+                ? ['--fields', cli.fields]
+                : []),
+            ...getTypedGlobalArgs(command),
+            '--cursor',
+            nextCursor,
+          ])
+        : undefined,
+      { itemsKey: pagination.itemsKey, meta: pagination.meta, elideNullColumns },
+    ),
+  };
+};
+
+/**
+ * `rozenite agent <domain> [tool] [--<arg> <value>…]`, plus every spelling
+ * of the previous grammar (`<domain> tools`, `<domain> schema --tool`,
+ * `<domain> call --tool --args`).
+ */
+const runDomainCommand = async (command: Command, tokens: string[]): Promise<void> => {
+  const { positionals, cli, toolTokens } = parseDomainInvocation(tokens);
+  const [domainToken, actionToken, ...extra] = positionals;
+
+  // `rozenite agent help` alone prints this command's help; a plugin domain
+  // named `help` is still reachable for its tools (`rozenite agent help <tool>`).
+  if (domainToken === undefined || (domainToken === 'help' && actionToken === undefined)) {
+    command.outputHelp();
+    return;
+  }
+
+  await runAgentAction(command, async () => {
+    if (domainToken === 'rozenite') {
+      throw new Error(REMOVED_ROZENITE_DOMAIN_HINT);
+    }
+    if (isLegacyVerb(domainToken)) {
+      throw new Error(
+        `Missing domain before "${domainToken}". Use: rozenite agent <domain> [tool]; run \`rozenite agent domains\` to list domains.`,
+      );
+    }
+    if (extra.length > 0) {
+      throw new Error(
+        `Unexpected argument "${extra[0]}". Use: rozenite agent <domain> <tool> [--<arg> <value>…]`,
+      );
+    }
+
+    const mode = getDomainMode(actionToken, cli);
+    const connection = getConnection(command);
+
+    if (mode.kind === 'help' && !mode.tool) {
+      process.stdout.write(DOMAIN_USAGE);
+      return;
+    }
+
+    if (mode.kind === 'list') {
+      printOutput(
+        await listDomainTools(command, domainToken, cli, toolTokens),
+        true,
+        connection.pretty,
+      );
+      return;
+    }
+
+    if (mode.kind === 'schema') {
+      assertNoToolTokens(toolTokens, 'rozenite agent <domain> <tool> --schema');
+      const session = await openSession(command);
+      printOutput(
+        await session.tools.getSchema({ domain: domainToken, tool: mode.tool }),
+        true,
+        connection.pretty,
+      );
+      return;
+    }
+
+    const outcome = await callDomainTool(
+      command,
+      domainToken,
+      mode.tool!,
+      cli,
+      toolTokens,
+      mode.kind === 'help',
     );
+    if ('text' in outcome) {
+      process.stdout.write(outcome.text);
+      return;
+    }
+    printOutput(outcome.result, true, connection.pretty);
+  });
 };
+
+const AGENT_HELP_EXAMPLES = `
+Examples:
+  rozenite agent domains                             List domains
+  rozenite agent console                             List the console tools
+  rozenite agent console getMessages --levels error  Call a tool
+  rozenite agent console getMessages --help          Show a tool's arguments
+  rozenite agent session stop                        Stop the session when done
+
+The session is created on first use for the only connected device; pass
+--device <id> (or set ROZENITE_DEVICE) when several are connected.
+`;
 
 export const registerAgentCommand = (program: Command): void => {
-  const mcpCommand = program
+  const agentCommand = program
     .command('agent')
-    .description('CLI for session-scoped domain discovery and dynamic tool execution')
-    .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
-    .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
-    .option('-j, --json', 'Deprecated no-op; agent commands always output JSON')
-    .option('--pretty', 'Pretty-print JSON output');
-
-  mcpCommand
-    .command('targets')
-    .description('List connected targets and the integration serving each')
+    .description('Inspect and drive a running app through its domains and tools')
+    .usage('<domain> [tool] [--<arg> <value>...] | <command>')
+    .argument('[domain]', 'Domain to list or call')
+    .argument('[tool]', "Tool to call; omit it to list the domain's tools")
+    .argument('[args...]', 'Tool arguments as --<name> <value>')
+    .option('--host <host>', 'Metro host', DEFAULT_AGENT_HOST)
+    .option('--port <port>', 'Metro port', String(DEFAULT_AGENT_PORT))
+    .option('-s, --session <id>', 'Session to use (default: resolved from --device)')
+    .option('--device <id>', 'Device whose session to use (default: the only connected one)')
+    .addOption(new Option('-d, --deviceId <id>', 'Same as --device').hideHelp())
+    .option('--pretty', 'Indent JSON output (the default on a terminal)')
+    .addOption(new Option('-j, --json', 'No-op; agent commands always print JSON').hideHelp())
+    // `--help` is read by the domain command itself, so that
+    // `rozenite agent <domain> <tool> --help` can describe the tool.
+    .helpOption(false)
+    .allowUnknownOption()
+    .configureHelp({ showGlobalOptions: true })
+    .addHelpText('after', AGENT_HELP_EXAMPLES)
     .action(async (...args: unknown[]) => {
       const command = getActionCommand(args);
-      await runAgentAction(command, async () => {
-        const options = getConnectionOptions(command);
-        const targets = await createAgentClient({
-          host: options.host,
-          port: options.port,
-        }).targets.list();
-        const conciseTargets = targets.map((target) => ({
-          id: target.id,
-          name: target.name,
-          integration: target.integration,
-        }));
-
-        const payload = {
-          items: conciseTargets,
-        };
-
-        printOutput(payload, true, !!options.pretty);
-      });
+      await runDomainCommand(command, [...command.args]);
     });
 
-  registerTapCommand(mcpCommand);
+  addListingOptions(
+    withHelp(agentCommand.command('targets')).description(
+      'List connected targets and the integration serving each',
+    ),
+  ).action(async (...args: unknown[]) => {
+    const command = getActionCommand(args);
+    await runAgentAction(command, async () => {
+      const connection = getConnection(command);
+      const targets = await createAgentClient({
+        host: connection.host,
+        port: connection.port,
+      }).targets.list();
 
-  const sessionCommand = mcpCommand
-    .command('session')
-    .description('Manage device-keyed Agent sessions')
-    .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
-    .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
-    .option('-j, --json', 'Deprecated no-op; agent commands always output JSON')
-    .option('--pretty', 'Pretty-print JSON output');
+      printOutput(
+        shapeListing(targets as unknown as Record<string, unknown>[], {
+          keyOf: (target) => String(target.id),
+          scope: 'targets',
+          fieldSet: TARGET_ROWS,
+          options: command.opts<ListingOptions>(),
+          commandArgs: ['targets', ...getTypedGlobalArgs(command)],
+        }),
+        true,
+        connection.pretty,
+      );
+    });
+  });
+
+  registerTapCommand(agentCommand);
+
+  const sessionCommand = withHelp(agentCommand.command('session')).description(
+    'Manage device-keyed agent sessions (created on first use)',
+  );
 
   sessionCommand
     .command('create')
-    .description('Create or reuse the Agent session for a device')
-    .option('-d, --deviceId <id>', 'Target Metro device ID')
+    .description('Create or reuse the agent session for a device')
     .action(async (...args: unknown[]) => {
       const command = getActionCommand(args);
       await runAgentAction(command, async () => {
-        const options = getConnectionOptions(command);
-        const sessionOptions = command.optsWithGlobals<SessionCommandOptions>();
-        const transport = createAgentTransport({
-          host: options.host,
-          port: options.port,
-        });
-        const result = await transport.createSession({
-          deviceId: sessionOptions.deviceId,
-          cliVersion: getPackageJSON().version,
-        });
+        const connection = getConnection(command);
+        const transport = createAgentTransport({ host: connection.host, port: connection.port });
+        const result = await createOrReuseSession(
+          transport,
+          getRequestedDevice(getSessionSelection(command)),
+        );
         printOutput(
-          projectSessionOutput(result.session, result.versionCheck),
+          projectSessionOutput(
+            result.session as unknown as Record<string, unknown>,
+            result.versionCheck,
+          ),
           true,
-          !!options.pretty,
+          connection.pretty,
         );
       });
     });
 
-  sessionCommand
-    .command('list')
-    .description('List running Agent sessions')
-    .action(async (...args: unknown[]) => {
-      const command = getActionCommand(args);
-      await runAgentAction(command, async () => {
-        const options = getConnectionOptions(command);
-        const result = await createAgentTransport({
-          host: options.host,
-          port: options.port,
-        }).listSessions();
-        printOutput(
-          result.sessions.map((session) =>
-            projectSessionOutput(session as Record<string, unknown>),
-          ),
-          true,
-          !!options.pretty,
-        );
-      });
+  addListingOptions(
+    sessionCommand.command('list').description('List running agent sessions'),
+  ).action(async (...args: unknown[]) => {
+    const command = getActionCommand(args);
+    await runAgentAction(command, async () => {
+      const connection = getConnection(command);
+      const result = await createAgentTransport({
+        host: connection.host,
+        port: connection.port,
+      }).listSessions();
+      printOutput(
+        shapeListing(result.sessions as unknown as Record<string, unknown>[], {
+          keyOf: (session) => String(session.id),
+          scope: 'sessions',
+          fieldSet: SESSION_ROWS,
+          options: command.opts<ListingOptions>(),
+          commandArgs: ['session', 'list', ...getTypedGlobalArgs(command)],
+        }),
+        true,
+        connection.pretty,
+      );
     });
+  });
 
   sessionCommand
     .command('show')
-    .description('Show one Agent session')
+    .description('Show one agent session')
     .argument('<sessionId>', 'Session ID')
     .action(async (sessionId: string, ...args: unknown[]) => {
       const command = getActionCommand(args);
       await runAgentAction(command, async () => {
-        const options = getConnectionOptions(command);
+        const connection = getConnection(command);
         const result = await createAgentTransport({
-          host: options.host,
-          port: options.port,
+          host: connection.host,
+          port: connection.port,
         }).getSession(sessionId);
         printOutput(
-          projectSessionOutput(result.session as Record<string, unknown>),
+          projectSessionOutput(result.session as unknown as Record<string, unknown>),
           true,
-          !!options.pretty,
+          connection.pretty,
         );
       });
     });
 
   sessionCommand
     .command('stop')
-    .description('Stop one Agent session')
-    .argument('<sessionId>', 'Session ID')
-    .action(async (sessionId: string, ...args: unknown[]) => {
+    .description('Stop an agent session (default: the one other commands would use)')
+    .argument('[sessionId]', 'Session ID')
+    .action(async (sessionId: string | undefined, ...args: unknown[]) => {
       const command = getActionCommand(args);
       await runAgentAction(command, async () => {
-        const options = getConnectionOptions(command);
-        const result = await createAgentTransport({
-          host: options.host,
-          port: options.port,
-        }).stopSession(sessionId);
-        printOutput(result, true, !!options.pretty);
+        const connection = getConnection(command);
+        const transport = createAgentTransport({ host: connection.host, port: connection.port });
+        const id = sessionId ?? (await findSessionToStop(transport, getSessionSelection(command)));
+        printOutput(await transport.stopSession(id), true, connection.pretty);
       });
     });
 
-  mcpCommand
-    .command('list-domains')
-    .alias('domains')
-    .description('List available static and plugin domains')
-    .option('-f, --fields <csv>', `Fields to include (${DOMAIN_LIST_FIELDS.join(', ')})`)
-    .option('-v, --verbose', 'Include all supported fields')
-    .option('-n, --limit <n>', 'Page size (default 20, max 100)')
-    .option('-c, --cursor <token>', 'Opaque cursor from previous page')
-    .requiredOption('-s, --session <id>', 'Target Agent session ID')
-    .action(async (_args: ListDomainsOptions, command: Command) => {
-      await runAgentAction(command, async () => {
-        const options = getConnectionOptions(command);
-        const listOptions = command.optsWithGlobals<ListDomainsOptions>();
-        const fields = parseFields(
-          listOptions.fields,
-          DOMAIN_LIST_FIELDS,
-          DOMAIN_LIST_DEFAULT_FIELDS,
-          !!listOptions.verbose,
-        );
-        const limit = parseLimit(listOptions.limit);
-        const sessionId = getSessionId(command);
-        const client = createAgentClient({
-          host: options.host,
-          port: options.port,
-        });
-        const session = await client.attachSession(sessionId);
+  const listDomains = async (...args: unknown[]) => {
+    const command = getActionCommand(args);
+    await runAgentAction(command, async () => {
+      const connection = getConnection(command);
+      const session = await openSession(command);
+      const domains = (await session.domains.list())
+        .map<DomainListRow>((domain) => ({
+          id: domain.id,
+          kind: domain.kind,
+          availability: domain.availability ?? 'supported',
+          fallback: domain.fallback,
+          pluginId: domain.pluginId,
+          slug: domain.slug,
+          description: domain.description,
+        }))
+        .sort((a, b) => a.id.localeCompare(b.id));
 
-        const result = await (async () => {
-          const domains = (await session.domains.list())
-            .map<DomainListRow>((domain) => ({
-              id: domain.id,
-              kind: domain.kind,
-              availability: domain.availability ?? 'supported',
-              fallback: domain.fallback,
-              pluginId: domain.pluginId,
-              slug: domain.slug,
-              description: domain.description,
-            }))
-            .sort((a, b) => a.id.localeCompare(b.id));
-          const paged = paginateRows(domains, {
-            kind: 'domains',
-            scope: 'all',
-            limit,
-            cursor: listOptions.cursor,
-          });
-
-          return shapePaginatedRows(
-            paged,
-            fields,
-            paged.page.nextCursor
-              ? formatAgentCommand([
-                  'domains',
-                  ...getConnectionCommandArgs(options),
-                  '--session',
-                  sessionId,
-                  ...getListingOptionArgs(
-                    listOptions,
-                    limit,
-                    paged.page.nextCursor,
-                    !!options.pretty,
-                  ),
-                ])
-              : undefined,
-          );
-        })();
-
-        printOutput(result, true, !!options.pretty);
-      });
+      printOutput(
+        shapeListing(domains as unknown as Record<string, unknown>[], {
+          keyOf: (domain) => String(domain.id),
+          scope: 'domains',
+          fieldSet: { fields: DOMAIN_LIST_FIELDS, defaultFields: DOMAIN_LIST_DEFAULT_FIELDS },
+          options: command.opts<ListingOptions>(),
+          commandArgs: ['domains', ...getTypedGlobalArgs(command)],
+        }),
+        true,
+        connection.pretty,
+      );
     });
+  };
 
-  registerDynamicPluginDomainDispatcher(mcpCommand);
+  addListingOptions(
+    withHelp(agentCommand.command('domains')).description(
+      'List available built-in and plugin domains',
+    ),
+  ).action(listDomains);
+  // The previous spelling, accepted and no longer listed (ADR 0005, decision 11).
+  addListingOptions(withHelp(agentCommand.command('list-domains', { hidden: true }))).action(
+    listDomains,
+  );
 };

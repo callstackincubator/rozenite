@@ -6,6 +6,7 @@ import {
   DEFAULT_AGENT_HOST,
   DEFAULT_AGENT_PORT,
   getAgentSessionCallToolRoute,
+  getErrorDetails,
   getAgentSessionRoute,
   getAgentSessionTapRoute,
   getAgentSessionToolsRoute,
@@ -24,20 +25,6 @@ import {
 import type { AgentClientOptions, AgentTapStreamHandle, AgentTransport } from './types.js';
 
 export type { AgentClientOptions, AgentTransport } from './types.js';
-
-const getErrorDetails = (error: unknown): string | null => {
-  if (!error) {
-    return null;
-  }
-
-  if (error instanceof AggregateError && error.errors.length > 0) {
-    return error.errors
-      .map((entry) => (entry instanceof Error ? entry.message : String(entry)))
-      .join('; ');
-  }
-
-  return error instanceof Error ? error.message : String(error);
-};
 
 const createMetroConnectionError = (host: string, port: number, error: unknown): Error => {
   const details = getErrorDetails(error);

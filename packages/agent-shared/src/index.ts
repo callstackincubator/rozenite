@@ -1,5 +1,6 @@
 import type { RozeniteHostIntegration, RozeniteIntegration } from '@rozenite/tools/integration';
 import type { UnsupportedDomainInfo } from './capabilities.js';
+import { AGENT_MESSAGE_TYPES } from './message-types.js';
 
 export {
   createEmptyCapabilityProfile,
@@ -26,6 +27,35 @@ export {
   shapePaginatedRows,
   shapeToolResult,
 } from './output-shaping.js';
+
+export { decodeCursor, encodeCursor, normalizePageLimit, paginateArray } from './pagination.js';
+export type { CursorKey, CursorPayload, PaginateArrayOptions } from './pagination.js';
+
+export {
+  BOUNDED_VALUE_DEFAULTS,
+  BOUNDED_VALUE_LIMITS,
+  boundValue,
+  normalizeBoundedValueArgs,
+  parseValuePath,
+  selectValuePath,
+  truncateString,
+} from './bounded-value.js';
+export type { BoundedValue, BoundedValueArgs, BoundedValueOptions } from './bounded-value.js';
+export { sliceUtf8 } from './slice-utf8.js';
+export type { SliceUtf8Options, SliceUtf8Result } from './slice-utf8.js';
+
+export { getErrorDetails } from './errors.js';
+export { AGENT_MESSAGE_TYPES } from './message-types.js';
+export {
+  BUILT_IN_DOMAIN_TOOL_NAMES,
+  CONSOLE_TOOL_NAMES,
+  MEMORY_TOOL_NAMES,
+  NETWORK_TOOL_NAMES,
+  PERFORMANCE_TOOL_NAMES,
+  REACT_TOOL_NAMES,
+} from './built-in-tools.js';
+export { parseAgentTargetsResponse } from './targets-response.js';
+export type { ParsedTargetsResponse } from './targets-response.js';
 
 export const AGENT_PLUGIN_ID = 'rozenite-agent';
 
@@ -86,42 +116,91 @@ export interface PageResult<TItem, TMeta = unknown> {
 
 export interface AgentToolPagination {
   kind: 'cursor';
+  /** Every row field an agent may request. */
   fields: readonly string[];
+  /** The projection used when the caller does not ask for fields. */
+  defaultFields?: readonly string[];
+  /** Result key holding the rows, when it is not `items`. */
+  itemsKey?: string;
+  /**
+   * Top-level result keys, besides the rows and `page`, that a frontend
+   * prints with a page. Omitted means "print every key"; `[]` means "print
+   * only the rows and the page". The result itself is never changed.
+   */
+  meta?: readonly string[];
+}
+
+/** Row metadata for a tool that returns a list without paging it. */
+export interface AgentToolRows {
+  /** Result key holding the rows. Defaults to `items`. */
+  key?: string;
+  /** Every row field an agent may request. */
+  fields: readonly string[];
+  /** The projection used when the caller does not ask for fields. */
   defaultFields?: readonly string[];
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'string');
 
-export const isAgentToolPagination = (value: unknown): value is AgentToolPagination => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+const isUniqueNonEmptyStringList = (value: unknown): value is string[] =>
+  isStringArray(value) &&
+  value.every((item) => item.length > 0) &&
+  new Set(value).size === value.length;
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const hasValidFieldSet = (fields: unknown, defaultFields: unknown): boolean => {
+  if (!isStringArray(fields) || fields.length === 0 || new Set(fields).size !== fields.length) {
     return false;
   }
 
-  const pagination = value as Record<string, unknown>;
-  if (
-    pagination.kind !== 'cursor' ||
-    !isStringArray(pagination.fields) ||
-    pagination.fields.length === 0 ||
-    new Set(pagination.fields).size !== pagination.fields.length
-  ) {
-    return false;
-  }
-
-  if (pagination.defaultFields === undefined) {
+  if (defaultFields === undefined) {
     return true;
   }
 
   if (
-    !isStringArray(pagination.defaultFields) ||
-    pagination.defaultFields.length === 0 ||
-    new Set(pagination.defaultFields).size !== pagination.defaultFields.length
+    !isStringArray(defaultFields) ||
+    defaultFields.length === 0 ||
+    new Set(defaultFields).size !== defaultFields.length
   ) {
     return false;
   }
 
-  const allowedFields = new Set(pagination.fields);
-  return pagination.defaultFields.every((field) => allowedFields.has(field));
+  const allowedFields = new Set(fields);
+  return defaultFields.every((field) => allowedFields.has(field));
+};
+
+export const isAgentToolPagination = (value: unknown): value is AgentToolPagination => {
+  if (!isRecord(value) || value.kind !== 'cursor') {
+    return false;
+  }
+
+  if (value.itemsKey !== undefined && !isNonEmptyString(value.itemsKey)) {
+    return false;
+  }
+
+  if (value.meta !== undefined && !isUniqueNonEmptyStringList(value.meta)) {
+    return false;
+  }
+
+  return hasValidFieldSet(value.fields, value.defaultFields);
+};
+
+export const isAgentToolRows = (value: unknown): value is AgentToolRows => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  if (value.key !== undefined && !isNonEmptyString(value.key)) {
+    return false;
+  }
+
+  return hasValidFieldSet(value.fields, value.defaultFields);
 };
 
 export interface AgentToolTraits {
@@ -138,6 +217,8 @@ export interface AgentTool extends AgentToolTraits {
   description: string;
   inputSchema: JSONSchema7;
   pagination?: AgentToolPagination;
+  /** Declares the rows of a list this tool returns without paging it. */
+  rows?: AgentToolRows;
 }
 
 type AgentToolTypeCarrier<TArgs = unknown, TResult = unknown> = {
@@ -158,6 +239,7 @@ type AgentToolDescriptorShape = AgentToolTraits & {
   description: string;
   inputSchema: JSONSchema7;
   pagination?: AgentToolPagination;
+  rows?: AgentToolRows;
 };
 
 export interface AgentToolDescriptor<TArgs = unknown, TResult = unknown>
@@ -175,31 +257,81 @@ export const defineAgentToolContract = <TArgs, TResult>(
   return tool as AgentToolContract<TArgs, TResult>;
 };
 
-type PaginatedResultShape<TItem> = {
-  items: TItem[];
-  page: PageEnvelope;
+type ListRow = Record<string, unknown>;
+
+type PaginatedResultShape<TItemsKey extends string> = { page: PageEnvelope } & {
+  [K in TItemsKey]: readonly ListRow[];
 };
 
-type PaginatedItem<TResult> = TResult extends PaginatedResultShape<infer TItem> ? TItem : never;
+type RowsResultShape<TKey extends string> = { [K in TKey]: readonly ListRow[] };
 
-type PaginatedItemField<TResult> = Extract<keyof PaginatedItem<TResult>, string>;
+type ListRowOf<TResult, TKey extends string> = TResult extends {
+  [K in TKey]: readonly (infer TRow)[];
+}
+  ? TRow
+  : never;
 
-type PaginatedToolShape<TResult> = AgentTool & {
-  pagination: Omit<AgentToolPagination, 'fields' | 'defaultFields'> & {
-    fields: readonly PaginatedItemField<TResult>[];
-    defaultFields?: readonly PaginatedItemField<TResult>[];
+type ListRowField<TResult, TKey extends string> = Extract<keyof ListRowOf<TResult, TKey>, string>;
+
+/** `items` may be spelled out or left out; any other key must be declared. */
+type ListKeyDeclaration<TName extends string, TKey extends string> = 'items' extends TKey
+  ? { [K in TName]?: TKey }
+  : { [K in TName]: TKey };
+
+type PaginatedToolShape<TResult, TItemsKey extends string> = AgentTool & {
+  pagination: Omit<AgentToolPagination, 'fields' | 'defaultFields' | 'itemsKey' | 'meta'> &
+    ListKeyDeclaration<'itemsKey', TItemsKey> & {
+      fields: readonly ListRowField<TResult, TItemsKey>[];
+      defaultFields?: readonly ListRowField<TResult, TItemsKey>[];
+      meta?: readonly Extract<Exclude<keyof TResult, TItemsKey | 'page'>, string>[];
+    };
+};
+
+type RowsToolShape<TResult, TKey extends string> = AgentTool & {
+  rows: ListKeyDeclaration<'key', TKey> & {
+    fields: readonly ListRowField<TResult, TKey>[];
+    defaultFields?: readonly ListRowField<TResult, TKey>[];
   };
 };
 
+/**
+ * Defines a cursor-paginated tool. `fields`, `defaultFields` and `meta` are
+ * checked against `TResult` at compile time. Rows live under `items` unless
+ * the third type argument names another key, which must then be passed as
+ * `pagination.itemsKey`.
+ */
 export const definePaginatedAgentToolContract = <
   TArgs,
-  TResult extends PaginatedResultShape<Record<string, unknown>>,
+  TResult extends PaginatedResultShape<TItemsKey>,
+  TItemsKey extends string = 'items',
 >(
-  tool: PaginatedToolShape<TResult>,
+  tool: PaginatedToolShape<TResult, TItemsKey>,
 ): AgentToolContract<TArgs, TResult> => {
   if (!isAgentToolPagination(tool.pagination)) {
     throw new Error(
-      'Paginated agent tool fields must be non-empty, unique, and contain every default field',
+      'Paginated agent tool fields must be non-empty, unique, and contain every default field; itemsKey must be a non-empty string; meta must list unique non-empty keys',
+    );
+  }
+
+  return tool as AgentToolContract<TArgs, TResult>;
+};
+
+/**
+ * Defines a tool that returns a list without paging it. `rows.fields` and
+ * `rows.defaultFields` are checked against the row type at compile time.
+ * Rows live under `items` unless the third type argument names another key,
+ * which must then be passed as `rows.key`.
+ */
+export const defineRowsAgentToolContract = <
+  TArgs,
+  TResult extends RowsResultShape<TKey>,
+  TKey extends string = 'items',
+>(
+  tool: RowsToolShape<TResult, TKey>,
+): AgentToolContract<TArgs, TResult> => {
+  if (!isAgentToolRows(tool.rows)) {
+    throw new Error(
+      'Agent tool rows must declare non-empty, unique fields that contain every default field, and a non-empty key',
     );
   }
 
@@ -235,6 +367,7 @@ export const defineAgentToolDescriptors = <
         ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
         ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
         ...(tool.pagination ? { pagination: tool.pagination } : {}),
+        ...(tool.rows ? { rows: tool.rows } : {}),
       }),
     ]),
   ) as {
@@ -349,6 +482,11 @@ export type CreateAgentSessionRequest = {
 
 export type CreateAgentSessionResponse = {
   session: AgentSessionInfo;
+  /**
+   * `true` when this request started the session, `false` when it reused a
+   * running one. Absent from servers older than the field.
+   */
+  created?: boolean;
   versionCheck?: string;
 };
 
@@ -439,27 +577,27 @@ export type AgentSessionReadyPayload = {
 };
 
 export type RegisterToolMessage = {
-  type: 'register-tool';
+  type: typeof AGENT_MESSAGE_TYPES.registerTool;
   payload: RegisterToolPayload;
 };
 
 export type UnregisterToolMessage = {
-  type: 'unregister-tool';
+  type: typeof AGENT_MESSAGE_TYPES.unregisterTool;
   payload: UnregisterToolPayload;
 };
 
 export type ToolCallMessage = {
-  type: 'tool-call';
+  type: typeof AGENT_MESSAGE_TYPES.toolCall;
   payload: ToolCallPayload;
 };
 
 export type ToolResultMessage = {
-  type: 'tool-result';
+  type: typeof AGENT_MESSAGE_TYPES.toolResult;
   payload: ToolResultPayload;
 };
 
 export type AgentSessionReadyMessage = {
-  type: 'agent-session-ready';
+  type: typeof AGENT_MESSAGE_TYPES.agentSessionReady;
   payload: AgentSessionReadyPayload;
 };
 
@@ -469,3 +607,12 @@ export type AgentMessage =
   | ToolCallMessage
   | ToolResultMessage
   | AgentSessionReadyMessage;
+
+/** Payload type for each agent message `type`, as a device-bridge event map. */
+export type AgentEventMap = {
+  [AGENT_MESSAGE_TYPES.agentSessionReady]: AgentSessionReadyPayload;
+  [AGENT_MESSAGE_TYPES.registerTool]: RegisterToolPayload;
+  [AGENT_MESSAGE_TYPES.unregisterTool]: UnregisterToolPayload;
+  [AGENT_MESSAGE_TYPES.toolCall]: ToolCallPayload;
+  [AGENT_MESSAGE_TYPES.toolResult]: ToolResultPayload;
+};
