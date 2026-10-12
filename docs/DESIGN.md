@@ -7,11 +7,12 @@ look shared with Apex (lime), Simlock (orange), Appduct (cyan) and agent-device 
 Rozenite's accent is crimson-rose, the colour of the mineral's red crystals in dark rock.
 
 **Scope.** This file governs the website (landing page, docs theme, plugin directory, welcome
-page), social cards, slides, diagrams, videos and any other brand visual. It does not govern
-the DevTools panel UI that plugins build with `@rozenite/ui`; that work follows
-[agents/working-on-ui-components.md](../agents/working-on-ui-components.md). Where the two
-seem to disagree, the panel UI follows its own guide and this file only applies to pictures
-of it on the website.
+page), social cards, slides, diagrams, videos and any other brand visual, and the DevTools
+panel UI: `@rozenite/ui`, the Rozenite shell, the standalone app and every plugin panel. The
+panel UI is the same look tuned for a dense tool; where it departs from the marketing rules
+(status colours, a light theme, smaller type) it says so in [DevTools panel UI](#devtools-panel-ui).
+How to work on the components themselves is in
+[agents/working-on-ui-components.md](../agents/working-on-ui-components.md).
 
 ## Colour
 
@@ -35,7 +36,8 @@ Dark is the default and the only mode for marketing surfaces.
 - One accent, used sparingly: the mark and wordmark, the primary action, the second beat of a
   headline, strings in code, live state in animations. Never for status (success, error,
   warning), even though it is red: an error row in a pictured panel is white text with an
-  `ERR` label, not crimson.
+  `ERR` label, not crimson. The panel UI has its own status colours, kept clear of the
+  accent's hue (see [DevTools panel UI](#devtools-panel-ui)).
 - Anything filled with the accent carries dark text.
 - Docs in light mode: white background, black text, neutral greys, and a deeper crimson for
   accent text and links (`#c2143f`, 6.1:1 on white) and for rules (`#d6204c`). The bright
@@ -142,8 +144,8 @@ narrowing to the base. As a 7×10 bitmap:
   that just changed flashed in the accent. HTTP status codes and errors stay white: status
   never takes the accent. The row the story is about is picked out like the selected plugin.
   On phones only Console stays of the built-in tabs, the sidebar narrows, and the table drops
-  its least important column. Never draw Chrome's real UI, icons or the Rozenite UI's own
-  colours; this is a diagram of it.
+  its least important column. Never draw Chrome's real UI or icons; this is a diagram of it, drawn
+  with the same tokens the panel UI uses.
 - **Code.** Zero-padded line numbers (`01`, `02`) in `faint`, keywords and punctuation in
   dimmed white, functions and types in white, strings and numbers in the accent, comments in
   `faint`. Shell: the command in white, plain arguments as text (never as strings), options
@@ -185,6 +187,85 @@ narrowing to the base. As a 7×10 bitmap:
 - **Closing.** CTA bar, then the giant accent wordmark, then a single footer row:
   `© YEAR ROZENITE BY CALLSTACK` left, mono links right (Docs, Plugin directory, llms.txt,
   GitHub, Discord, MIT license, Callstack).
+
+## DevTools panel UI
+
+The panels people work in all day: `@rozenite/ui`, the shell's plugin sidebar, the standalone
+app and every plugin panel. Same palette, fonts and hairlines as the website, tuned for a dense
+tool. The reference composition is the Storybook story `Preview / Design refresh`
+(`apps/ui-storybook/src/stories/DesignPreview.stories.tsx`): a Network Activity panel in the
+shell, dark, light and empty.
+
+**Tokens.** `packages/ui/styles.css` is the single source; components use its Tailwind names,
+never raw colours. The website tokens map onto them like this:
+
+| Panel token | Dark | Light | Website token / use |
+| --- | --- | --- | --- |
+| `background`, `card`, `sidebar` | `#0a0a0a` | `#ffffff` | `bg` |
+| `surface`, `sidebar-accent` | `#111111` | `#f9f9f8` / `#f4f4f3` | `surface`: selected rows and items |
+| `popover` | `#111111` | `#ffffff` | Menus, select and combobox popups, dialogs, toasts |
+| `muted` | `#161616` | `#f6f6f5` | `field`: inputs, chips, inline code |
+| `secondary` | `#1a1a1a` | `#efefee` | The dark button |
+| `accent` | white 5% | black 4% | Hover wash only (not the brand accent) |
+| `border` | `#1f1f1f` | `#e6e6e6` | `line` |
+| `border-strong`, `input` | `#313131` | `#d1d1d1` | `line-strong`: inputs, outlined buttons, popups |
+| `foreground` | `#ffffff` | `#0a0a0a` | `text` |
+| `muted-foreground` | `#a3a3a3` | `#5e5e5e` | `muted`: body copy, idle items |
+| `faint` | `#858585` | `#6b6b6b` | `faint`: labels, metadata, placeholders |
+| `primary`, `ring` | `#ff4f7b` | `#c2143f` | `accent` (light uses the docs' deeper crimson) |
+| `primary-hover` | `#ff9fb2` | `#a3102f` | `accent-hover` |
+| `primary-foreground` | `#0a0a0a` | `#ffffff` | `on-accent` |
+
+The greys are the website's alpha whites flattened onto `bg`, so they stay predictable when
+they stack. Every text pair meets 4.5:1 in both themes, chips included.
+
+**Status colours.** Panels need them; the website does not. `success` (`#4ade80` / `#136f35`),
+`warning` (`#fbbf24` / `#8f5a06`), `danger` (`#ff7a50` / `#b13b0b`) and `info` (`#60a5fa` /
+`#1d4ed8`). Danger is an orange-red so an error never reads as the brand. Status is text on a
+chip (`soft`: a 14% / 10% tint), a square indicator or a mono label such as `ERR`; it never
+fills large areas, and the accent never means status.
+
+**Type.** Switzer for UI text and names, Geist Mono for data and labels, both bundled in
+`packages/ui/fonts/` (the website's own files, 57 kB). Sizes are smaller than the website's:
+
+| Role | Style |
+| --- | --- |
+| Panel title (`PluginHeader.Title`) | Switzer 500, 15px, -0.01em |
+| Headings, `Text` `title`/`heading` | Switzer 500, never bold |
+| Body, list items, field values | Switzer 400, 13–14px, `muted-foreground` when idle |
+| Label (`Text variant="label"`, buttons, tabs, badges, table headers, group labels) | Geist Mono, uppercase, 0.08em, 10–12px, usually `faint` |
+| Data (`Text` `code`/`numeric`, table values, keys) | Geist Mono 12px, tabular numbers |
+
+Labels are mono; sentences, descriptions and empty-state copy never are. Plugin names stay
+in Switzer.
+
+**Shape.** Square everywhere (`--radius: 0`, the `rounded-*` scale stays wired as a seam). No
+shadows, blur or gradients: popups, dialogs and toasts are separated by a `border-strong`
+hairline on `popover`. Indicators are squares, never dots. The switch is a square track with a
+square thumb.
+
+**Components.**
+
+- **Buttons:** mono uppercase labels, `h-6`/`h-8`/`h-10`. Primary is the accent fill with
+  `primary-foreground` text; neutral solid is the dark button; outline has a `border-strong`
+  border; ghost is `muted-foreground` until hovered.
+- **Badges:** the website's chip. `soft` (the usual one) is a `muted` fill with the tone as
+  text; `solid` primary is the accent block, like the `ROZENITE` window tag.
+- **Tabs:** hairline-divided mono cells in `faint`; the selected one is white on the hover
+  wash with a 2px accent underline.
+- **Sidebar:** full-width rows, items in Switzer `muted-foreground`, the selected one on
+  `surface` with a 2px accent bar on its left; mono group labels.
+- **Tables:** header row of `faint` mono uppercase labels, rows divided by `border`, hover on
+  the wash, selected row on `surface` with the accent bar.
+- **Fields:** `muted` fill, `input` border that brightens to `faint` on hover and to the accent
+  on focus; placeholders in `faint`.
+- **Focus:** a 2px `ring` in the accent, square.
+- **Motion:** 120ms colour transitions, as in [Motion](#motion).
+
+**Plugins.** A plugin panel styles itself through `@rozenite/ui` components and tokens. It
+does not ship its own palette, font or radius; colour for data (charts, categories, syntax)
+comes from the status colours and neutral greys before anything new is added, and never from
+violet, Rozenite's retired colour.
 
 ## Pixel imagery
 
@@ -307,6 +388,10 @@ Both are generated from one page, `website/og/og.html`, with `pnpm --filter @roz
   pick up a new banner when the site deploys.
 
 ## Where it is implemented
+
+- Panel UI tokens, fonts and base styles: `packages/ui/styles.css`, `packages/ui/fonts/`;
+  components in `packages/ui/src/`; the reference panel in
+  `apps/ui-storybook/src/stories/DesignPreview.stories.tsx`
 
 - Landing tokens and base styles: `website/src/styles/landing.css`
 - Docs theme, dark and light: `website/src/styles/theme.css`, `website/src/styles/docs.css`,
