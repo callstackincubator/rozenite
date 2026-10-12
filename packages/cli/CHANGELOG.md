@@ -1,5 +1,112 @@
 # rozenite
 
+## 2.5.0
+
+### Minor Changes
+
+- [#540](https://github.com/callstackincubator/rozenite/pull/540) [`f59e90b`](https://github.com/callstackincubator/rozenite/commit/f59e90b8cb63cfbe045c1768bb482424a8650cb5) Thanks [@V3RON](https://github.com/V3RON)! - `rozenite agent` has a shorter grammar. A call is now
+  `rozenite agent <domain> <tool> [--<arg> <value>…]`, with one flag per tool
+  argument taken from the tool's input schema (`--levels error,warning`,
+  `--noHost`, `--action '{"type":"x"}'`); `--args '<json>'` still works and
+  explicit flags win over it. `rozenite agent <domain>` lists a domain's tools,
+  `<tool> --schema` prints a tool's schema and `<tool> --help` describes its
+  arguments. An unknown flag fails and lists the tool's arguments.
+
+  `--session` is now optional on every agent command. The CLI picks the
+  session in this order: `--session <id>`, the session for `--device <id>`,
+  `ROZENITE_SESSION`, the session for `ROZENITE_DEVICE`, then the session for
+  the only connected device; otherwise it fails with the list of targets. A
+  flag you type always wins over an environment variable. When the server
+  reports that a command started a new session, the CLI says so on stderr
+  (Metro servers from earlier releases do not report it, so no notice is
+  printed). `rozenite agent session stop` with no id stops the session the
+  other commands would use.
+
+  Other changes:
+
+  - `--limit` and `--cursor` page every listing, including a tool's own
+    results, and a page's `next` is the command you ran with `--cursor` set.
+    It repeats every flag you typed (`--session`, `--device`, `--host`,
+    `--port`, `--pretty`, `--fields`) and none you did not, so it no longer
+    injects the default host and port or a session id from the environment.
+  - `rozenite agent help` prints the agent help.
+  - `--fields all` selects every column. `targets` and `session list` print
+    rows like every other listing and accept `--fields`, `--limit` and
+    `--cursor`. `session list` used to print a bare array.
+  - Default projections leave out a column that is null on every row of a
+    page; a column named with `--fields` is always printed.
+  - A tool that declares `pagination.itemsKey`, `pagination.meta` or `rows`
+    is printed accordingly: rows from the declared key, only the declared
+    metadata, and columns for unpaged lists.
+  - Domain listings print each tool's short name, and tool names ignore case,
+    `-` and `_`.
+  - `rozenite agent tap <plugin> [--send <type> [--payload <json>]]` takes the
+    plugin as an argument, and uses the same session resolution.
+  - JSON is compact when piped and indented on a terminal (default change:
+    agent commands used to always print compact JSON unless `--pretty` was
+    passed). `tap` writes NDJSON when piped and arrow lines on a terminal
+    (default change: it used to print arrow lines unless `--json` was passed).
+
+  The previous spellings keep working: `<domain> call|call-tool --tool …
+--args …`, `<domain> tools|list-tools`, `<domain> schema|get-tool-schema
+--tool …`, `list-domains`, `--verbose`, `--json`, `--deviceId`, and
+  `tap --plugin/--type/-a`. As before, `-v`/`--verbose` is ignored for a tool
+  that declares no columns, and `--limit`/`--cursor` are ignored for a tool
+  that does not page (the CLI now prints a one-line note on stderr). The new
+  `--fields` flag fails for a tool that declares no columns.
+
+- [#551](https://github.com/callstackincubator/rozenite/pull/551) [`22f5e0a`](https://github.com/callstackincubator/rozenite/commit/22f5e0a5cd8a81af9ddd273066aaff230cd17c7e) Thanks [@V3RON](https://github.com/V3RON)! - The Rozenite shell, the standalone app and its window, the Vite dev host and
+  the official plugin panels now share the rozenite.dev look: the crimson
+  stepped mark, the near-black theme with the crimson-rose accent, square
+  corners and no shadows. Network Activity and SQLite drop their own palettes
+  for the shared one, the Overlay plugin's on-device slider uses the new accent,
+  and plugins generated with `rozenite generate` start from the new colours.
+
+- [#504](https://github.com/callstackincubator/rozenite/pull/504) [`66098f4`](https://github.com/callstackincubator/rozenite/commit/66098f4a6e07bcc8f59d246e32fc80000353b0a5) Thanks [@V3RON](https://github.com/V3RON)! - `rozenite init` now detects rspeedy/Rsbuild (Lynx) projects — via
+  `lynx.config.ts`/`lynx.config.js`, or `@lynx-js/rspeedy` in `package.json` —
+  installs `@rozenite/lynx` as a dev dependency, and adds `rozeniteLynxPlugin()`
+  to the `plugins` array in `lynx.config.ts`, mirroring what it already does for
+  Metro and Re.Pack. It also reminds you to turn on Lynx DevTool, since that
+  switch is off by default and Rozenite finds nothing to connect to without it.
+
+### Patch Changes
+
+- [#544](https://github.com/callstackincubator/rozenite/pull/544) [`f46c00e`](https://github.com/callstackincubator/rozenite/commit/f46c00e92c282304ede07d10f3206939153a4bcb) Thanks [@V3RON](https://github.com/V3RON)! - The first command on an implicitly created agent session no longer runs before the device has registered its plugin and app tools. The CLI now waits, for up to three seconds, until the session's tool count stops changing, so `rozenite agent domains` on a fresh session lists plugin domains on the first call instead of only the built-ins.
+
+- [#539](https://github.com/callstackincubator/rozenite/pull/539) [`83733d9`](https://github.com/callstackincubator/rozenite/commit/83733d9127630fdadbc19750b3482e0c3a1690e3) Thanks [@V3RON](https://github.com/V3RON)! - The bundled `console`, `network`, `react`, `memory`, `performance` and `lynx`
+  agent docs now use the `rozenite agent <domain> <tool> --<arg>` grammar,
+  describe the new default columns, bounded body reads and request-detail
+  `include` sections, and correct earlier mistakes (`fields` is a CLI flag, not
+  a tool argument; the React host filter is `noHost`).
+
+  New bundled docs for the `sqlite` and `feature-flags` plugin domains, so
+  `npx rozenite skills list` covers every official plugin with agent tools.
+
+- [#560](https://github.com/callstackincubator/rozenite/pull/560) [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58) Thanks [@V3RON](https://github.com/V3RON)! - The published packages no longer include development fixtures, tests and build
+  configuration (such as `rozenite.config.ts`, `__tests__` and `tsconfig.json`),
+  which makes installs smaller: `@rozenite/expo-atlas-plugin` alone drops from
+  about 6 MB to 90 KB. Every package now lists its `CHANGELOG.md`, so changelogs
+  ship. Plugins generated by `rozenite generate` get the same treatment: they
+  publish only their built output, without `rozenite.config.ts`, sources, tests
+  or build configuration.
+
+- [#560](https://github.com/callstackincubator/rozenite/pull/560) [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58) Thanks [@V3RON](https://github.com/V3RON)! - Fix dev-mode bundles (Re.Pack, webpack, Rspack and Vite) failing to resolve
+  `@rozenite/agent-bridge`, `@rozenite/agent-shared` and the other packages
+  that publish an `exports` map: it carried a `development` condition pointing at
+  TypeScript source that was not in the package. The published packages no
+  longer have that condition, so these tools pick the built output in every mode.
+
+  `rozenite build` also stops adding a `development` condition to a plugin's
+  `./sdk` export and removes the `./sdk.ts` one that earlier versions wrote; a
+  `development` condition you wrote yourself (any other value) is kept. If your
+  `package.json` has a `publishConfig.exports`, `rozenite build` now keeps its
+  managed entries (`.`, `./sdk`, `./metro`) in step with `exports`.
+
+- Updated dependencies [[`f59e90b`](https://github.com/callstackincubator/rozenite/commit/f59e90b8cb63cfbe045c1768bb482424a8650cb5), [`fb29800`](https://github.com/callstackincubator/rozenite/commit/fb298007eea021f23863b1b6a9534cb62d5260bf), [`2a72f21`](https://github.com/callstackincubator/rozenite/commit/2a72f2115eb6eda0b806fa4fcdaf5427f8b2d2c9), [`fb29800`](https://github.com/callstackincubator/rozenite/commit/fb298007eea021f23863b1b6a9534cb62d5260bf), [`f59e90b`](https://github.com/callstackincubator/rozenite/commit/f59e90b8cb63cfbe045c1768bb482424a8650cb5), [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58), [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58), [`66098f4`](https://github.com/callstackincubator/rozenite/commit/66098f4a6e07bcc8f59d246e32fc80000353b0a5), [`db452ea`](https://github.com/callstackincubator/rozenite/commit/db452ea72d78476234385e22dde7d69b52725007), [`950b806`](https://github.com/callstackincubator/rozenite/commit/950b806a31041928591d5bb60e9ab60382ac2c80)]:
+  - @rozenite/agent-sdk@2.5.0
+  - @rozenite/agent-shared@2.5.0
+  - @rozenite/tools@2.5.0
+
 ## 2.4.0
 
 ### Minor Changes

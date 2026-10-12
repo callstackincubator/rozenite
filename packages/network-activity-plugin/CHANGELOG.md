@@ -1,5 +1,120 @@
 # @rozenite/network-activity-plugin
 
+## 2.5.0
+
+### Minor Changes
+
+- [#541](https://github.com/callstackincubator/rozenite/pull/541) [`56cdf09`](https://github.com/callstackincubator/rozenite/commit/56cdf098c5b3ba2bfc8c4461b1631030c9b40e7d) Thanks [@V3RON](https://github.com/V3RON)! - `listRequests` and `listRealtimeConnections` now page with the shared agent
+  cursor, keyed by `requestId`: requests captured while an agent pages no
+  longer shift the next page, and a cursor from an earlier recording, or one
+  whose request was evicted, answers `reset: true` instead of an error. An
+  invalid `limit` is now an error instead of quietly falling back to 20.
+
+  Default changes, each reachable through an argument:
+
+  - `getRequestBody` / `getResponseBody`: the whole body → at most 16384 bytes.
+    `offset` and `maxBytes` read any range, and the result reports
+    `totalBytes`, `truncated` and, when truncated, `nextOffset`, like the
+    built-in `network` domain: both cut with the same `sliceUtf8` from
+    `@rozenite/agent-shared`, so a range never runs past `maxBytes` and never
+    ends inside a multi-byte character.
+  - Pages printed by the CLI: the full `recording` block → nothing but the
+    rows. The SDK result still carries it, and `getRecordingStatus` returns it.
+
+- [#555](https://github.com/callstackincubator/rozenite/pull/555) [`6a46e9c`](https://github.com/callstackincubator/rozenite/commit/6a46e9c49ba37a6de4b527bb53a50cdb732bb167) Thanks [@V3RON](https://github.com/V3RON)! - The Network Activity panel is rebuilt on `@rozenite/ui`, so it follows the DevTools
+  light and dark themes instead of always rendering dark. Every feature stays: the
+  request list with filters, sorting and selection, the timeline, the side panel with
+  headers, request and response bodies, cookies, initiator, timing and WebSocket and
+  SSE messages, response overrides, and copying a request as cURL or `fetch`. The
+  side panel and the columns of the request list are now resizable, the list shows an
+  empty state, rows can be picked with the keyboard, and failed requests read as
+  errors. The Timing tab now shows the request's real start and end times.
+
+- [#512](https://github.com/callstackincubator/rozenite/pull/512) [`fd42c14`](https://github.com/callstackincubator/rozenite/commit/fd42c14fa4928f9e373e5ac3d35c93e02b234737) Thanks [@V3RON](https://github.com/V3RON)! - Rewrote HTTP capture around a single recorder: the `XMLHttpRequest` hook is
+  now the primary capture path for the built-in stack (covering Axios,
+  `react-native-sse` and React Native's own `fetch`), a generic fetch wrapper
+  covers Expo's `expo/fetch` (and, only when it lazily resolves to that same
+  implementation, the global `fetch`), and `react-native-nitro-fetch` HTTP
+  traffic is translated into the same recorder in one shot instead of being
+  diffed. RN's own `fetch` polyfill, an application wrapper around it, and
+  nitro's `fetch` are never wrapped by the generic fetch path — the XHR hook
+  and nitro's `NetworkInspector` already record that traffic, and either can
+  send its request asynchronously, which would double-record it if wrapped.
+  One module now owns request ids, timing, every emitted event and the
+  response body registry, replacing three separate capture paths, their own
+  emitters, and duplicate timing/body logic.
+
+  Behavior changes, some of them to the wire format:
+
+  - nitro response and request bodies, and nitro WebSocket messages, are now
+    captured up to 1 MiB, up from a 4 KiB cap.
+  - `expo/fetch` response bodies are captured up to 5 MiB; larger bodies are
+    reported by size only. `text/event-stream` responses from `expo/fetch`
+    are recorded without a body and are not read by the plugin at all.
+  - Expo SDK 54–55 keep capturing `expo/fetch` response bodies the app itself
+    reads via `text()`/`json()`/`arrayBuffer()`, as before; `blob()` and direct
+    stream readers are not observed on those SDKs, and a body the app never
+    reads is not captured. This path is covered by unit tests only, because the
+    playground runs an Expo SDK whose `clone()` works. Expo SDK 56 and newer
+    are unaffected.
+  - Requests captured from `react-native-nitro-fetch` now get the same
+    `req_<timestamp>_<random>` request id every other transport uses, instead
+    of nitro's own entry id.
+  - A fetch request's `AbortSignal` is no longer sent on `request-sent` (it
+    serialized to an uninformative `{}` and was never part of the documented
+    `Request` wire type).
+  - Initiator stacks are parsed in the V8/Hermes `at fn (file:line:col)`
+    format only; the JavaScriptCore `fn@file:line:col` format is no longer
+    parsed, so apps running on JSC get no initiator location.
+  - The initiator preview attached to a fetch-captured request now starts at
+    the application's own calling frame, matching the XHR path, instead of at
+    an internal async-transpilation helper frame.
+  - A fetch call still in flight when `network-disable` arrives now completes
+    and its events still reach a listener that stays subscribed (e.g. the
+    agent tools' internal state), instead of being silently dropped.
+
+  No change to the public `useNetworkActivityDevTools`/
+  `withOnBootNetworkActivityRecording` API or the DevTools panel.
+
+- [#551](https://github.com/callstackincubator/rozenite/pull/551) [`22f5e0a`](https://github.com/callstackincubator/rozenite/commit/22f5e0a5cd8a81af9ddd273066aaff230cd17c7e) Thanks [@V3RON](https://github.com/V3RON)! - The Rozenite shell, the standalone app and its window, the Vite dev host and
+  the official plugin panels now share the rozenite.dev look: the crimson
+  stepped mark, the near-black theme with the crimson-rose accent, square
+  corners and no shadows. Network Activity and SQLite drop their own palettes
+  for the shared one, the Overlay plugin's on-device slider uses the new accent,
+  and plugins generated with `rozenite generate` start from the new colours.
+
+### Patch Changes
+
+- [#534](https://github.com/callstackincubator/rozenite/pull/534) [`201e340`](https://github.com/callstackincubator/rozenite/commit/201e340411c50d3ecf04f477197c325988d955a8) Thanks [@theluckystrike](https://github.com/theluckystrike)! - Show the request body in Network Activity when `fetch` is called with a
+  `Request` instance. `ky` v2 does this for every request, so its POST and PUT
+  bodies sent through `expo/fetch` were missing from the panel.
+
+- [#560](https://github.com/callstackincubator/rozenite/pull/560) [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58) Thanks [@V3RON](https://github.com/V3RON)! - The published packages no longer include development fixtures, tests and build
+  configuration (such as `rozenite.config.ts`, `__tests__` and `tsconfig.json`),
+  which makes installs smaller: `@rozenite/expo-atlas-plugin` alone drops from
+  about 6 MB to 90 KB. Every package now lists its `CHANGELOG.md`, so changelogs
+  ship. Plugins generated by `rozenite generate` get the same treatment: they
+  publish only their built output, without `rozenite.config.ts`, sources, tests
+  or build configuration.
+
+- [#560](https://github.com/callstackincubator/rozenite/pull/560) [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58) Thanks [@V3RON](https://github.com/V3RON)! - Fix dev-mode bundles (Re.Pack, webpack, Rspack and Vite) failing to resolve
+  `@rozenite/agent-bridge`, `@rozenite/agent-shared` and the other packages
+  that publish an `exports` map: it carried a `development` condition pointing at
+  TypeScript source that was not in the package. The published packages no
+  longer have that condition, so these tools pick the built output in every mode.
+
+  `rozenite build` also stops adding a `development` condition to a plugin's
+  `./sdk` export and removes the `./sdk.ts` one that earlier versions wrote; a
+  `development` condition you wrote yourself (any other value) is kept. If your
+  `package.json` has a `publishConfig.exports`, `rozenite build` now keeps its
+  managed entries (`.`, `./sdk`, `./metro`) in step with `exports`.
+
+- Updated dependencies [[`2a72f21`](https://github.com/callstackincubator/rozenite/commit/2a72f2115eb6eda0b806fa4fcdaf5427f8b2d2c9), [`fb29800`](https://github.com/callstackincubator/rozenite/commit/fb298007eea021f23863b1b6a9534cb62d5260bf), [`f59e90b`](https://github.com/callstackincubator/rozenite/commit/f59e90b8cb63cfbe045c1768bb482424a8650cb5), [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58), [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58), [`fd4512e`](https://github.com/callstackincubator/rozenite/commit/fd4512e522f9af4ed49a800d4b4a066c9994dc35), [`22f5e0a`](https://github.com/callstackincubator/rozenite/commit/22f5e0a5cd8a81af9ddd273066aaff230cd17c7e), [`212e6fe`](https://github.com/callstackincubator/rozenite/commit/212e6fe0fa7b3f6cfa7feeabee513de88fea4c47)]:
+  - @rozenite/agent-shared@2.5.0
+  - @rozenite/agent-bridge@2.5.0
+  - @rozenite/plugin-bridge@2.5.0
+  - @rozenite/ui@2.5.0
+
 ## 2.4.0
 
 ### Patch Changes

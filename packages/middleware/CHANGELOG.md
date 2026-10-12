@@ -1,5 +1,129 @@
 # @rozenite/middleware
 
+## 2.5.0
+
+### Minor Changes
+
+- [#526](https://github.com/callstackincubator/rozenite/pull/526) [`efda88f`](https://github.com/callstackincubator/rozenite/commit/efda88f0d826da9979f40555328c3cbb94900e31) Thanks [@V3RON](https://github.com/V3RON)! - Metro, Re.Pack and Lynx now pass options to Rozenite through one shared helper,
+  `toRozeniteConfig`, newly exported from `@rozenite/middleware`. Only the options
+  Rozenite reads are forwarded, so bundler-only options such as `enabled` no
+  longer leak through. For Metro and Re.Pack, a `projectRoot` passed through the
+  Rozenite options is now ignored in favour of the bundler's own project root.
+
+- [#539](https://github.com/callstackincubator/rozenite/pull/539) [`83733d9`](https://github.com/callstackincubator/rozenite/commit/83733d9127630fdadbc19750b3482e0c3a1690e3) Thanks [@V3RON](https://github.com/V3RON)! - Make the built-in agent domains cheaper to read by default, with everything
+  they returned before still one argument away.
+
+  - `console.getMessages`: a row's `cursor` is now its `seq` as a string, and a
+    page's `nextCursor` is the `seq` of its last row. `cursor`, `before` and
+    `after` accept a `seq` as a number or a numeric string; cursors issued by
+    earlier releases keep working. Default columns change from
+    `seq,timestamp,level,source,text` to `seq,timestamp,level,text`; `source`,
+    `context` and `cursor` remain available through `fields`.
+  - `network.getRequestBody` and `network.getResponseBody` return at most
+    `maxBytes` bytes (default 16384, previously the whole body) starting at
+    `offset` (default 0). Results gain `totalBytes`, `truncated` and, when
+    bytes remain, `nextOffset`, the byte index of the first byte not returned.
+    A window never ends inside a multi-byte character and never runs past
+    `maxBytes`, and an `offset` inside a character moves to the next one; the
+    network-activity plugin cuts its bodies the same way. Bytes are counted on
+    the decoded text when `decoded` is `true`, otherwise on the returned
+    string.
+  - `network.getRequestDetails` takes `include` (default `["headers"]`;
+    accepts `headers`, `timing`, `initiator`, `cookies`, `redirectChain`).
+    By default `initiator` carries only its `type` (previously the full
+    initiator with its stack), `response.timing`, `requestAssociatedCookies`,
+    `responseBlockedCookies` and `redirectChain` are left out (previously
+    always present). `getRequestDetails` omits keys whose value would be
+    `null` (`type`, `priority`, `failureText`, `blockedReason`,
+    `corsErrorStatus`, `request`, `response`, `requestHeadersExtra`,
+    `responseHeadersExtra`; previously present as `null`): a missing key reads
+    as `undefined` where it read as `null`.
+  - `react.getTree` default columns change from
+    `nodeId,label,displayName,elementType,childCount,depth,errorCount,warningCount`
+    to `label,displayName,childCount,depth`.
+  - `react.getChildren` default columns change from
+    `nodeId,label,displayName,elementType,childCount,errorCount,warningCount`
+    to `label,displayName,childCount`.
+  - `react.searchNodes` default columns change from
+    `nodeId,label,displayName,elementType,childCount,parentLabel,errorCount,warningCount`
+    to `label,displayName,childCount,parentLabel`.
+  - `react.getErrors` default columns change from
+    `nodeId,label,displayName,errorCount,warningCount` to
+    `label,displayName,errorCount,warningCount`.
+  - `react.getComponentRenders` default columns drop `avgDurationMs`.
+  - An invalid `limit` (0, negative, fractional or not a number) on
+    `network.listRequests` is now an error instead of falling back to the
+    default of 20.
+  - `POST /rozenite/agent/sessions` answers `created: true` when it started
+    the session and `created: false` when it reused a running one, so the CLI
+    can say when a command opened a new session.
+  - React inspected values (`getComponent`, `getProps`, …) no longer end a cut
+    string on the first half of a surrogate pair.
+  - `react.getTree` accepts a component label (`@c12`) for `root`, like every
+    other React tool that takes a node.
+  - React profiling results round every duration and timestamp to at most
+    three decimals.
+
+  - `network.listRequests` and the React list tools page with the shared
+    `paginateArray` from `@rozenite/agent-shared`: a cursor now resumes after
+    the last row it returned instead of at an index, so a row that appears or
+    disappears earlier in the list no longer makes a page skip or repeat one.
+    When the row a cursor names is gone, the page answers `reset: true`.
+    Cursors issued by earlier releases are rejected; restart the listing.
+  - Every paginated built-in tool declares `pagination.meta`, the result keys
+    worth printing with a page (`getMessages`: `meta`; `getTree`: `roots`,
+    `totalCount`; `getErrors`, `getComponentRenders`, `getProfileTimeline`:
+    `totalCount`, `summary`; `getRenderData`: `commit`, `summary`; the rest,
+    including `listRequests`, nothing). Results themselves still carry every
+    key, including `listRequests`' `recording` block.
+
+  Every dropped column is still listed in the tool's `fields`.
+
+### Patch Changes
+
+- [#524](https://github.com/callstackincubator/rozenite/pull/524) [`c62d5fa`](https://github.com/callstackincubator/rozenite/commit/c62d5fa0d90172091d2ccfd7334ac36fb93155f4) Thanks [@V3RON](https://github.com/V3RON)! - Agent sessions no longer hang when the device stops answering: commands time out after 10 seconds, and session start now fails with a clear error when the device keeps failing to respond or the app does not include the Rozenite runtime, instead of retrying forever.
+
+- [#527](https://github.com/callstackincubator/rozenite/pull/527) [`0bc336c`](https://github.com/callstackincubator/rozenite/commit/0bc336c2c300c7307e5c0bd439aec34fc753b513) Thanks [@V3RON](https://github.com/V3RON)! - Align agent pagination limits. The console `getMessages` tool now defaults to 20 items (was 50) and caps at 100 (was 200), so SDK calls without a limit return 20 items and larger requests are capped. The Redux DevTools `list-actions` tool now defaults to 20 items (was 50) and is capped at 100 where it previously had no maximum.
+
+- [#505](https://github.com/callstackincubator/rozenite/pull/505) [`1141556`](https://github.com/callstackincubator/rozenite/commit/1141556de30ac8ac5f729103792a8148c5e6df24) Thanks [@V3RON](https://github.com/V3RON)! - Fix host-to-device messages carrying emoji or any other character outside the
+  Basic Multilingual Plane being silently dropped — editing a stored value that
+  contains one from the Storage, MMKV, or SQLite panels now reaches the app
+  instead of looking like it did. A message the device refuses to accept is
+  reported now, rather than lost without a trace.
+
+- [#544](https://github.com/callstackincubator/rozenite/pull/544) [`f46c00e`](https://github.com/callstackincubator/rozenite/commit/f46c00e92c282304ede07d10f3206939153a4bcb) Thanks [@V3RON](https://github.com/V3RON)! - `getResponseBody` now counts `offset`, `maxBytes`, `totalBytes` and `nextOffset` in decoded bytes for bodies that stay base64-encoded (binary content), and re-encodes the returned window. Previously they counted base64 characters, so a 64-character window reported `nextOffset: 64` while holding 48 bytes.
+
+- [#560](https://github.com/callstackincubator/rozenite/pull/560) [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58) Thanks [@V3RON](https://github.com/V3RON)! - The published packages no longer include development fixtures, tests and build
+  configuration (such as `rozenite.config.ts`, `__tests__` and `tsconfig.json`),
+  which makes installs smaller: `@rozenite/expo-atlas-plugin` alone drops from
+  about 6 MB to 90 KB. Every package now lists its `CHANGELOG.md`, so changelogs
+  ship. Plugins generated by `rozenite generate` get the same treatment: they
+  publish only their built output, without `rozenite.config.ts`, sources, tests
+  or build configuration.
+
+- [#560](https://github.com/callstackincubator/rozenite/pull/560) [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58) Thanks [@V3RON](https://github.com/V3RON)! - Fix dev-mode bundles (Re.Pack, webpack, Rspack and Vite) failing to resolve
+  `@rozenite/agent-bridge`, `@rozenite/agent-shared` and the other packages
+  that publish an `exports` map: it carried a `development` condition pointing at
+  TypeScript source that was not in the package. The published packages no
+  longer have that condition, so these tools pick the built output in every mode.
+
+  `rozenite build` also stops adding a `development` condition to a plugin's
+  `./sdk` export and removes the `./sdk.ts` one that earlier versions wrote; a
+  `development` condition you wrote yourself (any other value) is kept. If your
+  `package.json` has a `publishConfig.exports`, `rozenite build` now keeps its
+  managed entries (`.`, `./sdk`, `./metro`) in step with `exports`.
+
+- [#529](https://github.com/callstackincubator/rozenite/pull/529) [`db452ea`](https://github.com/callstackincubator/rozenite/commit/db452ea72d78476234385e22dde7d69b52725007) Thanks [@V3RON](https://github.com/V3RON)! - Add `runDispatcherHandshake` and `RozeniteMissingError` to `@rozenite/tools/protocol`, the dispatcher handshake the DevTools hosts share. `@rozenite/app` and `@rozenite/middleware` now use it instead of their own copies; there is no change in behaviour.
+
+- [#528](https://github.com/callstackincubator/rozenite/pull/528) [`950b806`](https://github.com/callstackincubator/rozenite/commit/950b806a31041928591d5bb60e9ab60382ac2c80) Thanks [@V3RON](https://github.com/V3RON)! - Define the host wire contract once in the new `@rozenite/tools/protocol` subpath (handshake constants, close-reason classification, dispatcher expression builders and the binding payload parser), and use it from the DevTools hosts and the Lynx bridge instead of per-package copies. The only change on the wire: the runtime now sends the canonical double-quoted domain literal in `sendMessage` and `initializeDomain` (previously single-quoted), which evaluates to the same value.
+
+- Updated dependencies [[`2a72f21`](https://github.com/callstackincubator/rozenite/commit/2a72f2115eb6eda0b806fa4fcdaf5427f8b2d2c9), [`fb29800`](https://github.com/callstackincubator/rozenite/commit/fb298007eea021f23863b1b6a9534cb62d5260bf), [`f59e90b`](https://github.com/callstackincubator/rozenite/commit/f59e90b8cb63cfbe045c1768bb482424a8650cb5), [`1141556`](https://github.com/callstackincubator/rozenite/commit/1141556de30ac8ac5f729103792a8148c5e6df24), [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58), [`22f5e0a`](https://github.com/callstackincubator/rozenite/commit/22f5e0a5cd8a81af9ddd273066aaff230cd17c7e), [`a7985fa`](https://github.com/callstackincubator/rozenite/commit/a7985fa7876500ed5dd47bb3e61a97c75e0cfb58), [`66098f4`](https://github.com/callstackincubator/rozenite/commit/66098f4a6e07bcc8f59d246e32fc80000353b0a5), [`cee7e57`](https://github.com/callstackincubator/rozenite/commit/cee7e571cd05ca89d74e45e477b667ce2812ee1e), [`db452ea`](https://github.com/callstackincubator/rozenite/commit/db452ea72d78476234385e22dde7d69b52725007), [`950b806`](https://github.com/callstackincubator/rozenite/commit/950b806a31041928591d5bb60e9ab60382ac2c80)]:
+  - @rozenite/agent-shared@2.5.0
+  - @rozenite/app@2.5.0
+  - @rozenite/runtime@2.5.0
+  - @rozenite/shell@2.5.0
+  - @rozenite/tools@2.5.0
+
 ## 2.4.0
 
 ### Minor Changes
