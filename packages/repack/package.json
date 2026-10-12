@@ -21,8 +21,7 @@
   },
   "files": [
     "dist",
-    "!dist/**/*.tsbuildinfo",
-    "templates"
+    "!dist/**/*.tsbuildinfo"
   ],
   "type": "module",
   "main": "./dist/index.js",
