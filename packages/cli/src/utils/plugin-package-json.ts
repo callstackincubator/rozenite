@@ -98,10 +98,17 @@ const isPackageExports = (value: unknown): value is PackageExports => {
   return true;
 };
 
+// `rozenite build` wrote `development: './sdk.ts'` into the managed ./sdk export
+// from 1.10.0 until it stopped adding the condition. That value was never the
+// author's choice, and it points at a file a published plugin does not ship, so
+// it is dropped; any other `development` value was written by the author.
+const LEGACY_MANAGED_DEVELOPMENT = './sdk.ts';
+
 const mergeManagedExports = (
   existingExports: unknown,
   contract: PluginPackageContract,
   targets: PluginTargets,
+  { keepDevelopment }: { keepDevelopment: boolean },
 ): PackageExports => {
   const mergedExports = isPackageExports(existingExports) ? { ...existingExports } : {};
 
@@ -118,12 +125,16 @@ const mergeManagedExports = (
     const existingSdk = mergedExports['./sdk'];
     const managedSdk = contract.exports['./sdk'];
     const development =
-      existingSdk && typeof existingSdk === 'object' ? existingSdk.development : undefined;
+      keepDevelopment && existingSdk && typeof existingSdk === 'object'
+        ? existingSdk.development
+        : undefined;
 
-    // A workspace-only `development` condition that the author added is kept
-    // (and has to be stripped again with `publishConfig.exports`).
+    // A `development` condition the author wrote is kept in `exports`; it is
+    // never copied into `publishConfig.exports`, which is what gets published.
     mergedExports['./sdk'] =
-      typeof development === 'string' && typeof managedSdk === 'object'
+      typeof development === 'string' &&
+      development !== LEGACY_MANAGED_DEVELOPMENT &&
+      typeof managedSdk === 'object'
         ? { development, ...managedSdk }
         : managedSdk;
   } else {
@@ -131,6 +142,14 @@ const mergeManagedExports = (
   }
 
   return mergedExports;
+};
+
+const withoutOptionalManagedExports = (exports: PackageExports): PackageExports => {
+  const nextExports = { ...exports };
+  delete nextExports['./metro'];
+  delete nextExports['./sdk'];
+
+  return nextExports;
 };
 
 const formatPackageJSON = (value: PackageJSON): string => {
@@ -184,7 +203,9 @@ export const syncPluginPackageJSON = async (
     updateField('module', contract.module);
     updateField('types', contract.types);
 
-    const mergedExports = mergeManagedExports(updatedPackageJson.exports, contract, targets);
+    const mergedExports = mergeManagedExports(updatedPackageJson.exports, contract, targets, {
+      keepDevelopment: true,
+    });
 
     updateField('exports', mergedExports);
   } else if (
@@ -192,10 +213,31 @@ export const syncPluginPackageJSON = async (
     isPackageExports(updatedPackageJson.exports) &&
     ('./metro' in updatedPackageJson.exports || './sdk' in updatedPackageJson.exports)
   ) {
-    const nextExports = { ...updatedPackageJson.exports };
-    delete nextExports['./metro'];
-    delete nextExports['./sdk'];
-    updateField('exports', nextExports);
+    updateField('exports', withoutOptionalManagedExports(updatedPackageJson.exports));
+  }
+
+  // Authors who publish a different `exports` than they develop against (for
+  // example to hide a `development` condition) keep the managed entries in
+  // `publishConfig.exports` in step, so the published package does not lose
+  // ./sdk or ./metro when they appear.
+  const publishConfig = updatedPackageJson.publishConfig;
+  const publishedExports =
+    publishConfig && typeof publishConfig === 'object'
+      ? (publishConfig as { exports?: unknown }).exports
+      : undefined;
+
+  if (isPackageExports(publishedExports)) {
+    const nextPublishedExports = contract
+      ? mergeManagedExports(publishedExports, contract, targets, { keepDevelopment: false })
+      : withoutOptionalManagedExports(publishedExports);
+
+    if (!isEqual(publishedExports, nextPublishedExports)) {
+      updatedPackageJson.publishConfig = {
+        ...(publishConfig as Record<string, unknown>),
+        exports: nextPublishedExports,
+      };
+      updatedFields.push('publishConfig.exports');
+    }
   }
 
   if (updatedFields.length > 0) {
