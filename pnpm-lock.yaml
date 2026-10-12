@@ -28,6 +28,8 @@ overrides:
   '@microsoft/api-extractor': 7.48.1
   metro-config: 0.84.4
 
+pnpmfileChecksum: sha256-ZuEnF06ODgBUjEO9OmPWAkkcwWpMnzWaZ9WOHibnjhw=
+
 importers:
 
   .:

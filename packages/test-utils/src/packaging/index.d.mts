@@ -2,7 +2,7 @@ export type InspectPackedPackageOptions = {
   /**
    * Path prefixes (relative to the package root) that legitimately contain
    * files that look development-only, such as the plugin template that
-   * `rozenite init` copies.
+   * `rozenite generate` copies.
    */
   allowDevelopmentFilesUnder?: string[];
   /** Path prefixes whose modules are not scanned for relative imports. Defaults to `['dist/devtools/']`. */

@@ -35,14 +35,6 @@
     }
   },
   "publishConfig": {
-    "exports": {
-      "./package.json": "./package.json",
-      ".": {
-        "types": "./dist/react-native.d.ts",
-        "import": "./dist/react-native.js",
-        "require": "./dist/react-native.js"
-      }
-    },
     "access": "public"
   },
   "scripts": {

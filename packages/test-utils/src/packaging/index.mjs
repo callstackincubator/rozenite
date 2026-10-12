@@ -108,7 +108,8 @@ const resolvesInside = (fromFile, specifier, fileSet) => {
 
 /**
  * Packs the package exactly as `pnpm publish` would (so `publishConfig`
- * overrides and `workspace:` rewrites are applied), and unpacks the tarball
+ * overrides, the root .pnpmfile.cjs `beforePacking` hook and `workspace:`
+ * rewrites are applied), and unpacks the tarball
  * into a throwaway directory.
  */
 const pack = (packageRoot) => {
@@ -174,7 +175,7 @@ export const inspectPackedPackage = (packageRoot, options = {}) => {
     // 1. Published `exports` carries no workspace-only condition.
     if (hasCondition(manifest.exports, 'development')) {
       problems.push(
-        'published exports still has a `development` condition; strip it with `publishConfig.exports`',
+        'published exports still has a `development` condition; the `beforePacking` hook in the root .pnpmfile.cjs should strip it',
       );
     }
 
@@ -182,7 +183,7 @@ export const inspectPackedPackage = (packageRoot, options = {}) => {
 
     if (JSON.stringify(manifest.exports ?? null) !== JSON.stringify(expectedExports ?? null)) {
       problems.push(
-        'published exports differs from `exports` without `development`; update `publishConfig.exports` to match',
+        'published exports differs from `exports` without `development`; check `publishConfig.exports` and the root .pnpmfile.cjs',
       );
     }
 
