@@ -101,10 +101,7 @@ export const NITRO_NETWORK_EVENTS: (keyof NitroWebSocketEventMap)[] = [
   'websocket-error',
 ];
 
-const timestampOrigin =
-  typeof performance !== 'undefined' && typeof performance.timeOrigin === 'number'
-    ? performance.timeOrigin
-    : Date.now() - performance.now();
+const timestampOrigin = Date.now() - performance.now();
 
 const toEpochTime = (timestamp: number) => Math.round(timestampOrigin + timestamp);
 
