@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createNitroNetworkInspector } from '../nitro-network-inspector';
 import type { Recorder } from '../../http/recorder';
 
@@ -314,5 +314,159 @@ describe('nitro network inspector', () => {
     // nitro drops its oldest entry regardless of type, and a dropped
     // WebSocket entry stops reporting messages, so the count stays default.
     expect(enable).toHaveBeenCalledWith({ maxBodyCapture: 1024 * 1024 });
+  });
+});
+
+describe('nitro timestamps', () => {
+  const wallTime = Date.parse('2026-10-15T09:58:00.042Z');
+  const monotonicTime = 10_000.25;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    { name: 'ahead', offset: 400_000_000 },
+    { name: 'behind', offset: -400_000_000 },
+    { name: 'aligned', offset: 0 },
+    { name: 'missing', offset: undefined },
+  ])('aligns HTTP and WebSocket events with wall time when timeOrigin is $name', ({ offset }) => {
+    vi.spyOn(Date, 'now').mockReturnValue(wallTime);
+    vi.stubGlobal('performance', {
+      now: () => monotonicTime,
+      timeOrigin: offset === undefined ? undefined : wallTime - monotonicTime + offset,
+    });
+    const { recorder, calls } = createFakeRecorder();
+    let emit: (entry: any) => void = () => undefined;
+    const inspector = createNitroNetworkInspector(recorder, () => ({
+      NetworkInspector: {
+        enable() {},
+        disable() {},
+        isEnabled: () => true,
+        onEntry(callback) {
+          emit = callback;
+          return () => undefined;
+        },
+        getEntries: () => [],
+      },
+    }));
+    inspector.enable();
+
+    const httpEntry = {
+      id: 'nitro-http-clock',
+      type: 'http',
+      url: 'https://example.com/api',
+      method: 'GET',
+      requestHeaders: [],
+      status: 200,
+      statusText: 'OK',
+      responseHeaders: [],
+      responseBodySize: 0,
+      startTime: monotonicTime - 10,
+      endTime: monotonicTime + 20,
+    };
+    emit(httpEntry);
+    emit({ ...httpEntry, id: 'nitro-http-canceled', error: 'Request canceled' });
+
+    expect(calls).toEqual([
+      { method: 'begin', args: [expect.objectContaining({ timestamp: wallTime - 10 })] },
+      { method: 'headers', args: [expect.objectContaining({ timestamp: wallTime + 20 })] },
+      { method: 'end', args: [expect.objectContaining({ timestamp: wallTime + 20 })] },
+      { method: 'begin', args: [expect.objectContaining({ timestamp: wallTime - 10 })] },
+      { method: 'fail', args: ['Request canceled', true, wallTime + 20] },
+    ]);
+
+    const events: Array<{ type: string; timestamp: number }> = [];
+    for (const type of [
+      'websocket-connect',
+      'websocket-open',
+      'websocket-message-sent',
+      'websocket-message-received',
+      'websocket-error',
+      'websocket-close',
+    ] as const) {
+      inspector.on(type, (event) => events.push({ type: event.type, timestamp: event.timestamp }));
+    }
+    const socketEntry = {
+      id: 'nitro-ws-clock',
+      type: 'websocket',
+      url: 'wss://example.com/socket',
+      protocols: [],
+      readyState: 'OPEN',
+      startTime: monotonicTime - 10,
+      endTime: 0,
+      messages: [
+        { direction: 'sent', data: 'ping', isBinary: false, timestamp: monotonicTime - 5 },
+        { direction: 'received', data: 'pong', isBinary: false, timestamp: monotonicTime + 5 },
+      ],
+    };
+    emit(socketEntry);
+    emit({
+      ...socketEntry,
+      readyState: 'CLOSED',
+      endTime: monotonicTime + 20,
+      error: 'Connection closed',
+      closeCode: 1006,
+    });
+
+    expect(events).toEqual([
+      { type: 'websocket-connect', timestamp: wallTime - 10 },
+      { type: 'websocket-open', timestamp: wallTime - 10 },
+      { type: 'websocket-message-sent', timestamp: wallTime - 5 },
+      { type: 'websocket-message-received', timestamp: wallTime + 5 },
+      { type: 'websocket-error', timestamp: wallTime + 20 },
+      { type: 'websocket-close', timestamp: wallTime + 20 },
+    ]);
+    inspector.dispose();
+  });
+
+  it('follows wall time after the device sleeps', () => {
+    let now = wallTime;
+    let monotonic = monotonicTime;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    vi.stubGlobal('performance', { now: () => monotonic });
+    const { recorder, calls } = createFakeRecorder();
+    let emit: (entry: any) => void = () => undefined;
+    const inspector = createNitroNetworkInspector(recorder, () => ({
+      NetworkInspector: {
+        enable() {},
+        disable() {},
+        isEnabled: () => true,
+        onEntry(callback) {
+          emit = callback;
+          return () => undefined;
+        },
+        getEntries: () => [],
+      },
+    }));
+    inspector.enable();
+
+    // The monotonic clock pauses while asleep; wall time keeps going.
+    now += 60_000;
+    monotonic += 100;
+    emit({
+      id: 'nitro-http-after-sleep',
+      type: 'http',
+      url: 'https://example.com/api',
+      method: 'GET',
+      requestHeaders: [],
+      status: 200,
+      statusText: 'OK',
+      responseHeaders: [],
+      responseBodySize: 0,
+      startTime: monotonic - 30,
+      endTime: monotonic,
+    });
+
+    expect(calls[0]).toEqual({
+      method: 'begin',
+      args: [expect.objectContaining({ timestamp: now - 30 })],
+    });
+    expect(calls.at(-1)).toEqual({
+      method: 'end',
+      args: [expect.objectContaining({ timestamp: now })],
+    });
+    inspector.dispose();
   });
 });

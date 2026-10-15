@@ -101,12 +101,11 @@ export const NITRO_NETWORK_EVENTS: (keyof NitroWebSocketEventMap)[] = [
   'websocket-error',
 ];
 
-const timestampOrigin =
-  typeof performance !== 'undefined' && typeof performance.timeOrigin === 'number'
-    ? performance.timeOrigin
-    : Date.now() - performance.now();
-
-const toEpochTime = (timestamp: number) => Math.round(timestampOrigin + timestamp);
+// nitro stamps entries with `performance.now()`. The offset to wall time is
+// sampled on every conversion: React Native's `performance.timeOrigin` comes
+// from a different clock on iOS, and the monotonic clock pauses while the
+// device sleeps, so an offset cached at startup drifts.
+const toEpochTime = (timestamp: number) => Math.round(Date.now() - performance.now() + timestamp);
 
 const toHeaders = (headers: { key: string; value: string }[]): HttpHeaders => {
   const result: HttpHeaders = {};
