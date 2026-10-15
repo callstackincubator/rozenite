@@ -151,7 +151,7 @@ export const createRecorder = (): Recorder => {
           const timestamp = endMeta.timestamp ?? Date.now();
           if (endMeta.body !== undefined) {
             // Real wall-clock time, deliberately independent of `sendTime`:
-            // nitro synthesizes its timestamps from `performance.timeOrigin`,
+            // nitro synthesizes its timestamps from `performance.now()`,
             // which isn't guaranteed to line up with `Date.now()`.
             trimBodies();
             const body = endMeta.body;
