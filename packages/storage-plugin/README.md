@@ -2,7 +2,7 @@
 
 ### A Rozenite plugin for inspecting multiple storage backends in React Native DevTools.
 
-The Storage Plugin provides a single inspector for sync and async storages, including MMKV, AsyncStorage and Expo SecureStore via adapters.
+The Storage Plugin provides a single inspector for sync and async storages, including MMKV, AsyncStorage, Expo SecureStore and react-native-keychain via adapters.
 
 ## Installation
 
@@ -13,7 +13,7 @@ npm install @rozenite/storage-plugin
 Optional peers depending on adapters you use:
 
 ```bash
-npm install react-native-mmkv @react-native-async-storage/async-storage expo-secure-store
+npm install react-native-mmkv @react-native-async-storage/async-storage expo-secure-store react-native-keychain
 ```
 
 ## Usage
@@ -23,6 +23,7 @@ import {
   createAsyncStorageAdapter,
   createMMKVStorageAdapter,
   createExpoSecureStorageAdapter,
+  createKeychainStorageAdapter,
   useRozeniteStoragePlugin,
 } from '@rozenite/storage-plugin';
 
@@ -40,6 +41,9 @@ const storages = [
   createExpoSecureStorageAdapter({
     storage: SecureStore,
     keys: ['token', 'session'],
+  }),
+  createKeychainStorageAdapter({
+    keychain: Keychain,
   }),
 ];
 

@@ -9,5 +9,8 @@ export type {
   CreateExpoAsyncStorageAdapterOptions,
 } from './async-storage';
 
+export { createKeychainStorageAdapter } from './keychain';
+export type { CreateKeychainStorageAdapterOptions, KeychainLike } from './keychain';
+
 export { createExpoSecureStorageAdapter } from './secure-storage';
 export type { CreateExpoSecureStorageAdapterOptions, SecureStorageLike } from './secure-storage';

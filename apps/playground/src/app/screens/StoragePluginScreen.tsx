@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Text } from 'react-native';
+import * as Keychain from 'react-native-keychain';
 import * as SecureStore from 'expo-secure-store';
 import { MMKV } from 'react-native-mmkv';
 import {
@@ -23,7 +24,7 @@ import {
 } from '../storage-plugin-adapters';
 import { useTheme } from '../theme/useTheme';
 
-type AdapterTab = 'mmkv' | 'async' | 'secure';
+type AdapterTab = 'mmkv' | 'async' | 'secure' | 'keychain';
 type AsyncStorageMode = 'v2-default' | 'v3-auth' | 'v3-cache';
 type EntryType = 'string' | 'number' | 'boolean' | 'buffer';
 type AsyncStorageLike = {
@@ -125,6 +126,22 @@ export const StoragePluginScreen = () => {
       return;
     }
 
+    if (tab === 'keychain') {
+      const services = await Keychain.getAllGenericPasswordServices();
+      const credentials = await Promise.all(
+        services.map(async (service) => ({
+          service,
+          credentials: await Keychain.getGenericPassword({ service }),
+        })),
+      );
+      setEntries(
+        credentials.flatMap(({ service, credentials: item }) =>
+          item ? [{ key: service, type: 'string' as const, value: item.password }] : [],
+        ),
+      );
+      return;
+    }
+
     const keys = getKnownSecureStoreKeys();
     const values = await Promise.all(
       keys.map(async (entryKey) => ({
@@ -178,6 +195,8 @@ export const StoragePluginScreen = () => {
         }
       } else if (tab === 'async') {
         await selectedAsyncStorage.setItem(key, value);
+      } else if (tab === 'keychain') {
+        await Keychain.setGenericPassword('playground', value, { service: key });
       } else {
         rememberSecureStoreKey(key);
         await SecureStore.setItemAsync(key, value);
@@ -207,6 +226,8 @@ export const StoragePluginScreen = () => {
       }
     } else if (tab === 'async') {
       await selectedAsyncStorage.removeItem(key);
+    } else if (tab === 'keychain') {
+      await Keychain.resetGenericPassword({ service: key });
     } else {
       forgetSecureStoreKey(key);
       await SecureStore.deleteItemAsync(key);
@@ -224,7 +245,10 @@ export const StoragePluginScreen = () => {
 
   return (
     <Screen scroll={false}>
-      <PluginHeader title="Storage" subtitle="MMKV, AsyncStorage, and SecureStore adapters." />
+      <PluginHeader
+        title="Storage"
+        subtitle="MMKV, AsyncStorage, SecureStore, and Keychain adapters."
+      />
 
       <SegmentedTabs
         accessibilityLabel="Storage adapter"
@@ -234,6 +258,7 @@ export const StoragePluginScreen = () => {
           { value: 'mmkv', label: 'MMKV' },
           { value: 'async', label: 'Async' },
           { value: 'secure', label: 'Secure' },
+          { value: 'keychain', label: 'Keychain' },
         ]}
       />
 
@@ -297,7 +322,7 @@ export const StoragePluginScreen = () => {
         label="Value"
         helperText={
           !supportsTypedValues
-            ? 'AsyncStorage and SecureStore are string-only in this demo.'
+            ? 'AsyncStorage, SecureStore, and Keychain are string-only in this demo.'
             : undefined
         }
       >
