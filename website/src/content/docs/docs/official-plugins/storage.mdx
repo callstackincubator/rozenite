@@ -4,7 +4,7 @@ title: 'Storage Plugin'
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
 
-The Storage plugin is a single DevTools panel for MMKV, AsyncStorage, and Expo SecureStore. Register whichever adapters your app uses and inspect them all from one place.
+The Storage plugin is a single DevTools panel for MMKV, AsyncStorage, Expo SecureStore, and react-native-keychain. Register whichever adapters your app uses and inspect them all from one place.
 
 ## Installation
 
@@ -14,7 +14,7 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 Install the peer dependencies for the storages you use:
 
-<PackageManagerTabs command="install -D react-native-mmkv @react-native-async-storage/async-storage expo-secure-store" />
+<PackageManagerTabs command="install -D react-native-mmkv @react-native-async-storage/async-storage expo-secure-store react-native-keychain" />
 
 ## Setup
 
@@ -22,6 +22,7 @@ Install the peer dependencies for the storages you use:
 import {
   createAsyncStorageAdapter,
   createExpoSecureStorageAdapter,
+  createKeychainStorageAdapter,
   createMMKVStorageAdapter,
   useRozeniteStoragePlugin,
 } from '@rozenite/storage-plugin';
@@ -36,6 +37,9 @@ const storages = [
   createExpoSecureStorageAdapter({
     storage: SecureStore,
     keys: ['token', 'session'],
+  }),
+  createKeychainStorageAdapter({
+    keychain: Keychain,
   }),
 ];
 
@@ -89,9 +93,25 @@ createExpoSecureStorageAdapter({
 
 SecureStore doesn't support key enumeration, so you provide known keys via `keys`.
 
+### react-native-keychain
+
+```ts title="App.tsx"
+import * as Keychain from 'react-native-keychain';
+
+createKeychainStorageAdapter({
+  keychain: Keychain,
+  storageName: 'Credentials',
+  readOnly: true,
+});
+```
+
+Each entry is one Keychain (iOS) or Keystore (Android) service, and its value is the stored password. By default every service reported by `getAllGenericPasswordServices` is listed; pass `services` (a list or an async function) to limit it. Editing an entry keeps its existing username, new entries use `defaultUsername`, and `setOptions` is forwarded to `setGenericPassword` (for example `accessible`). Set `readOnly` to reject changes from the panel.
+
+If `keychain` is `undefined`, for example because you load the library optionally, the adapter exposes no storages instead of throwing.
+
 ## Binary values
 
-MMKV storages that hold binary values render and edit them through a hex viewer with a Base64 mode for copy/paste. AsyncStorage and Expo SecureStore don't support binary values.
+MMKV storages that hold binary values render and edit them through a hex viewer with a Base64 mode for copy/paste. AsyncStorage, Expo SecureStore, and react-native-keychain don't support binary values.
 
 ## Hiding sensitive keys
 

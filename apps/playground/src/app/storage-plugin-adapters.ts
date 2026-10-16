@@ -1,8 +1,10 @@
 import AsyncStorage, { createAsyncStorage } from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 import * as SecureStore from 'expo-secure-store';
 import {
   createAsyncStorageAdapter,
   createExpoSecureStorageAdapter,
+  createKeychainStorageAdapter,
   createMMKVStorageAdapter,
 } from '@rozenite/storage-plugin';
 import { mmkvStorages } from './mmkv-storages';
@@ -63,5 +65,8 @@ export const storagePluginAdapters = [
     adapterName: 'Expo SecureStore',
     storageId: 'secure-default',
     storageName: 'Default SecureStore',
+  }),
+  createKeychainStorageAdapter({
+    keychain: Keychain,
   }),
 ];

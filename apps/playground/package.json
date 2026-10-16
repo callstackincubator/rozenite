@@ -69,6 +69,7 @@
     "react-native-gesture-handler": "~2.32.0",
     "react-native-get-random-values": "^1.11.0",
     "react-native-harness": "^1.0.0-alpha.24",
+    "react-native-keychain": "^10.0.0",
     "react-native-mmkv": "^4.3.2",
     "react-native-nitro-fetch": "^1.5.1",
     "react-native-nitro-modules": "^0.36.1",
