@@ -114,11 +114,27 @@ export function useColumnResizing<TData extends RowData>(prop: ColumnResizingPro
 }
 
 /**
- * Layout for a table whose columns are resized: fixed layout, exactly as wide as its columns.
- * Widths on the header cells drive the layout, so the table has to say how wide it is.
+ * Layout for a table whose columns are resized: fixed layout, as wide as its container but never
+ * narrower than its columns. Widths on the header cells drive the layout, so the table has to say
+ * how wide it is. Any spare width goes to the trailing column from `ResizableColgroup`, so the
+ * resized columns keep their exact widths.
  */
 export function resizableTableStyle(totalSize: number) {
-  return { tableLayout: 'fixed', width: totalSize, minWidth: totalSize } as const;
+  return { tableLayout: 'fixed', width: '100%', minWidth: totalSize } as const;
+}
+
+/**
+ * An unsized trailing column that takes the spare width of a resizable table. Fixed layout gives
+ * the leftover space to auto-width columns, so the data columns keep their exact widths.
+ */
+export function ResizableColgroup({ columnCount }: { columnCount: number }) {
+  return (
+    <colgroup>
+      {Array.from({ length: columnCount + 1 }, (_, index) => (
+        <col key={index} />
+      ))}
+    </colgroup>
+  );
 }
 
 /** Classes that keep a body cell inside its column once columns have a fixed width. */
