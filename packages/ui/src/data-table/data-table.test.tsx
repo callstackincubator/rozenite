@@ -86,7 +86,8 @@ describe('DataTable column resizing', () => {
     const separators = view.querySelectorAll('[role="separator"]');
 
     expect(view.querySelector('table')?.style.tableLayout).toBe('fixed');
-    expect(view.querySelector('table')?.style.width).toBe('320px');
+    expect(view.querySelector('table')?.style.width).toBe('100%');
+    expect(view.querySelector('table')?.style.minWidth).toBe('320px');
     expect(separators).toHaveLength(1);
     expect(separators[0]?.getAttribute('aria-label')).toBe('Resize Name column');
     expect(view.querySelector('th')?.style.width).toBe('200px');
@@ -130,7 +131,7 @@ describe('DataTable column resizing', () => {
 
     dragWithMouse(handle(), 300, 340, 380);
     expect(width()).toBe('280px');
-    expect(view.querySelector('table')?.style.width).toBe('400px');
+    expect(view.querySelector('table')?.style.minWidth).toBe('400px');
 
     // Every move is applied relative to where the drag began, and min and max still bound it.
     dragWithMouse(handle(), 300, 100);

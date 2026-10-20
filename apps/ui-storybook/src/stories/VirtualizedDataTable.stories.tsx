@@ -57,3 +57,22 @@ export const ColumnResizing: Story = {
     />
   ),
 };
+
+/** Use for a resizable table with no rows yet, such as a query that returned nothing.
+ * The empty message spans the full width of the table, not just the width of its columns.
+ * @summary Show an empty state in a resizable table.
+ */
+export const ColumnResizingEmpty: Story = {
+  render: () => (
+    <VirtualizedDataTable<Row>
+      ariaLabel="Resizable requests with no rows"
+      columns={resizableColumns}
+      columnResizing={{ minSize: 80, maxSize: 480 }}
+      data={[]}
+      emptyMessage="No requests yet."
+      getRowId={(row) => row.id}
+      getRowTextValue={(row) => row.name}
+      style={{ height: 320 }}
+    />
+  ),
+};

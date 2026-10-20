@@ -22,6 +22,7 @@ import { SortIcon } from '../utils/sort-icon';
 import { monoLabel } from '../utils/mono-label';
 import {
   ColumnResizeHandle,
+  ResizableColgroup,
   resizableCellClassName,
   resizableTableStyle,
   useColumnResizing,
@@ -58,8 +59,8 @@ export type VirtualizedDataTableProps<TData> = {
   style?: CSSProperties;
   /**
    * Opt in to draggable column borders. Columns start at 150px unless `defaultSize` or a
-   * column's own `size` says otherwise, and the table becomes exactly as wide as its columns.
-   * A column opts out with `enableResizing: false`.
+   * column's own `size` says otherwise. The table is as wide as its columns or its container,
+   * whichever is larger. A column opts out with `enableResizing: false`.
    */
   columnResizing?: ColumnResizingProp;
 };
@@ -97,6 +98,9 @@ const VirtualizedTableElement = ({ children, context, style }: TableComponentPro
         : { ...style, ...resizableTableStyle(context.resizableTotalSize) }
     }
   >
+    {context.resizableTotalSize === null ? null : (
+      <ResizableColgroup columnCount={context.columnCount} />
+    )}
     {children}
   </table>
 );
