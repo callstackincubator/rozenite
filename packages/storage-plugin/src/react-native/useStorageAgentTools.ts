@@ -5,7 +5,12 @@ import {
   storageToolDefinitions,
   type StorageListEntriesArgs,
 } from '../shared/agent-tools';
-import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
+import {
+  isReadOnly,
+  type StorageEntry,
+  type StorageEntryType,
+  type StorageEntryValue,
+} from '../shared/types';
 import type { StorageView } from './storage-view';
 import { compareKeys } from './entry-preview-pagination';
 
@@ -129,6 +134,7 @@ export const createStorageAgentHandlers = (views: readonly StorageView[]) => ({
       adapterName: view.adapterName,
       storageName: view.storageName,
       supportedTypes: view.capabilities.supportedTypes,
+      readOnly: isReadOnly(view.capabilities),
     })),
   }),
 

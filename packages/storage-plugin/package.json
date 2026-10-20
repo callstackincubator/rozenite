@@ -76,6 +76,7 @@
     "expo-secure-store": "*",
     "react": "*",
     "react-native": "*",
+    "react-native-keychain": "*",
     "react-native-mmkv": "*"
   },
   "peerDependenciesMeta": {
@@ -83,6 +84,9 @@
       "optional": true
     },
     "expo-secure-store": {
+      "optional": true
+    },
+    "react-native-keychain": {
       "optional": true
     },
     "react-native-mmkv": {

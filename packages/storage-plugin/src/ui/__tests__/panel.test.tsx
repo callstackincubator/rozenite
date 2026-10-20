@@ -202,13 +202,13 @@ const renderPanel = async () => {
 };
 const discoveryRequests = () =>
   mocks.client.send.mock.calls.filter(([type]) => type === 'discover-storages');
-const discover = async () => {
+const discover = async (storages: StorageDescriptor[] = descriptors) => {
   const request = discoveryRequests().at(-1)?.[1];
   await act(async () =>
     mocks.emit('storage-descriptors', {
       type: 'storage-descriptors',
       requestId: request.requestId,
-      storages: descriptors,
+      storages,
     }),
   );
 };
@@ -391,6 +391,21 @@ describe('StoragePanel preview query cutover', () => {
     await discover();
 
     expect(container.textContent).toContain('First');
+    await act(async () => root.unmount());
+  });
+
+  it('disables add, purge and import for read-only storages', async () => {
+    const { root, container } = await renderPanel();
+    await discover([
+      { ...descriptors[0], capabilities: { supportedTypes: ['string'], readOnly: true } },
+    ]);
+    const button = (label: string) =>
+      container.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+
+    expect(button('Add entry')?.disabled).toBe(true);
+    expect(button('Purge storage')?.disabled).toBe(true);
+    expect(button('Import storage')?.disabled).toBe(true);
+    expect(button('Export storage')?.disabled).toBe(false);
     await act(async () => root.unmount());
   });
 });

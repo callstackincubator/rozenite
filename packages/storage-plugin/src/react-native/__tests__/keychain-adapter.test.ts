@@ -2,18 +2,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { createKeychainStorageAdapter } from '../adapters/keychain';
 import type { KeychainLike } from '../adapters/keychain';
 
-const createFakeKeychain = (
-  initial: Record<string, { username: string; password: string }> = {},
-) => {
+type FakeItem = { username: string; password: string; storage?: string };
+
+const createFakeKeychain = (initial: Record<string, FakeItem> = {}) => {
   const items = new Map(Object.entries(initial));
 
   const keychain = {
-    getAllGenericPasswordServices: vi.fn(async () => [...items.keys()]),
+    getAllGenericPasswordServices: vi.fn<KeychainLike['getAllGenericPasswordServices']>(
+      async () => [...items.keys()],
+    ),
     getGenericPassword: vi.fn(
       async ({ service }: { service: string }) => items.get(service) ?? false,
     ),
     setGenericPassword: vi.fn(
-      async (username: string, password: string, options?: { service?: string }) => {
+      async (
+        username: string,
+        password: string,
+        options?: { service?: string; [option: string]: unknown },
+      ) => {
         items.set(options?.service ?? 'default', { username, password });
       },
     ),
@@ -42,7 +48,10 @@ describe('createKeychainStorageAdapter', () => {
     expect(adapter.id).toBe('react-native-keychain');
     expect(adapter.name).toBe('React Native Keychain');
     expect(adapter.storages).toHaveLength(1);
-    expect(adapter.storages[0].capabilities.supportedTypes).toEqual(['string']);
+    expect(adapter.storages[0].capabilities).toEqual({
+      supportedTypes: ['string'],
+      readOnly: false,
+    });
   });
 
   it('exposes no storages when react-native-keychain is missing', () => {
@@ -58,6 +67,20 @@ describe('createKeychainStorageAdapter', () => {
     const storage = getStorage(createKeychainStorageAdapter({ keychain }));
 
     expect(await storage.getAllKeys()).toEqual(['token', 'session']);
+  });
+
+  it('skips services that need authentication when listing, unless disabled', async () => {
+    const { keychain } = createFakeKeychain();
+
+    await getStorage(createKeychainStorageAdapter({ keychain })).getAllKeys();
+    await getStorage(createKeychainStorageAdapter({ keychain, skipUIAuth: false })).getAllKeys();
+
+    expect(keychain.getAllGenericPasswordServices).toHaveBeenNthCalledWith(1, {
+      skipUIAuth: true,
+    });
+    expect(keychain.getAllGenericPasswordServices).toHaveBeenNthCalledWith(2, {
+      skipUIAuth: false,
+    });
   });
 
   it('uses the services option, either as a list or as a function', async () => {
@@ -87,6 +110,16 @@ describe('createKeychainStorageAdapter', () => {
     expect(await storage.get('missing')).toBeUndefined();
   });
 
+  it('returns undefined for entries that cannot be read', async () => {
+    const { keychain } = createFakeKeychain({
+      token: { username: 'alice', password: 'secret' },
+    });
+    keychain.getGenericPassword.mockRejectedValueOnce(new Error('User canceled the operation.'));
+    const storage = getStorage(createKeychainStorageAdapter({ keychain }));
+
+    expect(await storage.get('token')).toBeUndefined();
+  });
+
   it('keeps the existing username when updating an entry', async () => {
     const { keychain, items } = createFakeKeychain({
       token: { username: 'alice', password: 'old' },
@@ -104,6 +137,42 @@ describe('createKeychainStorageAdapter', () => {
     expect(keychain.setGenericPassword).toHaveBeenCalledWith('alice', 'new', {
       accessible: 'AccessibleWhenUnlocked',
       service: 'token',
+    });
+  });
+
+  it('keeps the Android storage type of an existing entry', async () => {
+    const { keychain } = createFakeKeychain({
+      token: { username: 'alice', password: 'old', storage: 'KeystoreAESGCM' },
+    });
+    const storage = getStorage(createKeychainStorageAdapter({ keychain }));
+
+    await storage.set({ key: 'token', type: 'string', value: 'new' });
+
+    expect(keychain.setGenericPassword).toHaveBeenCalledWith('alice', 'new', {
+      storage: 'KeystoreAESGCM',
+      service: 'token',
+    });
+  });
+
+  it('resolves setOptions per service when given a function', async () => {
+    const { keychain } = createFakeKeychain();
+    const storage = getStorage(
+      createKeychainStorageAdapter({
+        keychain,
+        setOptions: (service) =>
+          service === 'token' ? { accessControl: 'BiometryCurrentSet' } : undefined,
+      }),
+    );
+
+    await storage.set({ key: 'token', type: 'string', value: 'a' });
+    await storage.set({ key: 'other', type: 'string', value: 'b' });
+
+    expect(keychain.setGenericPassword).toHaveBeenNthCalledWith(1, 'user', 'a', {
+      accessControl: 'BiometryCurrentSet',
+      service: 'token',
+    });
+    expect(keychain.setGenericPassword).toHaveBeenNthCalledWith(2, 'user', 'b', {
+      service: 'other',
     });
   });
 
@@ -145,17 +214,40 @@ describe('createKeychainStorageAdapter', () => {
     expect(items.size).toBe(0);
   });
 
-  it('rejects every mutation when read-only', async () => {
+  it('does not clear services hidden by the blacklist', async () => {
+    const { keychain, items } = createFakeKeychain({
+      token: { username: 'u', password: '1' },
+      'auth-refresh': { username: 'u', password: '2' },
+    });
+    const storage = getStorage(createKeychainStorageAdapter({ keychain, blacklist: /auth/ }));
+
+    await storage.clear();
+
+    expect([...items.keys()]).toEqual(['auth-refresh']);
+  });
+
+  it('clears every service it can and reports the ones that failed', async () => {
     const { keychain, items } = createFakeKeychain({
       a: { username: 'u', password: '1' },
+      b: { username: 'u', password: '2' },
+      c: { username: 'u', password: '3' },
     });
-    const storage = getStorage(createKeychainStorageAdapter({ keychain, readOnly: true }));
+    keychain.resetGenericPassword.mockImplementation(async ({ service }) => {
+      if (service === 'b') {
+        throw new Error('Keystore failure');
+      }
+      items.delete(service);
+    });
+    const storage = getStorage(createKeychainStorageAdapter({ keychain }));
 
-    await expect(storage.set({ key: 'a', type: 'string', value: 'x' })).rejects.toThrow(
-      'read-only',
-    );
-    await expect(storage.delete('a')).rejects.toThrow('read-only');
-    await expect(storage.clear()).rejects.toThrow('read-only');
-    expect(items.get('a')).toEqual({ username: 'u', password: '1' });
+    await expect(storage.clear()).rejects.toThrow('Could not clear Keychain services: b.');
+    expect([...items.keys()]).toEqual(['b']);
+  });
+
+  it('marks the storage read-only', () => {
+    const { keychain } = createFakeKeychain();
+    const adapter = createKeychainStorageAdapter({ keychain, readOnly: true });
+
+    expect(adapter.storages[0].capabilities.readOnly).toBe(true);
   });
 });

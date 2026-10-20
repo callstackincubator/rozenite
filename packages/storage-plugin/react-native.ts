@@ -49,6 +49,13 @@ const createNoopStorageAdapter = (
   storages: [],
 });
 
+const createNoopKeychainStorageAdapter = ((options: { adapterId?: string; adapterName?: string }) =>
+  createNoopStorageAdapter(
+    options,
+    'react-native-keychain',
+    'React Native Keychain',
+  )) as typeof createKeychainStorageAdapter;
+
 if (!isDev || isServer) {
   createAsyncStorageAdapter = ((options: { adapterId?: string; adapterName?: string }) =>
     createNoopStorageAdapter(
@@ -63,12 +70,7 @@ if (!isDev || isServer) {
       'expo-secure-store',
       'Expo SecureStore',
     )) as typeof createExpoSecureStorageAdapter;
-  createKeychainStorageAdapter = ((options: { adapterId?: string; adapterName?: string }) =>
-    createNoopStorageAdapter(
-      options,
-      'react-native-keychain',
-      'React Native Keychain',
-    )) as typeof createKeychainStorageAdapter;
+  createKeychainStorageAdapter = createNoopKeychainStorageAdapter;
   createMMKVStorageAdapter = ((options: { adapterId?: string; adapterName?: string }) =>
     createNoopStorageAdapter(options, 'mmkv', 'MMKV')) as typeof createMMKVStorageAdapter;
   useRozeniteStoragePlugin = () => null;
@@ -79,12 +81,7 @@ if (!isDev || isServer) {
   createAsyncStorageAdapter = asyncStorageModule.createAsyncStorageAdapter;
   createExpoAsyncStorageAdapter = asyncStorageModule.createExpoAsyncStorageAdapter;
   createExpoSecureStorageAdapter = secureStorageModule.createExpoSecureStorageAdapter;
-  createKeychainStorageAdapter = ((options: { adapterId?: string; adapterName?: string }) =>
-    createNoopStorageAdapter(
-      options,
-      'react-native-keychain',
-      'React Native Keychain',
-    )) as typeof createKeychainStorageAdapter;
+  createKeychainStorageAdapter = createNoopKeychainStorageAdapter;
   createMMKVStorageAdapter = ((options: { adapterId?: string; adapterName?: string }) =>
     createNoopStorageAdapter(options, 'mmkv', 'MMKV')) as typeof createMMKVStorageAdapter;
   useRozeniteStoragePlugin =

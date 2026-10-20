@@ -14,7 +14,7 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 Install the peer dependencies for the storages you use:
 
-<PackageManagerTabs command="install -D react-native-mmkv @react-native-async-storage/async-storage expo-secure-store react-native-keychain" />
+<PackageManagerTabs command="install react-native-mmkv @react-native-async-storage/async-storage expo-secure-store react-native-keychain" />
 
 ## Setup
 
@@ -105,7 +105,23 @@ createKeychainStorageAdapter({
 });
 ```
 
-Each entry is one Keychain (iOS) or Keystore (Android) service, and its value is the stored password. By default every service reported by `getAllGenericPasswordServices` is listed; pass `services` (a list or an async function) to limit it. Editing an entry keeps its existing username, new entries use `defaultUsername`, and `setOptions` is forwarded to `setGenericPassword` (for example `accessible`). Set `readOnly` to reject changes from the panel.
+Each entry is one Keychain (iOS) or Keystore (Android) service, and its value is the stored password. By default every service reported by `getAllGenericPasswordServices` is listed, which can include services written by other libraries in your app. Pass `services` (a list or an async function) to limit it. Purging the storage removes every listed service except the ones hidden by `blacklist`.
+
+On iOS, services that need Face ID, Touch ID or a passcode are skipped when listing, so the panel doesn't trigger authentication prompts. Set `skipUIAuth: false` to list them anyway. Entries that can't be read are left out instead of failing the whole list.
+
+Editing an entry keeps its existing username and, on Android, its storage type. New entries use `defaultUsername`. `setOptions` is forwarded to `setGenericPassword` (for example `accessible` or `accessControl`). The keychain doesn't report these options for stored entries, so if your entries use different ones, pass a function that returns the options for each service:
+
+```ts
+createKeychainStorageAdapter({
+  keychain: Keychain,
+  setOptions: (service) =>
+    service === 'auth-token'
+      ? { accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET }
+      : undefined,
+});
+```
+
+Set `readOnly` to disable adding, editing, deleting, purging and importing in the panel.
 
 If `keychain` is `undefined`, for example because you load the library optionally, the adapter exposes no storages instead of throwing.
 

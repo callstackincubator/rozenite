@@ -170,3 +170,37 @@ describe('StorageView subscriptions', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe('StorageView read-only storages', () => {
+  it('rejects set, delete and purge without touching the storage', async () => {
+    const storage = {
+      kind: 'sync' as const,
+      getAllKeys: vi.fn(() => ['key']),
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      clear: vi.fn(),
+    };
+    const [view] = createStorageViews([
+      {
+        id: 'manual',
+        name: 'Manual',
+        storages: [
+          {
+            id: 'storage',
+            name: 'Storage',
+            capabilities: { supportedTypes: ['string'], readOnly: true },
+            storage,
+          },
+        ],
+      },
+    ]);
+
+    await expect(view.set({ key: 'key', type: 'string', value: 'x' })).rejects.toThrow('read-only');
+    await expect(view.delete('key')).rejects.toThrow('read-only');
+    await expect(view.purge()).rejects.toThrow('read-only');
+    expect(storage.set).not.toHaveBeenCalled();
+    expect(storage.delete).not.toHaveBeenCalled();
+    expect(storage.clear).not.toHaveBeenCalled();
+  });
+});

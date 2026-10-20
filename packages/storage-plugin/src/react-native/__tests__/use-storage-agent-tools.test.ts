@@ -58,6 +58,7 @@ describe('storage Agent tool handlers', () => {
           adapterName: 'Adapter one',
           storageName: 'Storage first',
           supportedTypes: ['string', 'buffer'],
+          readOnly: false,
         },
         {
           adapterId: 'two',
@@ -65,6 +66,7 @@ describe('storage Agent tool handlers', () => {
           adapterName: 'Adapter two',
           storageName: 'Storage second',
           supportedTypes: ['string', 'buffer'],
+          readOnly: false,
         },
       ],
     });
