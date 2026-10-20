@@ -64,12 +64,27 @@ export const createKeychainStorageAdapter = ({
     return { id: adapterId, name: adapterName, storages: [] };
   }
 
-  const resolveServices = async (): Promise<readonly string[]> => {
-    if (typeof services === 'function') {
-      return services();
-    }
+  const resolveServices = async (): Promise<string[]> => {
+    const resolved =
+      typeof services === 'function'
+        ? await services()
+        : (services ?? (await keychain.getAllGenericPasswordServices({ skipUIAuth })));
 
-    return services ?? keychain.getAllGenericPasswordServices({ skipUIAuth });
+    // iOS reports one service per Keychain item, so a service with several accounts repeats.
+    return [...new Set(resolved)];
+  };
+
+  const readCredentials = async (service: string) => {
+    try {
+      return await keychain.getGenericPassword({ service });
+    } catch (error) {
+      // Entries behind biometrics, or with an invalidated Keystore key, cannot be read.
+      console.warn(
+        `[Rozenite] Storage Plugin: Could not read Keychain service "${service}".`,
+        error,
+      );
+      return false;
+    }
   };
 
   const isBlacklisted = (service: string) => {
@@ -94,17 +109,10 @@ export const createKeychainStorageAdapter = ({
     },
     storage: {
       kind: 'async',
-      getAllKeys: async () => [...(await resolveServices())],
+      getAllKeys: resolveServices,
       get: async (key) => {
-        let credentials: Awaited<ReturnType<KeychainLike['getGenericPassword']>>;
-        try {
-          credentials = await keychain.getGenericPassword({ service: key });
-        } catch {
-          // Entries behind biometrics, or with an invalidated Keystore key, cannot be read.
-          // Skip them instead of failing the whole listing.
-          return undefined;
-        }
-
+        // Unreadable entries are skipped instead of failing the whole listing.
+        const credentials = await readCredentials(key);
         if (!credentials) {
           return undefined;
         }
@@ -121,14 +129,13 @@ export const createKeychainStorageAdapter = ({
         }
 
         // setGenericPassword replaces the whole entry, so keep the existing username and,
-        // on Android, the storage type it was encrypted with.
-        const existing = await keychain.getGenericPassword({
-          service: entry.key,
-        });
+        // on Android, the storage type it was encrypted with. An unreadable entry is
+        // overwritten with the defaults.
+        const existing = await readCredentials(entry.key);
         const username = existing ? existing.username : defaultUsername;
         await keychain.setGenericPassword(username, entry.value, {
-          ...resolveSetOptions(entry.key),
           ...(existing && existing.storage ? { storage: existing.storage } : {}),
+          ...resolveSetOptions(entry.key),
           service: entry.key,
         });
       },

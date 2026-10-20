@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import { MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import { storageToolDefinitions } from '../../shared/agent-tools';
 import type { StorageAdapter, StorageEntry } from '../../shared/types';
@@ -7,7 +8,7 @@ vi.mock('@rozenite/agent-bridge', () => ({
   useRozenitePluginAgentTool: vi.fn(),
 }));
 
-import { createStorageAgentHandlers } from '../useStorageAgentTools';
+import { createStorageAgentHandlers, useStorageAgentTools } from '../useStorageAgentTools';
 import { createStorageViews } from '../storage-view';
 
 const createViews = (
@@ -291,5 +292,35 @@ describe('storage Agent tool handlers', () => {
     });
     expect(adapters[0].storages[0].storage.get).toHaveBeenCalledTimes(1);
     expect(adapters[0].storages[0].storage.get).toHaveBeenCalledWith('large');
+  });
+
+  it('treats listed entries that cannot be read as existing in write tools', async () => {
+    const { views } = createViews([
+      { adapterId: 'adapter', storageId: 'storage', entries: entries('readable') },
+    ]);
+    // The key is listed, but reading it returns nothing (e.g. a locked Keychain item).
+    const getAllKeys = vi.spyOn(views[0], 'getAllKeys').mockResolvedValue(['readable', 'locked']);
+    vi.mocked(useRozenitePluginAgentTool).mockClear();
+    useStorageAgentTools(views);
+    const handler = (name: string) => {
+      const call = vi
+        .mocked(useRozenitePluginAgentTool)
+        .mock.calls.find(([options]) => options.tool.name === name);
+      return call?.[0].handler as (input: Record<string, unknown>) => Promise<unknown>;
+    };
+
+    await expect(
+      handler('create-entry')({ key: 'locked', type: 'string', value: 'x' }),
+    ).rejects.toThrow('already exists');
+    await expect(
+      handler('edit-entry')({ key: 'locked', type: 'string', value: 'x' }),
+    ).resolves.toMatchObject({ edited: true });
+    await expect(handler('remove-entry')({ key: 'locked' })).resolves.toMatchObject({
+      removed: true,
+    });
+    await expect(handler('remove-entry')({ key: 'missing' })).resolves.toMatchObject({
+      removed: false,
+    });
+    getAllKeys.mockRestore();
   });
 });

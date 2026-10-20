@@ -107,9 +107,9 @@ createKeychainStorageAdapter({
 
 Each entry is one Keychain (iOS) or Keystore (Android) service, and its value is the stored password. By default every service reported by `getAllGenericPasswordServices` is listed, which can include services written by other libraries in your app. Pass `services` (a list or an async function) to limit it. Purging the storage removes every listed service except the ones hidden by `blacklist`.
 
-On iOS, services that need Face ID, Touch ID or a passcode are skipped when listing, so the panel doesn't trigger authentication prompts. Set `skipUIAuth: false` to list them anyway. Entries that can't be read are left out instead of failing the whole list.
+On iOS, services that need Face ID, Touch ID or a passcode are skipped when listing, so the panel doesn't trigger authentication prompts. Set `skipUIAuth: false` to list them anyway. Entries that can't be read, for example after a biometric change invalidates their Keystore key, are left out of the table with a warning in the app's console instead of failing the whole list. They still count towards the storage's entry count, and purging removes them.
 
-Editing an entry keeps its existing username and, on Android, its storage type. New entries use `defaultUsername`. `setOptions` is forwarded to `setGenericPassword` (for example `accessible` or `accessControl`). The keychain doesn't report these options for stored entries, so if your entries use different ones, pass a function that returns the options for each service:
+Editing an entry keeps its existing username and, on Android, its storage type unless `setOptions` sets `storage`. New entries, and entries that can't be read, use `defaultUsername`. `setOptions` is forwarded to `setGenericPassword` (for example `accessible` or `accessControl`). The keychain doesn't report these options for stored entries, so if your entries use different ones, pass a function that returns the options for each service:
 
 ```ts
 createKeychainStorageAdapter({

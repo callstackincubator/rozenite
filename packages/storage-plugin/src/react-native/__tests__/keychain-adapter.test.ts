@@ -110,7 +110,8 @@ describe('createKeychainStorageAdapter', () => {
     expect(await storage.get('missing')).toBeUndefined();
   });
 
-  it('returns undefined for entries that cannot be read', async () => {
+  it('returns undefined and warns for entries that cannot be read', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { keychain } = createFakeKeychain({
       token: { username: 'alice', password: 'secret' },
     });
@@ -118,6 +119,19 @@ describe('createKeychainStorageAdapter', () => {
     const storage = getStorage(createKeychainStorageAdapter({ keychain }));
 
     expect(await storage.get('token')).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Could not read Keychain service "token"'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
+  });
+
+  it('lists each service once', async () => {
+    const { keychain } = createFakeKeychain();
+    keychain.getAllGenericPasswordServices.mockResolvedValueOnce(['token', 'token', 'session']);
+    const storage = getStorage(createKeychainStorageAdapter({ keychain }));
+
+    expect(await storage.getAllKeys()).toEqual(['token', 'session']);
   });
 
   it('keeps the existing username when updating an entry', async () => {
@@ -150,6 +164,36 @@ describe('createKeychainStorageAdapter', () => {
 
     expect(keychain.setGenericPassword).toHaveBeenCalledWith('alice', 'new', {
       storage: 'KeystoreAESGCM',
+      service: 'token',
+    });
+  });
+
+  it('overwrites an unreadable entry with the defaults', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { keychain, items } = createFakeKeychain({
+      token: { username: 'alice', password: 'old' },
+    });
+    keychain.getGenericPassword.mockRejectedValueOnce(new Error('Key permanently invalidated'));
+    const storage = getStorage(createKeychainStorageAdapter({ keychain }));
+
+    await storage.set({ key: 'token', type: 'string', value: 'new' });
+
+    expect(items.get('token')).toEqual({ username: 'user', password: 'new' });
+    warn.mockRestore();
+  });
+
+  it('lets setOptions override the existing storage type', async () => {
+    const { keychain } = createFakeKeychain({
+      token: { username: 'alice', password: 'old', storage: 'KeystoreAESCBC' },
+    });
+    const storage = getStorage(
+      createKeychainStorageAdapter({ keychain, setOptions: { storage: 'KeystoreAESGCM_NoAuth' } }),
+    );
+
+    await storage.set({ key: 'token', type: 'string', value: 'new' });
+
+    expect(keychain.setGenericPassword).toHaveBeenCalledWith('alice', 'new', {
+      storage: 'KeystoreAESGCM_NoAuth',
       service: 'token',
     });
   });
