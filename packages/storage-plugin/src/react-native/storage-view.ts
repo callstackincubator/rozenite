@@ -1,5 +1,6 @@
 import {
   getStorageViewId,
+  isReadOnly,
   supportsType,
   type AsyncStorage,
   type StorageAdapter,
@@ -42,6 +43,14 @@ const checkTypeSupport = (
   throw new Error(
     `Type "${type}" is not supported by storage "${target.storageId}" in adapter "${target.adapterId}".`,
   );
+};
+
+const checkWritable = (capabilities: StorageCapabilities, target: StorageTarget) => {
+  if (!isReadOnly(capabilities)) {
+    return;
+  }
+
+  throw new Error(`Storage "${target.storageId}" in adapter "${target.adapterId}" is read-only.`);
 };
 
 const getAllKeys = async (storage: AsyncStorageLike) => {
@@ -139,6 +148,7 @@ export const createStorageView = (
     blacklist: storageNode.blacklist,
     get,
     set: async (entry) => {
+      checkWritable(storageNode.capabilities, target);
       checkTypeSupport(storageNode.capabilities, entry.type, target);
       locallyMutatingKeys.add(entry.key);
       try {
@@ -148,6 +158,7 @@ export const createStorageView = (
       }
     },
     delete: async (key) => {
+      checkWritable(storageNode.capabilities, target);
       locallyMutatingKeys.add(key);
       try {
         await deleteEntry(storage, key);
@@ -156,6 +167,7 @@ export const createStorageView = (
       }
     },
     purge: async () => {
+      checkWritable(storageNode.capabilities, target);
       isLocallyPurging = true;
       try {
         await clearStorage(storage);

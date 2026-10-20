@@ -4,7 +4,7 @@ title: 'Storage Plugin'
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
 
-The Storage plugin is a single DevTools panel for MMKV, AsyncStorage, and Expo SecureStore. Register whichever adapters your app uses and inspect them all from one place.
+The Storage plugin is a single DevTools panel for MMKV, AsyncStorage, Expo SecureStore, and react-native-keychain. Register whichever adapters your app uses and inspect them all from one place.
 
 ## Installation
 
@@ -14,7 +14,7 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 Install the peer dependencies for the storages you use:
 
-<PackageManagerTabs command="install -D react-native-mmkv @react-native-async-storage/async-storage expo-secure-store" />
+<PackageManagerTabs command="install react-native-mmkv @react-native-async-storage/async-storage expo-secure-store react-native-keychain" />
 
 ## Setup
 
@@ -22,6 +22,7 @@ Install the peer dependencies for the storages you use:
 import {
   createAsyncStorageAdapter,
   createExpoSecureStorageAdapter,
+  createKeychainStorageAdapter,
   createMMKVStorageAdapter,
   useRozeniteStoragePlugin,
 } from '@rozenite/storage-plugin';
@@ -36,6 +37,9 @@ const storages = [
   createExpoSecureStorageAdapter({
     storage: SecureStore,
     keys: ['token', 'session'],
+  }),
+  createKeychainStorageAdapter({
+    keychain: Keychain,
   }),
 ];
 
@@ -89,9 +93,41 @@ createExpoSecureStorageAdapter({
 
 SecureStore doesn't support key enumeration, so you provide known keys via `keys`.
 
+### react-native-keychain
+
+```ts title="App.tsx"
+import * as Keychain from 'react-native-keychain';
+
+createKeychainStorageAdapter({
+  keychain: Keychain,
+  storageName: 'Credentials',
+  readOnly: true,
+});
+```
+
+Each entry is one Keychain (iOS) or Keystore (Android) service, and its value is the stored password. By default every service reported by `getAllGenericPasswordServices` is listed, which can include services written by other libraries in your app. Pass `services` (a list or an async function) to limit it. Purging the storage removes every listed service except the ones hidden by `blacklist`.
+
+On iOS, services that need Face ID, Touch ID or a passcode are skipped when listing, so the panel doesn't trigger authentication prompts. Set `skipUIAuth: false` to list them anyway. Entries that can't be read, for example after a biometric change invalidates their Keystore key, are left out of the table with a warning in the app's console instead of failing the whole list. They still count towards the storage's entry count, and purging removes them.
+
+Editing an entry keeps its existing username and, on Android, its storage type unless `setOptions` sets `storage`. New entries, and entries that can't be read, use `defaultUsername`. `setOptions` is forwarded to `setGenericPassword` (for example `accessible` or `accessControl`). The keychain doesn't report these options for stored entries, so if your entries use different ones, pass a function that returns the options for each service:
+
+```ts
+createKeychainStorageAdapter({
+  keychain: Keychain,
+  setOptions: (service) =>
+    service === 'auth-token'
+      ? { accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET }
+      : undefined,
+});
+```
+
+Set `readOnly` to disable adding, editing, deleting, purging and importing in the panel.
+
+If `keychain` is `undefined`, for example because you load the library optionally, the adapter exposes no storages instead of throwing.
+
 ## Binary values
 
-MMKV storages that hold binary values render and edit them through a hex viewer with a Base64 mode for copy/paste. AsyncStorage and Expo SecureStore don't support binary values.
+MMKV storages that hold binary values render and edit them through a hex viewer with a Base64 mode for copy/paste. AsyncStorage, Expo SecureStore, and react-native-keychain don't support binary values.
 
 ## Hiding sensitive keys
 

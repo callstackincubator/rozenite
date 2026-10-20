@@ -17,6 +17,8 @@ export type StorageEntryPreview = {
 
 export type StorageCapabilities = {
   supportedTypes: StorageEntryType[];
+  /** The panel disables add, edit, delete, purge and import, and the device rejects them. */
+  readOnly?: boolean;
 };
 
 export type StorageDescriptor = {
@@ -82,3 +84,5 @@ export const getStorageViewId = ({ adapterId, storageId }: StorageTarget) =>
 
 export const supportsType = (capabilities: StorageCapabilities, type: StorageEntryType) =>
   capabilities.supportedTypes.includes(type);
+
+export const isReadOnly = (capabilities: StorageCapabilities) => capabilities.readOnly === true;

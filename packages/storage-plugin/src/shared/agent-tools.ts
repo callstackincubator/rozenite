@@ -39,6 +39,7 @@ export type StorageListStoragesItem = {
   adapterName: string;
   storageName: string;
   supportedTypes: StorageEntryType[];
+  readOnly: boolean;
 };
 
 export type StorageListStoragesResult = {
@@ -109,11 +110,18 @@ export const storageToolDefinitions = {
   >({
     name: 'list-storages',
     description:
-      'List all storage adapters and their storage nodes currently available on the device, including supported entry types. Entry counts are omitted to avoid enumerating every storage.',
+      'List all storage adapters and their storage nodes currently available on the device, including supported entry types and whether the storage is read-only. Entry counts are omitted to avoid enumerating every storage.',
     inputSchema: { type: 'object', properties: {} },
     rows: {
       key: 'storages',
-      fields: ['adapterId', 'storageId', 'adapterName', 'storageName', 'supportedTypes'],
+      fields: [
+        'adapterId',
+        'storageId',
+        'adapterName',
+        'storageName',
+        'supportedTypes',
+        'readOnly',
+      ],
     },
   }),
   listEntries: definePaginatedAgentToolContract<StorageListEntriesArgs, StorageListEntriesResult>({

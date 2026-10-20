@@ -158,10 +158,19 @@ export const useRozeniteStoragePlugin = ({ storages }: RozeniteStoragePluginOpti
 
         try {
           await view.purge();
-          await sendInvalidation(view.target, undefined, 'purge');
         } catch (error) {
           console.warn(
             `[Rozenite] Storage Plugin: Failed to purge storage in ${target.adapterId}/${target.storageId}.`,
+            error,
+          );
+        }
+
+        // A failed purge may still have removed some entries, so refresh the panel either way.
+        try {
+          await sendInvalidation(view.target, undefined, 'purge');
+        } catch (error) {
+          console.warn(
+            `[Rozenite] Storage Plugin: Failed to refresh storage in ${target.adapterId}/${target.storageId}.`,
             error,
           );
         }

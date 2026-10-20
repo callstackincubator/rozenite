@@ -30,7 +30,7 @@ import type {
   StorageEntryValue,
   StorageTarget,
 } from '../shared/types';
-import { getStorageViewId } from '../shared/types';
+import { getStorageViewId, isReadOnly } from '../shared/types';
 import { AddEntryDialog } from './add-entry-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
 import { EntryDetailDialog } from './entry-detail-dialog';
@@ -116,6 +116,7 @@ function StoragePanelContent() {
   });
   const rows = flattenStorageEntryPreviewPages(previews.data);
   const supportedTypes = selectedDescriptor?.capabilities.supportedTypes ?? [];
+  const readOnly = selectedDescriptor ? isReadOnly(selectedDescriptor.capabilities) : false;
   const sidebarGroups = useMemo(() => {
     const storages = new Map(
       descriptors.map((descriptor) => [getStorageViewId(descriptor.target), descriptor]),
@@ -508,30 +509,31 @@ function StoragePanelContent() {
         id: 'actions',
         header: '',
         enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
-            <IconButton
-              tone="neutral"
-              variant="ghost"
-              onClick={() => setInteraction({ key: row.original.key, mode: 'edit' })}
-              label={`Edit value for ${row.original.key}`}
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-            </IconButton>
-            <IconButton
-              tone="neutral"
-              variant="ghost"
-              className="text-muted-foreground hover:text-danger"
-              onClick={() => void handleDeleteClick(row.original.key)}
-              label={`Delete entry ${row.original.key}`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </IconButton>
-          </div>
-        ),
+        cell: ({ row }) =>
+          readOnly ? null : (
+            <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+              <IconButton
+                tone="neutral"
+                variant="ghost"
+                onClick={() => setInteraction({ key: row.original.key, mode: 'edit' })}
+                label={`Edit value for ${row.original.key}`}
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+              </IconButton>
+              <IconButton
+                tone="neutral"
+                variant="ghost"
+                className="text-muted-foreground hover:text-danger"
+                onClick={() => void handleDeleteClick(row.original.key)}
+                label={`Delete entry ${row.original.key}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </IconButton>
+            </div>
+          ),
       },
     ],
-    [handleDeleteClick],
+    [handleDeleteClick, readOnly],
   );
   const sorting: SortingState = [{ id: 'key', desc: keySortDirection === 'descending' }];
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
@@ -608,7 +610,7 @@ function StoragePanelContent() {
                 <Toolbar.Group>
                   <Toolbar.Button
                     onClick={() => setShowAddDialog(true)}
-                    disabled={!selectedDescriptor}
+                    disabled={!selectedDescriptor || readOnly}
                     aria-label="Add entry"
                     title="Add entry"
                     className="w-6 px-0"
@@ -617,7 +619,7 @@ function StoragePanelContent() {
                   </Toolbar.Button>
                   <Toolbar.Button
                     onClick={() => void handlePurgeClick()}
-                    disabled={!client || !selectedTarget || previews.isFetching}
+                    disabled={!client || !selectedTarget || previews.isFetching || readOnly}
                     aria-label="Purge storage"
                     title="Purge storage"
                     className="w-6 px-0 text-muted-foreground hover:text-danger"
@@ -641,7 +643,7 @@ function StoragePanelContent() {
                 <Toolbar.Group>
                   <Toolbar.Button
                     onClick={handleImportClick}
-                    disabled={!selectedDescriptor}
+                    disabled={!selectedDescriptor || readOnly}
                     aria-label="Import storage"
                     title="Import storage"
                     className="w-6 px-0"
@@ -731,13 +733,15 @@ function StoragePanelContent() {
         onOpenChange={(open) => {
           if (!open) closeInteraction();
         }}
-        onEdit={() =>
-          setInteraction((current) => (current ? { ...current, mode: 'edit' } : current))
+        onEdit={
+          readOnly
+            ? undefined
+            : () => setInteraction((current) => (current ? { ...current, mode: 'edit' } : current))
         }
         entry={fullEntry.entry ?? null}
       />
       <EditEntryDialog
-        isOpen={interaction?.mode === 'edit' && fullEntry.entry != null}
+        isOpen={interaction?.mode === 'edit' && fullEntry.entry != null && !readOnly}
         onClose={closeInteraction}
         onEditEntry={handleValueChange}
         entry={fullEntry.entry ?? null}

@@ -5,7 +5,12 @@ import {
   storageToolDefinitions,
   type StorageListEntriesArgs,
 } from '../shared/agent-tools';
-import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
+import {
+  isReadOnly,
+  type StorageEntry,
+  type StorageEntryType,
+  type StorageEntryValue,
+} from '../shared/types';
 import type { StorageView } from './storage-view';
 import { compareKeys } from './entry-preview-pagination';
 
@@ -129,6 +134,7 @@ export const createStorageAgentHandlers = (views: readonly StorageView[]) => ({
       adapterName: view.adapterName,
       storageName: view.storageName,
       supportedTypes: view.capabilities.supportedTypes,
+      readOnly: isReadOnly(view.capabilities),
     })),
   }),
 
@@ -161,6 +167,11 @@ export const createStorageAgentHandlers = (views: readonly StorageView[]) => ({
   },
 });
 
+// Some entries exist but cannot be read (for example Keychain items behind biometrics),
+// so fall back to the key list when reading returns nothing.
+const hasEntry = async (view: StorageView, key: string) =>
+  !!(await view.get(key)) || (await view.getAllKeys()).includes(key);
+
 export const useStorageAgentTools = (views: StorageView[]) => {
   const handlers = createStorageAgentHandlers(views);
 
@@ -187,9 +198,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     tool: storageToolDefinitions.createEntry,
     handler: async ({ adapterId, storageId, key, type, value }) => {
       const view = resolveStorage(views, adapterId, storageId);
-      const existing = await view.get(key);
-
-      if (existing) {
+      if (await hasEntry(view, key)) {
         throw new Error(
           `Key "${key}" already exists in storage "${formatViewRef(view)}". Use edit-entry instead.`,
         );
@@ -212,9 +221,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     tool: storageToolDefinitions.editEntry,
     handler: async ({ adapterId, storageId, key, type, value }) => {
       const view = resolveStorage(views, adapterId, storageId);
-      const existing = await view.get(key);
-
-      if (!existing) {
+      if (!(await hasEntry(view, key))) {
         throw new Error(
           `Key "${key}" not found in storage "${formatViewRef(view)}". Use create-entry instead.`,
         );
@@ -237,7 +244,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     tool: storageToolDefinitions.removeEntry,
     handler: async ({ adapterId, storageId, key }) => {
       const view = resolveStorage(views, adapterId, storageId);
-      const existed = !!(await view.get(key));
+      const existed = await hasEntry(view, key);
       await view.delete(key);
 
       return {
