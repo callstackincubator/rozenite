@@ -81,6 +81,9 @@ const createTsconfig = (emit: TscEmit) => {
       // is only compatible with ES module output, so CommonJS uses `node10` -
       // which is equally forgiving about extensions.
       moduleResolution: isEsm ? 'bundler' : 'node10',
+      // The declaration emit already type checks these sources, and `node10`
+      // cannot see types published only via `exports` (React Native 0.87+).
+      noCheck: !emit.declaration,
       // Resolve dependencies through their published entry points. Without
       // this, the `development` condition that plugin tsconfigs enable for
       // editor support would pull workspace *sources* into the build.

@@ -50,7 +50,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native": "catalog:",
-    "react-native-svg": "15.15.4",
+    "react-native-svg": "15.16.0",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
     "typescript": "~5.9.3",

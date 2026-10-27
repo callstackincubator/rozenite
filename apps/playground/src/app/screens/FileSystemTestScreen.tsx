@@ -91,6 +91,9 @@ export const FileSystemTestScreen = () => {
       const destPath = `${dirPath}/${fileName}`;
 
       const asset = Image.resolveAssetSource(reactLogoPng);
+      if (!asset) {
+        throw new Error('Could not resolve the bundled image asset');
+      }
       const uri = asset.uri;
 
       if (uri.startsWith('http://') || uri.startsWith('https://')) {

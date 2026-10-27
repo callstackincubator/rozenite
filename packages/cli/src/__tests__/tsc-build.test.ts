@@ -105,6 +105,20 @@ describe('prepareEmit', () => {
       module: 'CommonJS',
       moduleResolution: 'node10',
       outDir: '../dist/metro',
+      noCheck: false,
     });
+  });
+
+  it('type checks only the emit that declares types', async () => {
+    const projectRoot = await createTempDir();
+    const [esm, cjs] = getTscEmits('react-native');
+
+    const esmConfig = await readJson(await prepareEmit(projectRoot, esm));
+    const cjsConfig = await readJson(await prepareEmit(projectRoot, cjs));
+
+    expect(esmConfig.compilerOptions.noCheck).toBe(false);
+    // `node10` ignores `exports`, so checking the CommonJS emit would fail on
+    // packages that publish their types only there, like React Native 0.87+.
+    expect(cjsConfig.compilerOptions.noCheck).toBe(true);
   });
 });
