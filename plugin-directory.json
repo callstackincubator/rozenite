@@ -94,5 +94,9 @@
   {
     "npmUrl": "https://www.npmjs.com/package/rozenite-i18n-devtools",
     "githubUrl": "https://github.com/sbaiahmed1/rozenite-i18n-devtools"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-timeline-plugin",
+    "githubUrl": "https://github.com/R0ixy/rozenite-timeline-plugin"
   }
 ]
