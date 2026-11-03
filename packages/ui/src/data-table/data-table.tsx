@@ -12,6 +12,7 @@ import { SortIcon } from '../utils/sort-icon';
 import { monoLabel } from '../utils/mono-label';
 import {
   ColumnResizeHandle,
+  ResizableColgroup,
   resizableCellClassName,
   resizableTableStyle,
   useColumnResizing,
@@ -95,6 +96,7 @@ export function DataTable<TRow>({
       className={cn('w-full border-collapse text-sm', className)}
       style={resizing.enabled ? resizableTableStyle(table.getTotalSize()) : undefined}
     >
+      {resizing.enabled ? <ResizableColgroup columnCount={columnCount} /> : null}
       <thead data-slot="data-table-head">
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id} className="border-b border-border">
