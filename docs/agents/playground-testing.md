@@ -25,6 +25,7 @@ deep link appears to open the wrong app, confirm the bundle id under test is
 | Home | `rozenite://` | Rozenite Playground |
 | ControlsPlugin | `rozenite://controls` | Controls |
 | ReduxTest | `rozenite://redux` | Redux |
+| ZustandPlugin | `rozenite://zustand` | Zustand |
 | StoragePlugin | `rozenite://storage` | Storage |
 | FeatureFlagsPlugin | `rozenite://feature-flags` | Feature Flags |
 | FileSystemTest | `rozenite://file-system` | File System |
@@ -65,6 +66,7 @@ Prefer `agent-device` driving the iOS AXSnapshot over coordinates:
 | Home | `` | Rozenite Playground home |
 | ControlsPlugin | `controls` | Controls plugin |
 | ReduxTest | `redux` | Redux DevTools demo |
+| ZustandPlugin | `zustand` | Zustand plugin |
 | StoragePlugin | `storage` | Storage plugin |
 | FeatureFlagsPlugin | `feature-flags` | Feature flags plugin |
 | FileSystemTest | `file-system` | File system plugin |
@@ -85,6 +87,7 @@ reached from within their parent screen, not from the home index.)
 | --- | --- | --- |
 | Controls | Toggle a switch, edit the release label, or press an action button on the Controls screen | Controls panel in DevTools |
 | Redux | Press `+1` / `-1` / `Reset` on either counter card | Redux DevTools panel — switch instances to see both stores |
+| Zustand | On the Zustand screen, add items or check out (Cart), or log in / "Login + refresh" (Session) | Zustand panel in DevTools — one sidebar entry per store (Cart, Session) |
 | Storage | Set/Delete a key on the MMKV, Async, or Secure tab | Storage panel in DevTools |
 | Feature Flags | Press Refresh on the Feature Flags screen, or set/clear an override from the Feature Flags panel in DevTools | Feature Flags panel in DevTools; the checkout banner, welcome message, retry count, and card styling on the Feature Flags screen react to the effective value |
 | File System | Save or remove the react logo PNG | File System panel in DevTools |
