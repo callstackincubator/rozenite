@@ -9,6 +9,7 @@ export type RootStackParamList = {
   NetworkTest: undefined;
   RequestBodyTest: undefined;
   ReduxTest: undefined;
+  ZustandPlugin: undefined;
   PerformanceMonitor: undefined;
   RequireProfilerTest: undefined;
   FileSystemTest: undefined;

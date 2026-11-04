@@ -25,6 +25,7 @@
         "@rozenite/network-activity-plugin#build",
         "@rozenite/react-navigation-plugin#build",
         "@rozenite/redux-devtools-plugin#build",
+        "@rozenite/zustand-plugin#build",
         "@rozenite/storage-plugin#build",
         "@rozenite/tanstack-query-plugin#build"
       ],

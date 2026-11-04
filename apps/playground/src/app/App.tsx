@@ -5,6 +5,7 @@ import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
+import { useZustandAgentTools } from '@rozenite/zustand-plugin';
 import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
 import { useRozeniteSqlitePlugin } from '@rozenite/sqlite-plugin';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
@@ -25,6 +26,7 @@ import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
 import { PerfProblemScreen } from './screens/PerfProblemScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
+import { ZustandPluginScreen } from './screens/ZustandPluginScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
@@ -71,6 +73,7 @@ const Wrapper = () => {
     adapters: sqlitePluginAdapters,
   });
   useReduxDevToolsAgentTools();
+  useZustandAgentTools();
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
   useAgentPlaygroundTools();
@@ -103,6 +106,7 @@ const Wrapper = () => {
       <Stack.Screen name={routes.networkTest.name} component={NetworkTestScreen} />
       <Stack.Screen name={routes.requestBodyTest.name} component={RequestBodyTestScreen} />
       <Stack.Screen name={routes.reduxTest.name} component={ReduxTestScreen} />
+      <Stack.Screen name={routes.zustandPlugin.name} component={ZustandPluginScreen} />
       <Stack.Screen name={routes.performanceMonitor.name} component={PerformanceMonitorScreen} />
       <Stack.Screen name={routes.requireProfilerTest.name} component={RequireProfilerTestScreen} />
       <Stack.Screen name={routes.fileSystemTest.name} component={FileSystemTestScreen} />
@@ -149,6 +153,7 @@ const linking = {
       [routes.networkTest.name]: routes.networkTest.path,
       [routes.requestBodyTest.name]: routes.requestBodyTest.path,
       [routes.reduxTest.name]: routes.reduxTest.path,
+      [routes.zustandPlugin.name]: routes.zustandPlugin.path,
       [routes.performanceMonitor.name]: routes.performanceMonitor.path,
       [routes.requireProfilerTest.name]: routes.requireProfilerTest.path,
       [routes.fileSystemTest.name]: routes.fileSystemTest.path,

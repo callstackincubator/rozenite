@@ -59,7 +59,7 @@ export type Plugin = {
   href: string;
 };
 
-/** The fourteen official plugins, ordered by how often a team reaches for them. */
+/** The official plugins, ordered by how often a team reaches for them. */
 export const plugins: Plugin[] = [
   {
     name: 'Network Activity',
@@ -81,6 +81,13 @@ export const plugins: Plugin[] = [
     about: 'Store state, dispatched actions and a diff for each one.',
     icon: 'cube',
     href: '/docs/official-plugins/redux-devtools',
+  },
+  {
+    name: 'Zustand',
+    pkg: '@rozenite/zustand-plugin',
+    about: 'Zustand stores: named actions, diffs, time travel and live editing.',
+    icon: 'history',
+    href: '/docs/official-plugins/zustand',
   },
   {
     name: 'React Navigation',
