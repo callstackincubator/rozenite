@@ -54,6 +54,17 @@ export interface WebSocketInterceptor {
   disableInterception(): void;
 }
 
+type WebSocketEvents = {
+  websocketMessage: [
+    | { type?: 'binary' | 'text'; data: string; id: number }
+    // Sent when `binaryType` is 'blob'; the payload stays in native memory.
+    | { type: 'blob'; data: { size: number }; id: number },
+  ];
+  websocketOpen: [{ id: number }];
+  websocketClosed: [{ code: number; reason?: string; id: number }];
+  websocketFailed: [{ message: string; id: number }];
+};
+
 /**
  * A network interceptor which monkey-patches the native WebSocket module to
  * gather all WebSocket network events.
@@ -72,7 +83,7 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
   const originalSendBinary = nativeWebSocketModule.sendBinary.bind(nativeWebSocketModule);
   const originalClose = nativeWebSocketModule.close.bind(nativeWebSocketModule);
 
-  let eventEmitter: NativeEventEmitter | undefined;
+  let eventEmitter: NativeEventEmitter<WebSocketEvents> | undefined;
   let subscriptions: { remove(): void }[] = [];
 
   let closeCallback: Parameters<WebSocketInterceptor['setCloseCallback']>[0] | null = null;
@@ -90,28 +101,33 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
     return `ArrayBuffer {${Array.from(new Uint8Array(value)).join(',')}}`;
   };
 
+  const messageToString = (ev: WebSocketEvents['websocketMessage'][0]): string => {
+    switch (ev.type) {
+      case 'binary':
+        return arrayBufferToString(ev.data);
+      case 'blob':
+        return `Blob {size: ${ev.data.size}}`;
+      default:
+        return ev.data;
+    }
+  };
+
   const registerEvents = () => {
     if (!eventEmitter) {
       return;
     }
 
     subscriptions = [
-      eventEmitter.addListener(
-        'websocketMessage',
-        (ev: { type?: 'binary' | 'text'; data: string; id: number }) => {
-          onMessageCallback?.(ev.type === 'binary' ? arrayBufferToString(ev.data) : ev.data, ev.id);
-        },
-      ),
-      eventEmitter.addListener('websocketOpen', (ev: { id: number }) => {
+      eventEmitter.addListener('websocketMessage', (ev) => {
+        onMessageCallback?.(messageToString(ev), ev.id);
+      }),
+      eventEmitter.addListener('websocketOpen', (ev) => {
         onOpenCallback?.(ev.id);
       }),
-      eventEmitter.addListener(
-        'websocketClosed',
-        (ev: { code: number; reason?: string; id: number }) => {
-          onCloseCallback?.({ code: ev.code, reason: ev.reason }, ev.id);
-        },
-      ),
-      eventEmitter.addListener('websocketFailed', (ev: { message: string; id: number }) => {
+      eventEmitter.addListener('websocketClosed', (ev) => {
+        onCloseCallback?.({ code: ev.code, reason: ev.reason }, ev.id);
+      }),
+      eventEmitter.addListener('websocketFailed', (ev) => {
         onErrorCallback?.(ev.message, ev.id);
       }),
     ];

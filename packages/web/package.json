@@ -60,7 +60,7 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@react-native/metro-config": "~0.86.0",
+    "@react-native/metro-config": "~0.88.0",
     "@rozenite/test-utils": "workspace:*"
   },
   "engines": {
