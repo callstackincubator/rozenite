@@ -3,10 +3,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { PluginInfo } from '../types.js';
 
+type TemplateData = PluginInfo & {
+  rozeniteVersion: string;
+};
+
 const renderTemplateFile = async (
   src: string,
   dest: string,
-  pluginInfo: PluginInfo,
+  pluginInfo: TemplateData,
 ): Promise<void> => {
   let content = await fs.readFile(src, 'utf8');
   content = ejs.render(content, pluginInfo);
@@ -30,7 +34,7 @@ const renderTemplateFile = async (
 export const renderTemplate = async (
   src: string,
   dest: string,
-  pluginInfo: PluginInfo,
+  pluginInfo: TemplateData,
 ): Promise<void> => {
   const entries = await fs.readdir(src, { withFileTypes: true });
 
