@@ -2,6 +2,7 @@ import type { PluginInfo } from '../../types.js';
 import { step } from '../../utils/steps.js';
 import { renderTemplate } from '../../utils/templates.js';
 import { TEMPLATE_DIR } from '../../constants.js';
+import { getPackageJSON } from '../../package-json.js';
 
 export const bootstrapPlugin = async (
   projectRoot: string,
@@ -14,7 +15,10 @@ export const bootstrapPlugin = async (
       error: 'Failed to bootstrap plugin',
     },
     async () => {
-      await renderTemplate(TEMPLATE_DIR, projectRoot, pluginInfo);
+      await renderTemplate(TEMPLATE_DIR, projectRoot, {
+        ...pluginInfo,
+        rozeniteVersion: getPackageJSON().version,
+      });
     },
   );
 };
