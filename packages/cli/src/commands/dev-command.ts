@@ -6,6 +6,7 @@ import { isInteractive } from '../utils/isInteractive.js';
 import {
   assertTsconfigExists,
   getTscEmits,
+  getTypeScriptMajor,
   PluginTarget,
   prepareEmit,
   spawnTscWatch,
@@ -87,8 +88,10 @@ export const devCommand = async (targetDir: string) => {
     const processes: Subprocess[] = [];
 
     for (const target of watchTargets) {
+      const typescriptMajor = await getTypeScriptMajor(targetDir);
+
       for (const emit of getTscEmits(target)) {
-        const configPath = await prepareEmit(targetDir, emit);
+        const configPath = await prepareEmit(targetDir, emit, typescriptMajor);
         processes.push(spawnTscWatch(targetDir, configPath));
       }
     }

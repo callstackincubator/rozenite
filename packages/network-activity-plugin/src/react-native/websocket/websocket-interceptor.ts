@@ -55,7 +55,11 @@ export interface WebSocketInterceptor {
 }
 
 type WebSocketEvents = {
-  websocketMessage: [{ type?: 'binary' | 'text'; data: string; id: number }];
+  websocketMessage: [
+    | { type?: 'binary' | 'text'; data: string; id: number }
+    // Sent when `binaryType` is 'blob'; the payload stays in native memory.
+    | { type: 'blob'; data: { size: number }; id: number },
+  ];
   websocketOpen: [{ id: number }];
   websocketClosed: [{ code: number; reason?: string; id: number }];
   websocketFailed: [{ message: string; id: number }];
@@ -97,6 +101,17 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
     return `ArrayBuffer {${Array.from(new Uint8Array(value)).join(',')}}`;
   };
 
+  const messageToString = (ev: WebSocketEvents['websocketMessage'][0]): string => {
+    switch (ev.type) {
+      case 'binary':
+        return arrayBufferToString(ev.data);
+      case 'blob':
+        return `Blob {size: ${ev.data.size}}`;
+      default:
+        return ev.data;
+    }
+  };
+
   const registerEvents = () => {
     if (!eventEmitter) {
       return;
@@ -104,7 +119,7 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
 
     subscriptions = [
       eventEmitter.addListener('websocketMessage', (ev) => {
-        onMessageCallback?.(ev.type === 'binary' ? arrayBufferToString(ev.data) : ev.data, ev.id);
+        onMessageCallback?.(messageToString(ev), ev.id);
       }),
       eventEmitter.addListener('websocketOpen', (ev) => {
         onOpenCallback?.(ev.id);
