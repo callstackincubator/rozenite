@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { spawn, spawnCapturingOutput, Subprocess } from './spawn.js';
 import { fileExists } from './files.js';
@@ -13,6 +14,8 @@ export type TscEmit = {
   /** Output directory, relative to the project root. */
   outDir: string;
   declaration: boolean;
+  /** False when the emit only declares types and a CommonJS emit writes the JavaScript. */
+  js: boolean;
 };
 
 export const TARGET_ENTRY_FILE: Record<PluginTarget, string> = {
@@ -41,24 +44,45 @@ const GENERATED_CONFIG_DIR = '.rozenite';
  * Metro and SDK code is consumed by Node, where a single CommonJS build behind
  * the `default` condition serves `require()` and `import` alike. Emitting only
  * CommonJS also keeps `__dirname` and friends available to config authors.
+ *
+ * The first emit of every target type checks the sources as ES modules, so
+ * types published only through `exports` (React Native 0.87+) resolve.
  */
 export const getTscEmits = (target: PluginTarget): TscEmit[] => {
   if (target === 'react-native') {
     return [
-      { target, format: 'esm', outDir: 'dist/react-native', declaration: true },
-      { target, format: 'cjs', outDir: 'dist/react-native/cjs', declaration: false },
+      { target, format: 'esm', outDir: 'dist/react-native', declaration: true, js: true },
+      { target, format: 'cjs', outDir: 'dist/react-native/cjs', declaration: false, js: true },
     ];
   }
 
-  return [{ target, format: 'cjs', outDir: `dist/${target}`, declaration: true }];
+  return [
+    { target, format: 'esm', outDir: `dist/${target}`, declaration: true, js: false },
+    { target, format: 'cjs', outDir: `dist/${target}`, declaration: false, js: true },
+  ];
+};
+
+/** Falls back to 5 when unresolvable, leaving `runTsc` to report TypeScript missing. */
+export const getTypeScriptMajor = async (projectRoot: string): Promise<number> => {
+  try {
+    const packageJsonPath = createRequire(path.join(projectRoot, 'package.json')).resolve(
+      'typescript/package.json',
+    );
+    const { version } = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+    return Number(version.split('.')[0]);
+  } catch {
+    return 5;
+  }
 };
 
 const getConfigFileName = (emit: TscEmit): string => {
   return `tsconfig.${emit.target}.${emit.format}.json`;
 };
 
-const createTsconfig = (emit: TscEmit) => {
+const createTsconfig = (emit: TscEmit, typescriptMajor: number) => {
   const isEsm = emit.format === 'esm';
+  // Only TypeScript 6+ accepts `bundler` resolution for CommonJS output.
+  const useBundler = isEsm || typescriptMajor >= 6;
 
   return {
     extends: '../tsconfig.json',
@@ -66,7 +90,7 @@ const createTsconfig = (emit: TscEmit) => {
       // A plugin's own tsconfig is a type-checking config, so undo everything
       // that would stop it from producing output.
       noEmit: false,
-      emitDeclarationOnly: false,
+      emitDeclarationOnly: !emit.js,
       composite: false,
       incremental: false,
       // Never publish output that failed to type check.
@@ -77,10 +101,11 @@ const createTsconfig = (emit: TscEmit) => {
       // CommonJS output cannot carry ESM-only syntax through verbatim.
       verbatimModuleSyntax: false,
       module: isEsm ? 'ESNext' : 'CommonJS',
-      // `bundler` is what keeps extensionless relative imports valid, but it
-      // is only compatible with ES module output, so CommonJS uses `node10` -
-      // which is equally forgiving about extensions.
-      moduleResolution: isEsm ? 'bundler' : 'node10',
+      // `bundler` is what keeps extensionless relative imports valid. Where it
+      // is unavailable, CommonJS uses `node10` - equally forgiving about
+      // extensions, but blind to `exports`, so it leaves checks to the first emit.
+      moduleResolution: useBundler ? 'bundler' : 'node10',
+      ...(!useBundler && { noCheck: true }),
       // Resolve dependencies through their published entry points. Without
       // this, the `development` condition that plugin tsconfigs enable for
       // editor support would pull workspace *sources* into the build.
@@ -95,12 +120,19 @@ const createTsconfig = (emit: TscEmit) => {
   };
 };
 
-export const writeTargetTsconfig = async (projectRoot: string, emit: TscEmit): Promise<string> => {
+export const writeTargetTsconfig = async (
+  projectRoot: string,
+  emit: TscEmit,
+  typescriptMajor: number,
+): Promise<string> => {
   const configDir = path.join(projectRoot, GENERATED_CONFIG_DIR);
   await fs.mkdir(configDir, { recursive: true });
 
   const configPath = path.join(configDir, getConfigFileName(emit));
-  await fs.writeFile(configPath, JSON.stringify(createTsconfig(emit), null, 2) + '\n');
+  await fs.writeFile(
+    configPath,
+    JSON.stringify(createTsconfig(emit, typescriptMajor), null, 2) + '\n',
+  );
 
   return configPath;
 };
@@ -177,10 +209,14 @@ export const spawnTscWatch = (projectRoot: string, configPath: string): Subproce
 };
 
 /** Prepares the generated config and output marker for a single emit. */
-export const prepareEmit = async (projectRoot: string, emit: TscEmit): Promise<string> => {
+export const prepareEmit = async (
+  projectRoot: string,
+  emit: TscEmit,
+  typescriptMajor: number,
+): Promise<string> => {
   const [configPath] = await Promise.all([
-    writeTargetTsconfig(projectRoot, emit),
-    writeModuleTypeMarker(projectRoot, emit),
+    writeTargetTsconfig(projectRoot, emit, typescriptMajor),
+    emit.js && writeModuleTypeMarker(projectRoot, emit),
   ]);
 
   return configPath;
@@ -191,10 +227,11 @@ export const buildTarget = async (
   target: PluginTarget,
   { signal }: RunTscOptions = {},
 ): Promise<void> => {
-  await Promise.all(
-    getTscEmits(target).map(async (emit) => {
-      const configPath = await prepareEmit(projectRoot, emit);
-      await runTsc(projectRoot, configPath, { signal });
-    }),
-  );
+  const typescriptMajor = await getTypeScriptMajor(projectRoot);
+
+  // Sequential, so a type error in the first emit stops the rest from writing output.
+  for (const emit of getTscEmits(target)) {
+    const configPath = await prepareEmit(projectRoot, emit, typescriptMajor);
+    await runTsc(projectRoot, configPath, { signal });
+  }
 };
