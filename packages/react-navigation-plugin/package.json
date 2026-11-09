@@ -68,6 +68,12 @@
     "vite": "catalog:"
   },
   "peerDependencies": {
-    "@react-navigation/core": "^7.12.1"
+    "@react-navigation/core": "^7.12.1",
+    "expo-router": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo-router": {
+      "optional": true
+    }
   }
 }

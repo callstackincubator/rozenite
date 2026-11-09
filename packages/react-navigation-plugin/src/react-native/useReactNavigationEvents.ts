@@ -10,6 +10,7 @@ import {
   resolveDispatchOrigin,
   type DispatchOriginCache,
 } from './dispatchOrigin';
+import { subscribeToExpoRouterActions } from './expoRouterActions';
 import type { ActionOrigin } from './symbolication';
 
 export type ActionDataEvent =
@@ -102,6 +103,7 @@ export function useReactNavigationEvents(
     let timer: any;
     let unsubscribeAction: (() => void) | undefined;
     let unsubscribeState: (() => void) | undefined;
+    let unsubscribeExpoRouterActions: (() => void) | undefined;
 
     const initialize = async () => {
       if (!ref.current) {
@@ -136,6 +138,10 @@ export function useReactNavigationEvents(
         }
       });
 
+      unsubscribeExpoRouterActions = subscribeToExpoRouterActions(({ actionType, payload }) => {
+        lastActionRef.current = { action: { type: actionType, payload }, stack: undefined };
+      });
+
       unsubscribeState = navigation.addListener('state', (e) => {
         // Don't show the action in dev tools if the state is what we sent to reset earlier
         if (lastResetRef.current && deepEqual(lastResetRef.current, e.data.state)) {
@@ -168,6 +174,7 @@ export function useReactNavigationEvents(
     return () => {
       unsubscribeAction?.();
       unsubscribeState?.();
+      unsubscribeExpoRouterActions?.();
       clearTimeout(timer);
     };
   }, [ref, send]);
