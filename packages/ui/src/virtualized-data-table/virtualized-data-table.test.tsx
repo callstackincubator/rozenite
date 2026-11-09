@@ -238,8 +238,10 @@ describe('VirtualizedDataTable', () => {
       const separators = view.querySelectorAll('[role="separator"]');
 
       expect(table?.style.tableLayout).toBe('fixed');
-      expect(table?.style.width).toBe('320px');
+      expect(table?.style.width).toBe('100%');
+      // Never narrower than its columns: the spare trailing column takes the extra width.
       expect(table?.style.minWidth).toBe('320px');
+      expect(view.querySelectorAll('col')).toHaveLength(3);
       expect(headers[0]?.style.width).toBe('200px');
       expect(headers[1]?.style.width).toBe('120px');
       expect(separators).toHaveLength(1);
@@ -255,7 +257,7 @@ describe('VirtualizedDataTable', () => {
       const separator = () => view.querySelector('[role="separator"]');
       const width = () => view.querySelector('th')?.style.width;
 
-      const tableWidth = () => view.querySelector('table')?.style.width;
+      const tableWidth = () => view.querySelector('table')?.style.minWidth;
 
       pressKey(separator(), 'ArrowRight');
       expect(width()).toBe('210px');
@@ -296,7 +298,7 @@ describe('VirtualizedDataTable', () => {
       act(() => document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 350 })));
 
       expect(view.querySelector('th')?.style.width).toBe('250px');
-      expect(view.querySelector('table')?.style.width).toBe('370px');
+      expect(view.querySelector('table')?.style.minWidth).toBe('370px');
     });
 
     it('clips body cells to the column width', () => {

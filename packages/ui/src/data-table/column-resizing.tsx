@@ -114,11 +114,37 @@ export function useColumnResizing<TData extends RowData>(prop: ColumnResizingPro
 }
 
 /**
- * Layout for a table whose columns are resized: fixed layout, exactly as wide as its columns.
- * Widths on the header cells drive the layout, so the table has to say how wide it is.
+ * Layout for a table whose columns are resized: fixed layout, as wide as its container but never
+ * narrower than its columns. Widths on the header cells drive the layout, so the table has to say
+ * how wide it is. Any spare width goes to the trailing column from `ResizableColgroup`, so the
+ * resized columns keep their exact widths.
  */
 export function resizableTableStyle(totalSize: number) {
-  return { tableLayout: 'fixed', width: totalSize, minWidth: totalSize } as const;
+  return { tableLayout: 'fixed', width: '100%', minWidth: totalSize } as const;
+}
+
+/**
+ * One `<col>` per visible leaf column, sized to that column, plus an unsized trailing column that
+ * takes the spare width. Sizing the `<col>`s keeps grouped headers from spreading a group's width
+ * evenly over its columns, and fixed layout gives the leftover space to the trailing column.
+ */
+export function ResizableColgroup({ columnSizes }: { columnSizes: readonly number[] }) {
+  return (
+    <colgroup>
+      {columnSizes.map((size, index) => (
+        <col key={index} style={{ width: size }} />
+      ))}
+      <col />
+    </colgroup>
+  );
+}
+
+/**
+ * An empty cell for the trailing column from `ResizableColgroup`. Without it the spare width has
+ * no cells, so header backgrounds, row hover and selection, and row clicks stop at the last column.
+ */
+export function ResizableFillerCell({ as: Cell = 'td' }: { as?: 'td' | 'th' }) {
+  return <Cell aria-hidden="true" data-slot="resizable-filler-cell" className="p-0" />;
 }
 
 /** Classes that keep a body cell inside its column once columns have a fixed width. */
