@@ -13,6 +13,7 @@ import { monoLabel } from '../utils/mono-label';
 import {
   ColumnResizeHandle,
   ResizableColgroup,
+  ResizableFillerCell,
   resizableCellClassName,
   resizableTableStyle,
   useColumnResizing,
@@ -87,7 +88,10 @@ export function DataTable<TRow>({
     },
   });
 
-  const columnCount = columns.length;
+  const leafColumns = table.getVisibleLeafColumns();
+  const columnCount = leafColumns.length;
+  // The trailing filler column from `ResizableColgroup` has to be spanned too.
+  const spanCount = resizing.enabled ? columnCount + 1 : columnCount;
 
   return (
     <table
@@ -96,7 +100,9 @@ export function DataTable<TRow>({
       className={cn('w-full border-collapse text-sm', className)}
       style={resizing.enabled ? resizableTableStyle(table.getTotalSize()) : undefined}
     >
-      {resizing.enabled ? <ResizableColgroup columnCount={columnCount} /> : null}
+      {resizing.enabled ? (
+        <ResizableColgroup columnSizes={leafColumns.map((column) => column.getSize())} />
+      ) : null}
       <thead data-slot="data-table-head">
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id} className="border-b border-border">
@@ -141,19 +147,20 @@ export function DataTable<TRow>({
                 </th>
               );
             })}
+            {resizing.enabled && <ResizableFillerCell as="th" />}
           </tr>
         ))}
       </thead>
       <tbody data-slot="data-table-body">
         {loading ? (
           <tr>
-            <td colSpan={columnCount} className="h-16 text-center text-xs text-faint">
+            <td colSpan={spanCount} className="h-16 text-center text-xs text-faint">
               Loading…
             </td>
           </tr>
         ) : data.length === 0 ? (
           <tr>
-            <td colSpan={columnCount} className="h-16 text-center text-xs text-muted-foreground">
+            <td colSpan={spanCount} className="h-16 text-center text-xs text-muted-foreground">
               {emptyMessage}
             </td>
           </tr>
@@ -179,6 +186,7 @@ export function DataTable<TRow>({
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
+              {resizing.enabled && <ResizableFillerCell />}
             </tr>
           ))
         )}

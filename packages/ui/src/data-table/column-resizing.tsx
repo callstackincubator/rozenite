@@ -124,17 +124,27 @@ export function resizableTableStyle(totalSize: number) {
 }
 
 /**
- * An unsized trailing column that takes the spare width of a resizable table. Fixed layout gives
- * the leftover space to auto-width columns, so the data columns keep their exact widths.
+ * One `<col>` per visible leaf column, sized to that column, plus an unsized trailing column that
+ * takes the spare width. Sizing the `<col>`s keeps grouped headers from spreading a group's width
+ * evenly over its columns, and fixed layout gives the leftover space to the trailing column.
  */
-export function ResizableColgroup({ columnCount }: { columnCount: number }) {
+export function ResizableColgroup({ columnSizes }: { columnSizes: readonly number[] }) {
   return (
     <colgroup>
-      {Array.from({ length: columnCount + 1 }, (_, index) => (
-        <col key={index} />
+      {columnSizes.map((size, index) => (
+        <col key={index} style={{ width: size }} />
       ))}
+      <col />
     </colgroup>
   );
+}
+
+/**
+ * An empty cell for the trailing column from `ResizableColgroup`. Without it the spare width has
+ * no cells, so header backgrounds, row hover and selection, and row clicks stop at the last column.
+ */
+export function ResizableFillerCell({ as: Cell = 'td' }: { as?: 'td' | 'th' }) {
+  return <Cell aria-hidden="true" data-slot="resizable-filler-cell" className="p-0" />;
 }
 
 /** Classes that keep a body cell inside its column once columns have a fixed width. */

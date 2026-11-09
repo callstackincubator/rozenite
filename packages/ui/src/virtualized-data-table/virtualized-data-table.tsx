@@ -23,6 +23,7 @@ import { monoLabel } from '../utils/mono-label';
 import {
   ColumnResizeHandle,
   ResizableColgroup,
+  ResizableFillerCell,
   resizableCellClassName,
   resizableTableStyle,
   useColumnResizing,
@@ -73,6 +74,8 @@ type VirtualizedTableContext<TData> = {
   isLoading: boolean;
   /** Set when columns are resizable: the table is laid out at exactly this width. */
   resizableTotalSize: number | null;
+  /** Set when columns are resizable: the width of each visible leaf column. */
+  resizableColumnSizes: readonly number[] | null;
   onRowClick?: (item: TData) => void;
   renderEmptyState?: () => ReactNode;
   tableClassName: string;
@@ -98,8 +101,8 @@ const VirtualizedTableElement = ({ children, context, style }: TableComponentPro
         : { ...style, ...resizableTableStyle(context.resizableTotalSize) }
     }
   >
-    {context.resizableTotalSize === null ? null : (
-      <ResizableColgroup columnCount={context.columnCount} />
+    {context.resizableColumnSizes === null ? null : (
+      <ResizableColgroup columnSizes={context.resizableColumnSizes} />
     )}
     {children}
   </table>
@@ -148,7 +151,11 @@ const VirtualizedEmptyState = ({ context }: { context: VirtualizedTableContext<u
   // Virtuoso renders the placeholder straight inside the `<table>`, so it brings its own `<tbody>`.
   <tbody>
     <tr>
-      <td colSpan={context.columnCount}>
+      <td
+        colSpan={
+          context.resizableTotalSize === null ? context.columnCount : context.columnCount + 1
+        }
+      >
         {context.renderEmptyState?.() ?? (
           <div className="flex min-h-56 w-full items-center justify-center px-4 py-10 text-center">
             <span className="text-sm text-muted-foreground">
@@ -221,6 +228,17 @@ export const VirtualizedDataTable = <TData,>({
   const rows = table.getRowModel().rows;
   // Read per render: `table` is a stable object, so the memo below would never see a resize.
   const resizableTotalSize = resizing.enabled ? table.getTotalSize() : null;
+  // A string, so the context below only changes when a size does.
+  const columnSizesKey = resizing.enabled
+    ? table
+        .getVisibleLeafColumns()
+        .map((column) => column.getSize())
+        .join(',')
+    : null;
+  const resizableColumnSizes = useMemo(
+    () => (columnSizesKey === null ? null : columnSizesKey.split(',').map(Number)),
+    [columnSizesKey],
+  );
   const context = useMemo<VirtualizedTableContext<TData>>(
     () => ({
       ariaLabel,
@@ -229,6 +247,7 @@ export const VirtualizedDataTable = <TData,>({
       getRowTextValue,
       isLoading: loading,
       resizableTotalSize,
+      resizableColumnSizes,
       onRowClick,
       renderEmptyState,
       tableClassName: cn(DEFAULT_TABLE_CLASSNAME, className),
@@ -241,20 +260,28 @@ export const VirtualizedDataTable = <TData,>({
       loading,
       onRowClick,
       renderEmptyState,
+      resizableColumnSizes,
       resizableTotalSize,
       table,
     ],
   );
   const itemContent = useCallback(
-    (_index: number, row: Row<TData>) =>
-      row.getVisibleCells().map((cell) => (
-        <td
-          key={cell.id}
-          className={cn('px-3 py-1.5 text-foreground', resizing.enabled && resizableCellClassName)}
-        >
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </td>
-      )),
+    (_index: number, row: Row<TData>) => (
+      <>
+        {row.getVisibleCells().map((cell) => (
+          <td
+            key={cell.id}
+            className={cn(
+              'px-3 py-1.5 text-foreground',
+              resizing.enabled && resizableCellClassName,
+            )}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </td>
+        ))}
+        {resizing.enabled && <ResizableFillerCell />}
+      </>
+    ),
     [resizing.enabled],
   );
   const fixedHeaderContent = useCallback(
@@ -304,6 +331,7 @@ export const VirtualizedDataTable = <TData,>({
               </th>
             );
           })}
+          {resizing.enabled && <ResizableFillerCell as="th" />}
         </tr>
       )),
     [resizing.enabled, table],
