@@ -10,7 +10,7 @@ import {
   resolveDispatchOrigin,
   type DispatchOriginCache,
 } from './dispatchOrigin';
-import { subscribeToExpoRouterActions } from './expoRouterActions';
+import { resetNavigationRoot, subscribeToExpoRouterActions } from './expoRouterActions';
 import type { ActionOrigin } from './symbolication';
 
 export type ActionDataEvent =
@@ -183,7 +183,7 @@ export function useReactNavigationEvents(
     (state: NavigationState) => {
       if (ref.current) {
         lastResetRef.current = state;
-        ref.current.resetRoot(state);
+        resetNavigationRoot(ref.current, state);
       }
     },
     [ref],
