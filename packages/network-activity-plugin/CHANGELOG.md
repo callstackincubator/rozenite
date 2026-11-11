@@ -1,5 +1,19 @@
 # @rozenite/network-activity-plugin
 
+## 2.6.0
+
+### Patch Changes
+
+- [#561](https://github.com/callstackincubator/rozenite/pull/561) [`4ca9479`](https://github.com/callstackincubator/rozenite/commit/4ca94797813ea5ec9270b32f860e98d9f9c54197) Thanks [@lorenc-tomasz](https://github.com/lorenc-tomasz)! - Fix incorrect Nitro HTTP and WebSocket timestamps in Network Activity when the runtime's performance.timeOrigin is out of sync with performance.now().
+
+- [#570](https://github.com/callstackincubator/rozenite/pull/570) [`5ec3b2a`](https://github.com/callstackincubator/rozenite/commit/5ec3b2aa0fe3415fa91abc62fcfc91fbcbf15b18) Thanks [@lukewalczak](https://github.com/lukewalczak)! - Show received WebSocket messages as `Blob {size: …}` instead of React Native's internal blob descriptor when the socket's `binaryType` is `'blob'`.
+
+- Updated dependencies [[`69023c7`](https://github.com/callstackincubator/rozenite/commit/69023c78f9a84759b18d9d327d5c45f6dd199e8f)]:
+  - @rozenite/ui@2.6.0
+  - @rozenite/agent-bridge@2.6.0
+  - @rozenite/agent-shared@2.6.0
+  - @rozenite/plugin-bridge@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes

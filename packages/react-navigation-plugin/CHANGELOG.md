@@ -1,5 +1,17 @@
 # @rozenite/react-navigation-plugin
 
+## 2.6.0
+
+### Patch Changes
+
+- [#578](https://github.com/callstackincubator/rozenite/pull/578) [`9ab007a`](https://github.com/callstackincubator/rozenite/commit/9ab007a20463a36090dd6aebc7ead7290fc7cc92) Thanks [@lukewalczak](https://github.com/lukewalczak)! - Support Expo Router 58: accept the ref from `useNavigationContainerRef` without a TypeScript error, show real action types and payloads instead of `@@UNKNOWN`, and make jumping back to a previous action work.
+
+- Updated dependencies [[`69023c7`](https://github.com/callstackincubator/rozenite/commit/69023c78f9a84759b18d9d327d5c45f6dd199e8f)]:
+  - @rozenite/ui@2.6.0
+  - @rozenite/agent-bridge@2.6.0
+  - @rozenite/agent-shared@2.6.0
+  - @rozenite/plugin-bridge@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes

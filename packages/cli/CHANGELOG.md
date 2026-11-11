@@ -1,5 +1,18 @@
 # rozenite
 
+## 2.6.0
+
+### Patch Changes
+
+- [#570](https://github.com/callstackincubator/rozenite/pull/570) [`5ec3b2a`](https://github.com/callstackincubator/rozenite/commit/5ec3b2aa0fe3415fa91abc62fcfc91fbcbf15b18) Thanks [@lukewalczak](https://github.com/lukewalczak)! - Fix `rozenite build` and `rozenite dev` failing on plugins that depend on packages publishing their types only through `exports`, like React Native 0.87+, and on TypeScript 6. Every entry point is now type checked with `bundler` resolution before its CommonJS output is emitted, and a type error no longer leaves a partial build behind.
+
+- [#571](https://github.com/callstackincubator/rozenite/pull/571) [`6b33f5a`](https://github.com/callstackincubator/rozenite/commit/6b33f5a2377274a9c4043559252ff381d007c4e3) Thanks [@lukewalczak](https://github.com/lukewalczak)! - Generate new plugins on the Rozenite version of the CLI that generates them. `rozenite generate` previously scaffolded plugins that installed the 1.x line, which ignored options such as `integrations` in `rozenite.config.ts`.
+
+- Updated dependencies []:
+  - @rozenite/agent-sdk@2.6.0
+  - @rozenite/agent-shared@2.6.0
+  - @rozenite/tools@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes

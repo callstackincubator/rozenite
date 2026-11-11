@@ -1,5 +1,13 @@
 # @rozenite/agent-sdk
 
+## 2.6.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@2.6.0
+  - @rozenite/tools@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes

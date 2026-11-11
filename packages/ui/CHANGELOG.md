@@ -1,5 +1,11 @@
 # @rozenite/ui
 
+## 2.6.0
+
+### Patch Changes
+
+- [#567](https://github.com/callstackincubator/rozenite/pull/567) [`69023c7`](https://github.com/callstackincubator/rozenite/commit/69023c78f9a84759b18d9d327d5c45f6dd199e8f) Thanks [@V3RON](https://github.com/V3RON)! - Fix resizable data tables not filling their container: the table now spans the full width of its container, and the empty state of a resizable table (such as an SQLite query with no rows) is centered across the full width instead of being squeezed into the width of its columns.
+
 ## 2.5.0
 
 ### Minor Changes

@@ -1,5 +1,23 @@
 # @rozenite/storage-plugin
 
+## 2.6.0
+
+### Minor Changes
+
+- [#563](https://github.com/callstackincubator/rozenite/pull/563) [`af5b0d7`](https://github.com/callstackincubator/rozenite/commit/af5b0d7c71ace824261f5453461ea6de8648fd70) Thanks [@alexprigi](https://github.com/alexprigi)! - Add `createKeychainStorageAdapter` to inspect and edit react-native-keychain (iOS Keychain and Android Keystore) entries in the Storage panel.
+
+  Storages can now be marked read-only with `capabilities.readOnly`. The panel disables adding, editing, deleting, purging and importing for them, and the device rejects those changes.
+
+### Patch Changes
+
+- [#563](https://github.com/callstackincubator/rozenite/pull/563) [`af5b0d7`](https://github.com/callstackincubator/rozenite/commit/af5b0d7c71ace824261f5453461ea6de8648fd70) Thanks [@alexprigi](https://github.com/alexprigi)! - Refresh the Storage panel after a purge that fails partway, so it no longer shows entries that were already removed.
+
+- Updated dependencies [[`69023c7`](https://github.com/callstackincubator/rozenite/commit/69023c78f9a84759b18d9d327d5c45f6dd199e8f)]:
+  - @rozenite/ui@2.6.0
+  - @rozenite/agent-bridge@2.6.0
+  - @rozenite/agent-shared@2.6.0
+  - @rozenite/plugin-bridge@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes
