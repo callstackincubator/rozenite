@@ -16,6 +16,14 @@ vi.mock('react-native', () => ({
   },
 }));
 
+const mockSubscribe = vi.hoisted(() =>
+  vi.fn<typeof import('../expoRouterActions').subscribeToExpoRouterActions>(),
+);
+
+vi.mock('../expoRouterActions', () => ({
+  subscribeToExpoRouterActions: mockSubscribe,
+}));
+
 import { useReactNavigationEvents, type ActionDataEvent } from '../useReactNavigationEvents';
 import { __resetMetroOriginCache } from '../symbolication/metro';
 
@@ -217,5 +225,36 @@ describe('useReactNavigationEvents', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it('labels state changes with the Expo Router action when __unsafe_action__ never fires', async () => {
+    const events: ActionDataEvent[] = [];
+    const unsubscribe = vi.fn();
+    let emitExpoRouterAction: Parameters<typeof mockSubscribe>[0] | undefined;
+    mockSubscribe.mockImplementationOnce((listener) => {
+      emitExpoRouterAction = listener;
+      return unsubscribe;
+    });
+    const nav = createMockNavigation();
+    const ref = { current: nav } as unknown as React.RefObject<
+      Parameters<typeof useReactNavigationEvents>[0]['current']
+    >;
+
+    const { unmount } = renderHook(() =>
+      useReactNavigationEvents(ref, (event) => events.push(event)),
+    );
+    await waitFor(() => expect(nav.hasListener('state')).toBe(true));
+
+    emitExpoRouterAction?.({ actionType: 'NAVIGATE', payload: { name: 'details' } });
+    nav.emit('state', { data: { state: undefined } });
+
+    await waitFor(() => expect(events).toHaveLength(1));
+    expect(events[0]).toMatchObject({
+      type: 'action',
+      action: { type: 'NAVIGATE', payload: { name: 'details' } },
+    });
+
+    unmount();
+    expect(unsubscribe).toHaveBeenCalledOnce();
   });
 });

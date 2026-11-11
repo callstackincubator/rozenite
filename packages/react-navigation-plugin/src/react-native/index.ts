@@ -2,6 +2,7 @@ import type { NavigationAction, NavigationState } from '@react-navigation/core';
 import { CommonActions, NavigationContainerRef } from '@react-navigation/core';
 import { useCallback, useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient, Subscription } from '@rozenite/plugin-bridge';
+import { resetNavigationRoot, type NavigationContainerRefLike } from './expoRouterActions';
 import { useReactNavigationEvents } from './useReactNavigationEvents';
 import { ReactNavigationPluginEventMap } from '../shared';
 import { Linking } from 'react-native';
@@ -12,12 +13,15 @@ import type {
 import { useReactNavigationAgentTools } from './useReactNavigationAgentTools';
 
 export type ReactNavigationDevToolsConfig<
-  TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>,
+  TNavigationContainerRef extends NavigationContainerRefLike = NavigationContainerRefLike,
 > = {
   ref: React.RefObject<TNavigationContainerRef | null>;
 };
 
-export const useReactNavigationDevTools = ({ ref }: ReactNavigationDevToolsConfig): void => {
+export const useReactNavigationDevTools = ({
+  ref: containerRef,
+}: ReactNavigationDevToolsConfig): void => {
+  const ref = containerRef as React.RefObject<NavigationContainerRef<any> | null>;
   const actionHistoryRef = useRef<NavigationActionHistoryEntry[]>([]);
   const currentStateRef = useRef<NavigationState | undefined>(undefined);
 
@@ -35,7 +39,7 @@ export const useReactNavigationDevTools = ({ ref }: ReactNavigationDevToolsConfi
         throw new Error('Navigation ref is not ready.');
       }
 
-      ref.current.resetRoot(state);
+      resetNavigationRoot(ref.current, state);
     },
     [ref],
   );
