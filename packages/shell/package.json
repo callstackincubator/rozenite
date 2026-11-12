@@ -47,7 +47,7 @@
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/ui": "workspace:*",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

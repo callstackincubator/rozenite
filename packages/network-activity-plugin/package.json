@@ -61,7 +61,7 @@
     "@testing-library/react": "^16.1.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "catalog:",
     "proxy-memoize": "^3.0.1",
     "react": "catalog:",
     "react-dom": "catalog:",

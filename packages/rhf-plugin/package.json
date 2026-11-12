@@ -49,7 +49,7 @@
     "@rozenite/vite-plugin": "workspace:*",
     "@types/lodash": "^4.17.0",
     "@types/react": "catalog:",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "^7.33.1",

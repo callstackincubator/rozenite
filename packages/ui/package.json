@@ -62,7 +62,7 @@
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "catalog:",
     "react-resizable-panels": "^4.12.2",
     "react-virtuoso": "^4.14.1",
     "tailwind-merge": "^3.3.1",

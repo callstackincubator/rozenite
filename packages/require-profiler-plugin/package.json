@@ -54,7 +54,7 @@
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "catalog:",
     "metro-config": "*",
     "react": "catalog:",
     "react-dom": "catalog:",
