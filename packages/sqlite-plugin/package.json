@@ -57,7 +57,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",
     "expo-sqlite": "^55.0.11",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native": "catalog:",
