@@ -43,6 +43,13 @@ export const routes = {
     accessibilityLabel: 'Redux DevTools demo',
     group: 'State',
   },
+  zustandPlugin: {
+    name: 'ZustandPlugin',
+    path: 'zustand',
+    title: 'Zustand',
+    accessibilityLabel: 'Zustand plugin',
+    group: 'State',
+  },
   storagePlugin: {
     name: 'StoragePlugin',
     path: 'storage',

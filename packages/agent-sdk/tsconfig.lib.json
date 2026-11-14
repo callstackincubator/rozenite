@@ -10,6 +10,7 @@
       "@rozenite/network-activity-plugin/sdk": ["../network-activity-plugin/dist/sdk/sdk.d.ts"],
       "@rozenite/react-navigation-plugin/sdk": ["../react-navigation-plugin/dist/sdk/sdk.d.ts"],
       "@rozenite/redux-devtools-plugin/sdk": ["../redux-devtools-plugin/dist/sdk/sdk.d.ts"],
+      "@rozenite/zustand-plugin/sdk": ["../zustand-plugin/dist/sdk/sdk.d.ts"],
       "@rozenite/storage-plugin/sdk": ["../storage-plugin/dist/sdk/sdk.d.ts"],
       "@rozenite/tanstack-query-plugin/sdk": ["../tanstack-query-plugin/dist/sdk/sdk.d.ts"]
     },

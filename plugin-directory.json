@@ -60,6 +60,10 @@
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/require-profiler-plugin"
   },
   {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/zustand-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/zustand-plugin"
+  },
+  {
     "npmUrl": "https://www.npmjs.com/package/@ilteoood/zorro",
     "githubUrl": "https://github.com/ilteoood/zorro"
   },

@@ -208,6 +208,9 @@ importers:
       '@rozenite/web':
         specifier: workspace:*
         version: link:../../packages/web
+      '@rozenite/zustand-plugin':
+        specifier: workspace:*
+        version: link:../../packages/zustand-plugin
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.83.0(react@19.3.0)
@@ -2021,6 +2024,64 @@ importers:
       '@rozenite/test-utils':
         specifier: workspace:*
         version: link:../test-utils
+
+  packages/zustand-plugin:
+    dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
+      '@rozenite/testing':
+        specifier: workspace:*
+        version: link:../testing
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.3.0
+      lucide-react:
+        specifier: 'catalog:'
+        version: 0.577.0(react@19.3.0)
+      react:
+        specifier: 'catalog:'
+        version: 19.3.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.0(react@19.3.0)
+      react-native:
+        specifier: 'catalog:'
+        version: 0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
+      react-native-web:
+        specifier: ^0.21.2
+        version: 0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.33.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.9.1)
+      zustand:
+        specifier: ^5.0.6
+        version: 5.0.6(@types/react@19.3.0)(immer@10.1.1)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+      zustand-v4:
+        specifier: npm:zustand@4.4.7
+        version: zustand@4.4.7(@types/react@19.3.0)(immer@10.1.1)(react@19.3.0)
 
   website:
     dependencies:
@@ -12053,6 +12114,7 @@ packages:
 
   node-abort-controller@3.1.1:
     resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
+    deprecated: This package is no longer needed on supported Node.js versions. Node.js 16+ includes AbortController and AbortSignal as built-in globals. All Node.js versions requiring this polyfill are end-of-life. Use the built-in globals instead.
 
   node-fetch-native@1.6.7:
     resolution: {integrity: sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q==}
@@ -14589,6 +14651,11 @@ packages:
     peerDependencies:
       react: '>=16.8'
 
+  use-sync-external-store@1.2.0:
+    resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
   use-sync-external-store@1.5.0:
     resolution: {integrity: sha512-Rb46I4cGGVBmjamjphe8L/UnvJD+uPPtTkNvX5mZgqdbavhI4EbgIWJiIHXJ8bc/i9EQGPRh4DwEURJ552Do0A==}
     peerDependencies:
@@ -15229,6 +15296,21 @@ packages:
 
   zod@4.6.5:
     resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+
+  zustand@4.4.7:
+    resolution: {integrity: sha512-QFJWJMdlETcI69paJwhSMJz7PPWjVP8Sjhclxmxmxv/RYI7ZOvR5BHX+ktH0we9gTWQMxcne8q1OY8xxz604gw==}
+    engines: {node: '>=12.7.0'}
+    peerDependencies:
+      '@types/react': '>=16.8'
+      immer: '>=9.0'
+      react: '>=16.8'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
 
   zustand@5.0.6:
     resolution: {integrity: sha512-ihAqNeUVhe0MAD+X8M5UzqyZ9k3FFZLBTtqo6JLPwV53cbRB/mJwBI0PxcIgqhBBHlEs8G45OTDTMq3gNcLq3A==}
@@ -22071,7 +22153,7 @@ snapshots:
 
   '@types/react-test-renderer@19.1.0':
     dependencies:
-      '@types/react': 19.2.18
+      '@types/react': 19.3.0
 
   '@types/react-transition-group@4.4.12(@types/react@19.3.0)':
     dependencies:
@@ -31828,6 +31910,10 @@ snapshots:
     dependencies:
       react: 19.3.0
 
+  use-sync-external-store@1.2.0(react@19.3.0):
+    dependencies:
+      react: 19.3.0
+
   use-sync-external-store@1.5.0(react@19.3.0):
     dependencies:
       react: 19.3.0
@@ -32557,6 +32643,14 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.6.5: {}
+
+  zustand@4.4.7(@types/react@19.3.0)(immer@10.1.1)(react@19.3.0):
+    dependencies:
+      use-sync-external-store: 1.2.0(react@19.3.0)
+    optionalDependencies:
+      '@types/react': 19.3.0
+      immer: 10.1.1
+      react: 19.3.0
 
   zustand@5.0.6(@types/react@19.3.0)(immer@10.1.1)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0)):
     optionalDependencies:

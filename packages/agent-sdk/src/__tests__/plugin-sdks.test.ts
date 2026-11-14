@@ -16,6 +16,7 @@ import {
 } from '@rozenite/network-activity-plugin/sdk';
 import { reactNavigationTools } from '@rozenite/react-navigation-plugin/sdk';
 import { reduxDevToolsTools } from '@rozenite/redux-devtools-plugin/sdk';
+import { zustandTools } from '@rozenite/zustand-plugin/sdk';
 import { storageTools, type StorageReadEntryResult } from '@rozenite/storage-plugin/sdk';
 import {
   tanstackQueryTools,
@@ -63,6 +64,10 @@ describe('official plugin sdk descriptors', () => {
     });
     expect(reduxDevToolsTools.listStores).toMatchObject({
       domain: '@rozenite/redux-devtools-plugin',
+      name: 'list-stores',
+    });
+    expect(zustandTools.listStores).toMatchObject({
+      domain: '@rozenite/zustand-plugin',
       name: 'list-stores',
     });
     expect(storageTools.readEntry).toMatchObject({

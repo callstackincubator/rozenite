@@ -29,6 +29,7 @@ export default {
         'chrome-extension',
         'web',
         'storage-plugin',
+        'zustand-plugin',
         'controls-plugin',
         'agent-bridge',
         'agent-shared',

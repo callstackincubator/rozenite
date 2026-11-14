@@ -11,6 +11,7 @@ const DOMAIN_IDS = [
   'react',
   'react-navigation',
   'redux-devtools',
+  'zustand',
   'performance',
   'memory',
   'file-system',
