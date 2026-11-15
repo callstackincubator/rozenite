@@ -106,7 +106,11 @@ const MAX_TRACES = 500;
 const MAX_WARNINGS = 100;
 const DEFAULT_MAX_AGE = 50;
 
-const sessionId = Math.random().toString(36).slice(2);
+/**
+ * Tells one run of the app's JS from the next, so the panel knows when seqs
+ * started over. Not a secret: the time this module loaded is enough.
+ */
+const sessionId = Date.now().toString(36);
 const records = new Map<string, StoreRecord>();
 const traces = new Map<string, string>();
 const warnings: StoreWarning[] = [];
