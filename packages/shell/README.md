@@ -50,6 +50,12 @@ files, so a pre-compiled build isn't viable here. Any consumer importing `.`
 directly (as `@rozenite/app` does) needs its own bundler (Vite, Metro, etc.)
 to compile this package's source — it isn't published pre-built.
 
+Because the served `dist` bundle already contains everything it needs, this
+package declares no runtime dependencies, so that installing Rozenite never
+adds a second copy of React to an app. A consumer compiling the source must
+therefore install what the source imports itself: `react`, `react-dom`,
+`lucide-react`, `@rozenite/ui`, and `@rozenite/plugin-bridge`.
+
 ## Made with ❤️ at Callstack
 
 `rozenite` is an open source project and will always remain free to use. If you think it's cool, please star it 🌟.

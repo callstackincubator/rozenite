@@ -570,7 +570,7 @@ importers:
         version: link:../test-utils
 
   packages/app:
-    dependencies:
+    devDependencies:
       '@rozenite/agent-shared':
         specifier: workspace:*
         version: link:../agent-shared
@@ -580,22 +580,15 @@ importers:
       '@rozenite/shell':
         specifier: workspace:*
         version: link:../shell
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/tools':
         specifier: workspace:*
         version: link:../tools
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui
-      react:
-        specifier: 'catalog:'
-        version: 19.3.0
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.3.0(react@19.3.0)
-    devDependencies:
-      '@rozenite/test-utils':
-        specifier: workspace:*
-        version: link:../test-utils
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.33.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.9.1))
@@ -608,6 +601,12 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.3.0(@types/react@19.3.0)
+      react:
+        specifier: 'catalog:'
+        version: 19.3.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.0(react@19.3.0)
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
@@ -1574,26 +1573,16 @@ importers:
         version: link:../test-utils
 
   packages/shell:
-    dependencies:
+    devDependencies:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
-      '@rozenite/ui':
-        specifier: workspace:*
-        version: link:../ui
-      lucide-react:
-        specifier: 'catalog:'
-        version: 0.577.0(react@19.3.0)
-      react:
-        specifier: 'catalog:'
-        version: 19.3.0
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.3.0(react@19.3.0)
-    devDependencies:
       '@rozenite/test-utils':
         specifier: workspace:*
         version: link:../test-utils
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.33.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.9.1))
@@ -1606,6 +1595,15 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.3.0(@types/react@19.3.0)
+      lucide-react:
+        specifier: 'catalog:'
+        version: 0.577.0(react@19.3.0)
+      react:
+        specifier: 'catalog:'
+        version: 19.3.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.3.0(react@19.3.0)
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
