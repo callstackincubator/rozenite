@@ -54,6 +54,7 @@ Official agent-enabled plugin SDK entrypoints include:
 - `@rozenite/redux-devtools-plugin/sdk`
 - `@rozenite/storage-plugin/sdk`
 - `@rozenite/tanstack-query-plugin/sdk`
+- `@rozenite/zustand-plugin/sdk`
 
 ## Inspecting Domains And Tools
 

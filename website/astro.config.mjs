@@ -109,6 +109,7 @@ export default defineConfig({
           ['network-activity', 'Network Activity'],
           ['overlay', 'Overlay'],
           ['redux-devtools', 'Redux DevTools'],
+          ['zustand', 'Zustand'],
           ['performance-monitor', 'Performance Monitor'],
           ['storage', 'Storage'],
           ['feature-flags', 'Feature Flags'],

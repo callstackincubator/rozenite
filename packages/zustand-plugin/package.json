@@ -1,0 +1,72 @@
+{
+  "name": "@rozenite/zustand-plugin",
+  "version": "2.6.0",
+  "description": "Zustand inspector for Rozenite: history, diffs, time travel and editing for Zustand stores.",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "CHANGELOG.md"
+  ],
+  "type": "module",
+  "main": "./dist/react-native/cjs/react-native.js",
+  "module": "./dist/react-native/react-native.js",
+  "types": "./dist/react-native/react-native.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/react-native/react-native.d.ts",
+      "import": "./dist/react-native/react-native.js",
+      "require": "./dist/react-native/cjs/react-native.js"
+    },
+    "./package.json": "./package.json",
+    "./sdk": {
+      "types": "./dist/sdk/sdk.d.ts",
+      "default": "./dist/sdk/sdk.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rozenite/agent-bridge": "workspace:*",
+    "@rozenite/agent-shared": "workspace:*",
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
+    "@rozenite/testing": "workspace:*",
+    "@rozenite/vite-plugin": "workspace:*",
+    "@types/react": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-native": "catalog:",
+    "react-native-web": "^0.21.2",
+    "rozenite": "workspace:*",
+    "typescript": "~5.9.3",
+    "vite": "catalog:",
+    "zustand": "^5.0.6",
+    "zustand-v4": "npm:zustand@4.4.7"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "zustand": ">=4.4.0"
+  }
+}

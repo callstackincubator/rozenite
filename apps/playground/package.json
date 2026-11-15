@@ -47,6 +47,7 @@
     "@rozenite/storage-plugin": "workspace:*",
     "@rozenite/tanstack-query-plugin": "workspace:*",
     "@rozenite/web": "workspace:*",
+    "@rozenite/zustand-plugin": "workspace:*",
     "@tanstack/react-query": "^5.81.5",
     "axios": "^1.19.0",
     "expo": "^58.0.19",

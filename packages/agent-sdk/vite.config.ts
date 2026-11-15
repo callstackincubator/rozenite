@@ -20,6 +20,7 @@ export default defineConfig({
         '../react-navigation-plugin/sdk.ts',
       ),
       '@rozenite/redux-devtools-plugin/sdk': resolve(__dirname, '../redux-devtools-plugin/sdk.ts'),
+      '@rozenite/zustand-plugin/sdk': resolve(__dirname, '../zustand-plugin/sdk.ts'),
       '@rozenite/storage-plugin/sdk': resolve(__dirname, '../storage-plugin/sdk.ts'),
       '@rozenite/tanstack-query-plugin/sdk': resolve(__dirname, '../tanstack-query-plugin/sdk.ts'),
     },
