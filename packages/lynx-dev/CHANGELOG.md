@@ -1,5 +1,12 @@
 # @rozenite/lynx-dev
 
+## 2.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/lynx@2.7.0
+
 ## 2.6.0
 
 ### Patch Changes

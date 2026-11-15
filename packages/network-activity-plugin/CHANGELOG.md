@@ -1,5 +1,15 @@
 # @rozenite/network-activity-plugin
 
+## 2.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`b25c58d`](https://github.com/callstackincubator/rozenite/commit/b25c58d5e89450d2bc9982b9b672bc2710d21d49)]:
+  - @rozenite/ui@2.7.0
+  - @rozenite/agent-bridge@2.7.0
+  - @rozenite/agent-shared@2.7.0
+  - @rozenite/plugin-bridge@2.7.0
+
 ## 2.6.0
 
 ### Patch Changes

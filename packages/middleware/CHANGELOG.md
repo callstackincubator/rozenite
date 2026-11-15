@@ -1,5 +1,16 @@
 # @rozenite/middleware
 
+## 2.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`9cba357`](https://github.com/callstackincubator/rozenite/commit/9cba357bacb443430b06721f7d9d1c3c34a9a6c6), [`b25c58d`](https://github.com/callstackincubator/rozenite/commit/b25c58d5e89450d2bc9982b9b672bc2710d21d49)]:
+  - @rozenite/app@2.7.0
+  - @rozenite/shell@2.7.0
+  - @rozenite/agent-shared@2.7.0
+  - @rozenite/runtime@2.7.0
+  - @rozenite/tools@2.7.0
+
 ## 2.6.0
 
 ### Patch Changes

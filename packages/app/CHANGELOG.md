@@ -1,5 +1,11 @@
 # @rozenite/app
 
+## 2.7.0
+
+### Patch Changes
+
+- [#584](https://github.com/callstackincubator/rozenite/pull/584) [`9cba357`](https://github.com/callstackincubator/rozenite/commit/9cba357bacb443430b06721f7d9d1c3c34a9a6c6) Thanks [@borisyankov](https://github.com/borisyankov)! - Stop installing a second copy of React alongside Rozenite. `@rozenite/app` and `@rozenite/shell` ship prebuilt bundles, so they no longer declare `react`, `react-dom`, and their other bundled packages as runtime dependencies. This fixes the duplicate dependency failure reported by `expo-doctor` when an app's React version differs from the one Rozenite is built with.
+
 ## 2.6.0
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/zustand-plugin",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Zustand inspector for Rozenite: history, diffs, time travel and editing for Zustand stores.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {

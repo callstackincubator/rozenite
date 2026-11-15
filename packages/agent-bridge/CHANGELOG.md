@@ -1,5 +1,13 @@
 # @rozenite/agent-bridge
 
+## 2.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@2.7.0
+  - @rozenite/plugin-bridge@2.7.0
+
 ## 2.6.0
 
 ### Patch Changes

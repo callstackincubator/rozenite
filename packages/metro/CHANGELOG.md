@@ -1,5 +1,14 @@
 # @rozenite/metro
 
+## 2.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/middleware@2.7.0
+  - @rozenite/runtime@2.7.0
+  - @rozenite/tools@2.7.0
+
 ## 2.6.0
 
 ### Patch Changes

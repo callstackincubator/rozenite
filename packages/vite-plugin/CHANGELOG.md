@@ -1,5 +1,15 @@
 # @rozenite/vite-plugin
 
+## 2.7.0
+
+### Patch Changes
+
+- [#581](https://github.com/callstackincubator/rozenite/pull/581) [`b25c58d`](https://github.com/callstackincubator/rozenite/commit/b25c58d5e89450d2bc9982b9b672bc2710d21d49) Thanks [@borisyankov](https://github.com/borisyankov)! - Upgrade `lucide-react` to a release that supports React 19, so installing `@rozenite/ui` no longer reports a conflicting React peer dependency.
+
+- Updated dependencies [[`b25c58d`](https://github.com/callstackincubator/rozenite/commit/b25c58d5e89450d2bc9982b9b672bc2710d21d49)]:
+  - @rozenite/ui@2.7.0
+  - @rozenite/tools@2.7.0
+
 ## 2.6.0
 
 ### Patch Changes
