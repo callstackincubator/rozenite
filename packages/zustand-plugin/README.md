@@ -17,6 +17,7 @@ The Zustand plugin records every change to your Zustand stores and shows it in a
 - **Rich values.** `Map`, `Set`, `Date`, `BigInt`, `undefined`, `NaN`, class instances, circular references and functions are shown as what they are. Large values load lazily in the panel. Typed arrays, `ArrayBuffer`, `DataView` and circular references are view-only.
 - **Warnings with copyable fixes**, for example when `rozenite()` is not the outermost middleware.
 - **Rozenite for Agents.** Agents can list stores, read state and history, call actions, set values, time travel and pause recording.
+- **Stores you can't change.** `observeStore()` shows a store without the middleware. You get everything except action names.
 - **Development only.** Every export compiles to a pass-through in production builds.
 
 ## Installation
@@ -64,6 +65,18 @@ export const useCartStore = create<CartState>()(
 | `stateSanitizer` | — | Strip secrets or huge values from the state before it leaves the device. |
 
 A third `set` argument still names a change explicitly: `set(next, false, 'cart/reset')`. Names passed through an inner `devtools()` or `persist()` are kept.
+
+### Stores without the middleware
+
+For a store you can't or don't want to wrap, such as one from a library, register it with `observeStore()`. Call it once, next to the store:
+
+```ts
+import { observeStore } from '@rozenite/zustand-plugin';
+
+observeStore(useLegacyStore, { name: 'Legacy' });
+```
+
+It takes the same options as `rozenite()` and returns a function that stops observing. The store gets the timeline, diffs, time travel, editing, callable actions, `persist` status and agent tools. It cannot see which action made a change, so changes show as `observed`. Changes made from the panel or by an agent are still named. Wrap the store in `rozenite()` when you want action names, arguments and async attribution.
 
 ### Rozenite for Agents
 

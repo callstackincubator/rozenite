@@ -49,6 +49,8 @@ export type TransitionSource =
   | 'external'
   /** `set` with no attributable caller. */
   | 'anonymous'
+  /** A change to a store registered with `observeStore()`, which cannot see who made it. */
+  | 'observed'
   /** `persist` rehydration. */
   | 'hydrate'
   /** A value edited from the panel or by an agent. */

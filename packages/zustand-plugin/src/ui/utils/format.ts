@@ -31,4 +31,5 @@ export const SOURCE_BADGES: Partial<
   edit: { label: 'edit', tone: 'info' },
   named: { label: 'named', tone: 'neutral' },
   anonymous: { label: 'anon', tone: 'warning' },
+  observed: { label: 'observed', tone: 'neutral' },
 };

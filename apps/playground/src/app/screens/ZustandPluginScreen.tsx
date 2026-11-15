@@ -1,5 +1,5 @@
 import { Button, KeyValueList, PluginHeader, Row, Screen } from '../components/ui';
-import { useCartStore, useSessionStore } from '../stores/stateDemoStores';
+import { useCartStore, useSessionStore, useThemeStore } from '../stores/stateDemoStores';
 
 const SKUS = [
   { sku: 'oat-milk', name: 'Oat milk' },
@@ -15,12 +15,15 @@ export const ZustandPluginScreen = () => {
   const loading = useSessionStore((state) => state.loading);
   const profileVersion = useSessionStore((state) => state.profileVersion);
   const session = useSessionStore.getState();
+  const themeMode = useThemeStore((state) => state.mode);
+  const fontScale = useThemeStore((state) => state.fontScale);
+  const theme = useThemeStore.getState();
 
   return (
     <Screen>
       <PluginHeader
         title="Zustand"
-        subtitle="Zustand stores wrapped in rozenite(), one of them persisted."
+        subtitle="Stores wrapped in rozenite(), one persisted, and one plain store registered with observeStore()."
       />
 
       <KeyValueList
@@ -103,6 +106,28 @@ export const ZustandPluginScreen = () => {
           label="Log out"
           accessibilityLabel="Log out"
           onPress={() => session.logout()}
+        />
+      </Row>
+
+      <KeyValueList
+        title="Theme (observeStore)"
+        items={[
+          { label: 'Theme mode', value: themeMode },
+          { label: 'Font scale', value: String(fontScale) },
+        ]}
+      />
+      <Row>
+        <Button
+          size="compact"
+          label="Toggle mode"
+          accessibilityLabel="Toggle theme mode"
+          onPress={() => theme.toggleMode()}
+        />
+        <Button
+          size="compact"
+          label="Bigger text"
+          accessibilityLabel="Increase font scale"
+          onPress={() => theme.bumpFontScale()}
         />
       </Row>
     </Screen>

@@ -6,7 +6,7 @@ domain: zustand
 
 # Zustand Plugin Domain
 
-A Rozenite plugin for Zustand state inspection in React Native DevTools. It exposes every store wrapped in `rozenite()`: current state, the recorded transitions with their action names, arguments and patches, action calls, value edits, time travel and recording pause. The app must call `useZustandAgentTools()`.
+A Rozenite plugin for Zustand state inspection in React Native DevTools. It exposes every store wrapped in `rozenite()` or registered with `observeStore()`: current state, the recorded transitions with their action names, arguments and patches, action calls, value edits, time travel and recording pause. The app must call `useZustandAgentTools()`.
 
 ## Domain
 

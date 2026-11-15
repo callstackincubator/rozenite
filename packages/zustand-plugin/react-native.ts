@@ -1,5 +1,11 @@
-export { rozenite } from './zustand';
-export type { Rozenite, RozeniteActionName, RozeniteOptions } from './zustand';
+export { observeStore, rozenite } from './zustand';
+export type {
+  ObservableStore,
+  ObserveStoreOptions,
+  Rozenite,
+  RozeniteActionName,
+  RozeniteOptions,
+} from './zustand';
 
 export type {
   ActionDescriptor,

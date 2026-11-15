@@ -25,7 +25,7 @@ export type RozeniteOptions = {
   stateSanitizer?: (state: unknown) => unknown;
 };
 
-type PersistApi = {
+export type PersistApi = {
   clearStorage: () => void;
   rehydrate: () => Promise<void> | void;
   hasHydrated: () => boolean;
@@ -98,7 +98,7 @@ const assignAt = (target: unknown, path: string[], value: unknown): unknown => {
  * state holds the functions of its time (a store replaced by Fast Refresh
  * since), and a decoded one holds none.
  */
-const withLiveActions = (state: unknown, live: unknown): unknown => {
+export const withLiveActions = (state: unknown, live: unknown): unknown => {
   let out = state;
   mapActions(live, (fn, path) => {
     out = assignAt(out, path, fn);
@@ -107,7 +107,7 @@ const withLiveActions = (state: unknown, live: unknown): unknown => {
   return out;
 };
 
-const listActions = (state: unknown): ActionDescriptor[] => {
+export const listActions = (state: unknown): ActionDescriptor[] => {
   const out: ActionDescriptor[] = [];
   mapActions(state, (fn, path) => {
     out.push({ path: path.join('.'), name: path[path.length - 1], arity: fn.length });
@@ -117,13 +117,32 @@ const listActions = (state: unknown): ActionDescriptor[] => {
 };
 
 /** The action `listActions` gave `path` to. Not read by key: a key may hold a dot. */
-const findAction = (state: unknown, path: string): AnyFn | undefined => {
+export const findAction = (state: unknown, path: string): AnyFn | undefined => {
   let found: AnyFn | undefined;
   mapActions(state, (fn, at) => {
     if (at.join('.') === path) found ??= fn;
     return fn;
   });
   return found;
+};
+
+export const persistInfoOf = (persist: PersistApi | undefined): PersistInfo | undefined => {
+  if (!persist) return undefined;
+  const { name, version } = persist.getOptions();
+  return { storageKey: String(name ?? ''), version, hasHydrated: persist.hasHydrated() };
+};
+
+/** Runs a `persist` command for the panel. */
+export const runPersistCommand = async (
+  persist: PersistApi | undefined,
+  command: 'rehydrate' | 'clear',
+) => {
+  if (!persist) throw new Error('No persist middleware on this store.');
+  if (command === 'rehydrate') {
+    await persist.rehydrate();
+  } else {
+    persist.clearStorage();
+  }
 };
 
 const trimStack = (stack: string) => {
@@ -357,12 +376,7 @@ export const rozeniteImpl =
 
     // ----- persist -----------------------------------------------------------
 
-    const getPersistInfo = (): PersistInfo | undefined => {
-      const persist = persistApi();
-      if (!persist) return undefined;
-      const { name, version } = persist.getOptions();
-      return { storageKey: String(name ?? ''), version, hasHydrated: persist.hasHydrated() };
-    };
+    const getPersistInfo = () => persistInfoOf(persistApi());
 
     const watchPersist = () => {
       const persist = persistApi();
@@ -399,13 +413,7 @@ export const rozeniteImpl =
       // The registry checked that `path` is one `getActions` lists.
       invokeAction: (path, args) => findAction(current(), path)?.(...args),
       persistCommand: async (command) => {
-        const persist = persistApi();
-        if (!persist) throw new Error('No persist middleware on this store.');
-        if (command === 'rehydrate') {
-          await persist.rehydrate();
-        } else {
-          persist.clearStorage();
-        }
+        await runPersistCommand(persistApi(), command);
         controller?.updateDescriptor();
       },
       getPersistInfo,

@@ -1,7 +1,9 @@
 import type { StateCreator, StoreMutatorIdentifier } from 'zustand/vanilla';
 import type { RozeniteOptions } from './src/zustand/middleware';
+import type { ObservableStore, ObserveStoreOptions } from './src/zustand/observe';
 
 export type { RozeniteOptions } from './src/zustand/middleware';
+export type { ObservableStore, ObserveStoreOptions } from './src/zustand/observe';
 
 type Write<T, U> = Omit<T, keyof U> & U;
 type Cast<T, U> = T extends U ? T : U;
@@ -72,6 +74,19 @@ export type Rozenite = <
  */
 export let rozenite: Rozenite;
 
+/**
+ * Shows a store that is not wrapped in `rozenite()` in the Rozenite Zustand
+ * panel: timeline, diffs, time travel, editing, persist and agent tools, but
+ * no action names (wrap the store in `rozenite()` for those). Call it once,
+ * next to the store. Returns a function that stops observing. A no-op in
+ * production.
+ *
+ * ```ts
+ * observeStore(useCart, { name: 'Cart' });
+ * ```
+ */
+export let observeStore: (store: ObservableStore, options: ObserveStoreOptions) => () => void;
+
 // Neither Lynx runtime has a `window`, so `typeof window` alone reported
 // every Lynx app as a server and installed the no-op stub below. `lynx` is
 // a free binding in module scope, not a property of `globalThis`. Kept
@@ -84,6 +99,8 @@ const isServer = typeof window === 'undefined' && typeof lynx === 'undefined';
 
 if (!isDev || isServer) {
   rozenite = ((initializer: unknown) => initializer) as Rozenite;
+  observeStore = () => () => undefined;
 } else {
   rozenite = require('./src/zustand/middleware').rozeniteImpl as Rozenite;
+  observeStore = require('./src/zustand/observe').observeStoreImpl;
 }

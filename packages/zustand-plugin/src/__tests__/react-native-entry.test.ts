@@ -38,6 +38,21 @@ describe('entry, production build', () => {
     expect(store.getState().count).toBe(1);
   });
 
+  it('makes observeStore() a no-op that leaves the store alone', async () => {
+    const { observeStore } = await import('../../react-native');
+    const store = createStore<{ count: number }>()(() => ({ count: 0 }));
+    const listeners: unknown[] = [];
+    const subscribe = store.subscribe;
+    store.subscribe = (listener) => {
+      listeners.push(listener);
+      return subscribe(listener);
+    };
+
+    const stop = observeStore(store, { name: 'Counter' });
+    stop();
+    expect(listeners).toEqual([]);
+  });
+
   it('makes the agent tools hook a no-op', async () => {
     const { useZustandAgentTools } = await import('../../react-native');
     expect(useZustandAgentTools()).toBeUndefined();

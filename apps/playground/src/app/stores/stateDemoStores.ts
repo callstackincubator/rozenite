@@ -1,13 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { rozenite } from '@rozenite/zustand-plugin';
+import { observeStore, rozenite } from '@rozenite/zustand-plugin';
 
 // Demo stores for the Zustand plugin screen:
 // - Cart:    rozenite() + persist -- named actions, args, async attribution,
 //            a Map in state, hydration, and time travel written to storage.
 // - Session: rozenite() -- concurrent async actions (left anonymous rather
 //            than guessed) and a cross-store action (logout clears the cart).
+// - Theme:   a plain store registered with observeStore() -- changes show as
+//            `observed`, with no action names.
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -111,3 +113,20 @@ export const useSessionStore = create<SessionState>()(
     { name: 'Session' },
   ),
 );
+
+type ThemeState = {
+  mode: 'light' | 'dark';
+  fontScale: number;
+  toggleMode: () => void;
+  bumpFontScale: () => void;
+};
+
+export const useThemeStore = create<ThemeState>()((set) => ({
+  mode: 'light',
+  fontScale: 1,
+  toggleMode: () => set((state) => ({ mode: state.mode === 'light' ? 'dark' : 'light' })),
+  bumpFontScale: () =>
+    set((state) => ({ fontScale: Math.round((state.fontScale + 0.1) * 10) / 10 })),
+}));
+
+observeStore(useThemeStore, { name: 'Theme' });

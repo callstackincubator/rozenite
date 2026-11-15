@@ -5,6 +5,7 @@ import { rozenitePlugin } from '@rozenite/vite-plugin';
 /** Tests that run a real zustand store; they run again against zustand 4.4. */
 const ZUSTAND_4_TESTS = [
   'src/zustand/__tests__/middleware.test.ts',
+  'src/zustand/__tests__/observe.test.ts',
   'src/runtime/__tests__/agent-tools.test.ts',
   'src/__tests__/protocol-fake-pair.test.ts',
 ];

@@ -178,6 +178,8 @@ const SOURCE_HELP: Record<TransitionSource, string> = {
   named: 'set(state, replace, "name")',
   external: 'useStore.setState() from outside the store',
   anonymous: 'no action or name accounts for it, or several async actions were pending',
+  observed:
+    'a store registered with observeStore(); wrap it in rozenite() to see which action made it',
   hydrate: 'persist rehydration',
   edit: 'a value edited from DevTools or by an agent',
   reload: 'Fast Refresh re-created the store',
