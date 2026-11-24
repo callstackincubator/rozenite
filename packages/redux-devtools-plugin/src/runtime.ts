@@ -2,7 +2,13 @@ import { parse, stringify } from 'jsan';
 import { Action, Reducer, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux';
 import { instrument } from '@redux-devtools/instrument';
 import type { EnhancedStore, LiftedState, PerformAction } from '@redux-devtools/instrument';
-import { evalAction, filterStagedActions, getLocalFilter, isFiltered } from '@redux-devtools/utils';
+import {
+  evalAction,
+  filterStagedActions,
+  getActionsArray,
+  getLocalFilter,
+  isFiltered,
+} from '@redux-devtools/utils';
 import {
   getRuntimeConnectionId,
   sendRuntimeMessage,
@@ -20,6 +26,53 @@ const PARTIAL_STATE_CHUNK_SIZE = 1;
 const STORE_SENTINEL = Symbol.for('rozenite.redux-devtools.store-sentinel');
 
 type AnyAction = Action<string>;
+
+type ActionCreator = (...args: any[]) => unknown;
+
+/**
+ * An action creator listed in the DevTools Dispatcher, with the argument
+ * names the Dispatcher shows as input fields.
+ */
+export type RozeniteActionCreatorDescriptor = {
+  name: string;
+  func: ActionCreator;
+  args?: readonly string[];
+};
+
+/**
+ * Action creators keyed by name. Nested objects are flattened into
+ * dot-separated names, for example `todos.add`.
+ */
+export type RozeniteActionCreatorMap = {
+  [name: string]: ActionCreator | RozeniteActionCreatorMap;
+};
+
+type NormalizedActionCreator = {
+  name: string;
+  func: ActionCreator;
+  args: string[];
+};
+
+const normalizeActionCreators = (
+  actionCreators: RozeniteDevToolsOptions['actionCreators'],
+): NormalizedActionCreator[] => {
+  if (!actionCreators) {
+    return [];
+  }
+
+  if (Array.isArray(actionCreators)) {
+    return actionCreators.map(({ name, func, args }) => ({
+      name,
+      func,
+      args: args ? [...args] : [],
+    }));
+  }
+
+  // Flattens nested objects and reads argument names from each function.
+  return getActionsArray(
+    actionCreators as Parameters<typeof getActionsArray>[0],
+  ) as NormalizedActionCreator[];
+};
 
 /**
  * Options for configuring Rozenite Redux DevTools
@@ -93,6 +146,17 @@ export interface RozeniteDevToolsOptions {
    * expression sources are sent to DevTools.
    */
   actionsAllowlist?: string | readonly string[];
+
+  /**
+   * Action creators listed in the DevTools Dispatcher, so they can be
+   * dispatched from the panel with arguments.
+   *
+   * Pass an object of creators, or an array of `{ name, func, args }` to name
+   * the arguments explicitly. With the object form, argument names are read
+   * from the function source, which Hermes does not preserve, so prefer the
+   * array form for creators that take arguments.
+   */
+  actionCreators?: RozeniteActionCreatorMap | readonly RozeniteActionCreatorDescriptor[];
 }
 
 type RuntimeController = {
@@ -144,6 +208,10 @@ const createRuntimeController = (options: RozeniteDevToolsOptions = {}): Runtime
   const traceLimit = trace ? (options.traceLimit ?? 25) : options.traceLimit;
   const traceSymbolication = options.traceSymbolication ?? true;
   const localFilter = getLocalFilter(options);
+  const actionCreators = normalizeActionCreators(options.actionCreators);
+  const serializedActionCreators = actionCreators.length
+    ? JSON.stringify(actionCreators.map(({ name, args }) => ({ name, args })))
+    : undefined;
 
   let store: EnhancedStore<any, AnyAction, unknown> | null = null;
   let monitored = false;
@@ -355,6 +423,7 @@ const createRuntimeController = (options: RozeniteDevToolsOptions = {}): Runtime
       type: 'STATE',
       name: instanceName,
       instanceId: appInstanceId,
+      action: serializedActionCreators,
       payload: stringify({
         actionsById: initialAction
           ? {
@@ -485,7 +554,11 @@ const createRuntimeController = (options: RozeniteDevToolsOptions = {}): Runtime
     }
 
     try {
-      const result = evalAction(action, []);
+      if (typeof action !== 'string' && !actionCreators[action.selected]) {
+        throw new Error(`Unknown action creator at index ${action.selected}.`);
+      }
+
+      const result = evalAction(action, actionCreators as Parameters<typeof evalAction>[1]);
       store.dispatch(result as AnyAction);
     } catch (error) {
       sendError((error as Error).message);

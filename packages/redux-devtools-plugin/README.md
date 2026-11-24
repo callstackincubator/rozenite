@@ -99,6 +99,19 @@ rozeniteDevToolsEnhancer({
 })
 ```
 
+To dispatch your own action creators from the panel's Dispatcher, pass them in `actionCreators`. Give an array of `{ name, func, args }` to name each argument; the Dispatcher shows one input per argument and evaluates what you type as JavaScript.
+
+```ts
+rozeniteDevToolsEnhancer({
+  actionCreators: [
+    { name: 'resetSettings', func: () => ({ type: 'settings/reset' }) },
+    { name: 'addTodo', func: (text: string) => ({ type: 'todos/add', payload: text }), args: ['text'] },
+  ],
+})
+```
+
+An object of creators also works, and nested objects become dotted names such as `todos.add`. Hermes does not keep argument names, so with the object form creators that take arguments show placeholder names; use the array form for those.
+
 `trace` captures the dispatch stack for each action and enables the Trace tab. Rozenite will also try to symbolicate the stack through Metro so React Native traces point to source files instead of generated bundle locations.
 
 ```ts

@@ -1,4 +1,8 @@
-export type { RozeniteDevToolsOptions } from './src/runtime';
+export type {
+  RozeniteActionCreatorDescriptor,
+  RozeniteActionCreatorMap,
+  RozeniteDevToolsOptions,
+} from './src/runtime';
 
 export let rozeniteDevToolsEnhancer: typeof import('./src/runtime').rozeniteDevToolsEnhancer;
 export let composeWithRozeniteDevTools: typeof import('./src/runtime').composeWithRozeniteDevTools;

@@ -4,6 +4,8 @@ export type ReduxDevToolsRequest =
       payload: string;
       instanceId: string;
       name?: string;
+      /** JSON list of `{ name, args }` action creators for the Dispatcher. */
+      action?: string;
     }
   | {
       type: 'PARTIAL_STATE';
