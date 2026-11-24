@@ -333,6 +333,97 @@ describe('redux devtools runtime', () => {
     // on every update and was left showing no actions at all.
     expect(visibleActionTypes).toEqual(['@@INIT', 'counter/add', 'counter/add']);
   });
+
+  it('lists action creators in the Dispatcher and dispatches the selected one', async () => {
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
+
+    const store = createStore(
+      reducer,
+      rozeniteDevToolsEnhancer({
+        actionCreators: [
+          { name: 'reset', func: () => ({ type: 'counter/add', payload: -1 }) },
+          {
+            name: 'add',
+            func: (amount: number) => ({ type: 'counter/add', payload: amount }),
+            args: ['amount'],
+          },
+        ],
+      }),
+    );
+
+    sendPanelCommand({ type: 'start' });
+
+    const [stateRequest] = getStateUpdateRequests(sentMessages);
+    const instances = reduceInstances(undefined, {
+      type: UPDATE_STATE,
+      request: stateRequest as never,
+      id: 'test-connection',
+    });
+
+    expect(instances.options[stateRequest.instanceId].actionCreators).toEqual([
+      { name: 'reset', args: [] },
+      { name: 'add', args: ['amount'] },
+    ]);
+
+    sendPanelCommand({
+      type: 'action',
+      action: { selected: 1, args: ['5'], rest: '' },
+      instanceId: stateRequest.instanceId,
+    });
+
+    expect(store.getState().counter).toBe(5);
+  });
+
+  it('flattens nested action creator objects into dotted names', async () => {
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
+
+    const store = createStore(
+      reducer,
+      rozeniteDevToolsEnhancer({
+        actionCreators: {
+          counter: {
+            increment: () => ({ type: 'counter/add', payload: 1 }),
+          },
+        },
+      }),
+    );
+
+    sendPanelCommand({ type: 'start' });
+
+    const [stateRequest] = getStateUpdateRequests(sentMessages);
+
+    if (stateRequest?.type !== 'STATE' || !stateRequest.action) {
+      throw new Error('Expected STATE request with action creators.');
+    }
+
+    expect(JSON.parse(stateRequest.action)).toEqual([{ name: 'counter.increment', args: [] }]);
+
+    sendPanelCommand({
+      type: 'action',
+      action: { selected: 0, args: [], rest: '' },
+      instanceId: stateRequest.instanceId,
+    });
+
+    expect(store.getState().counter).toBe(1);
+  });
+
+  it('reports an error instead of throwing for an unknown action creator', async () => {
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
+
+    createStore(reducer, rozeniteDevToolsEnhancer());
+
+    sendPanelCommand({ type: 'start' });
+    sentMessages.length = 0;
+
+    sendPanelCommand({ type: 'action', action: { selected: 0, args: [], rest: '' } });
+
+    expect(sentMessages).toEqual([
+      expect.objectContaining({
+        type: 'error',
+        message: 'Unknown action creator at index 0.',
+      }),
+    ]);
+  });
 });
 
 describe('redux devtools runtime tracing', () => {

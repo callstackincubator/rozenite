@@ -112,6 +112,25 @@ rozeniteDevToolsEnhancer({
 });
 ```
 
+### Dispatching action creators
+
+Pass `actionCreators` to list your own action creators in the panel's Dispatcher. Use an array of `{ name, func, args }` to name each argument. The Dispatcher shows one input per argument and evaluates what you type as JavaScript:
+
+```ts
+rozeniteDevToolsEnhancer({
+  actionCreators: [
+    { name: 'resetSettings', func: () => ({ type: 'settings/reset' }) },
+    {
+      name: 'addTodo',
+      func: (text: string) => ({ type: 'todos/add', payload: text }),
+      args: ['text'],
+    },
+  ],
+});
+```
+
+You can pass an object of creators instead, and nested objects become dotted names such as `todos.add`. Hermes doesn't keep argument names, so in the object form creators that take arguments show placeholder names. Use the array form for those.
+
 ### Dispatch traces
 
 Set `trace: true` to capture where each action was dispatched from, symbolicated back to your source files through Metro:
