@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/rhf-plugin",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "React Hook Form Inspector for Rozenite.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {

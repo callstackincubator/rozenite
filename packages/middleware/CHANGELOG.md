@@ -1,5 +1,16 @@
 # @rozenite/middleware
 
+## 2.8.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@2.8.0
+  - @rozenite/app@2.8.0
+  - @rozenite/runtime@2.8.0
+  - @rozenite/shell@2.8.0
+  - @rozenite/tools@2.8.0
+
 ## 2.7.0
 
 ### Patch Changes

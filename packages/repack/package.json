@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/repack",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "Re.Pack bundler plugin for Rozenite.",
   "keywords": [
     "bundler",

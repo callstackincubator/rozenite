@@ -1,5 +1,13 @@
 # @rozenite/vite-plugin
 
+## 2.8.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/tools@2.8.0
+  - @rozenite/ui@2.8.0
+
 ## 2.7.0
 
 ### Patch Changes

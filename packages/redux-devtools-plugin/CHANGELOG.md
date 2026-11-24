@@ -1,5 +1,19 @@
 # @rozenite/redux-devtools-plugin
 
+## 2.8.0
+
+### Minor Changes
+
+- [#588](https://github.com/callstackincubator/rozenite/pull/588) [`3c485f9`](https://github.com/callstackincubator/rozenite/commit/3c485f9562a64e39daaae2b8067de9bf880cb7f3) Thanks [@borisyankov](https://github.com/borisyankov)! - Add an `actionCreators` option to the Redux DevTools enhancer. The creators you pass appear in the panel's Dispatcher, where you can fill in their arguments and dispatch them. Pass an object of creators, or an array of `{ name, func, args }` to name the arguments yourself, which is the reliable choice on Hermes.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@2.8.0
+  - @rozenite/agent-shared@2.8.0
+  - @rozenite/plugin-bridge@2.8.0
+  - @rozenite/tools@2.8.0
+
 ## 2.7.0
 
 ### Patch Changes

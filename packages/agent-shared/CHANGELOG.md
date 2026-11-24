@@ -1,5 +1,12 @@
 # @rozenite/agent-shared
 
+## 2.8.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/tools@2.8.0
+
 ## 2.7.0
 
 ### Patch Changes

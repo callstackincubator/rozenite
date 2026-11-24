@@ -1,5 +1,13 @@
 # @rozenite/lynx
 
+## 2.8.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/middleware@2.8.0
+  - @rozenite/tools@2.8.0
+
 ## 2.7.0
 
 ### Patch Changes

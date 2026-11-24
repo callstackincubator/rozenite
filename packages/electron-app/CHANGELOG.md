@@ -1,5 +1,7 @@
 # @rozenite/electron-app
 
+## 2.8.0
+
 ## 2.7.0
 
 ## 2.6.0
