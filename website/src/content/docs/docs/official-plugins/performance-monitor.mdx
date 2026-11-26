@@ -1,5 +1,28 @@
 ---
 title: 'Performance Monitor Plugin'
+plugin:
+  icon: gauge
+  card: Startup timing, custom marks, measures and metrics.
+  headline:
+    - Where startup time goes,
+    - and your own marks.
+  lede: Startup timing and performance marks in React Native DevTools, built on `react-native-performance`.
+  features:
+    - title: Startup
+      body: Native initialization, JS bundle parse and execute, and the first React render, with no instrumentation.
+    - title: Marks and measures
+      body: Anything you record with `react-native-performance` shows up in real time.
+    - title: Metrics
+      body: Track arbitrary values, such as memory usage.
+    - title: Sessions
+      body: Start and stop a monitoring session and export what it captured.
+  setup:
+    - find: usePerformanceMonitorDevTools();
+      note: Call the hook in your app.
+    - find: performance.measure('app-initialization'
+      note: Add your own marks, measures and metrics from anywhere.
+  notes:
+    - A startup phase shows “—” if your app’s architecture does not report it.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

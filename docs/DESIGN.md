@@ -370,8 +370,30 @@ In order, each section in the frame:
 Every hero tells both stories on the same app and the same data: a DevTools panel for the
 human and a terminal for the agent, both live at once.
 
-Pages outside the home page (plugin directory, welcome page, 404) use the same shell, nav and
-footer. The welcome page is shown inside DevTools, so every link on it opens a new tab.
+Pages outside the home page (plugin directory, plugin pages, welcome page, 404) use the same
+shell, nav and footer. The welcome page is shown inside DevTools, so every link on it opens a new tab.
+
+## Plugin pages
+
+Each official plugin has a page at `/plugins/<slug>`, which its home page cell links to:
+
+1. **Intro:** a back link to the home page plugins, the plugin's pixel icon, name and package,
+   a two-beat headline, a lede, the `REACT NATIVE WEB` / `EXPERIMENTAL` chips when the docs
+   cover Rozenite for Web, then the install command bar and a `READ THE DOCS` button.
+2. **Screenshot** of the panel in React Native DevTools, the one its docs page shows.
+3. **What you get:** three, four or six feature cells, so no width leaves an empty cell.
+4. **Setup:** other installs the docs ask for, then code from the docs, each block in a Window
+   titled with its file name.
+5. **Agents** (when the plugin registers tools): what an agent can do, the tool names as chips.
+6. **Good to know** (optional): limits and caveats, one per hairline row.
+7. **Closing.**
+
+A page is built from the plugin's docs page in `website/src/content/docs/docs/official-plugins/`:
+its `plugin` frontmatter holds the copy (`website/src/site/plugin-schema.ts`), and the name,
+package, installs, code, screenshot, web support and tool names are read from the Markdown
+(`website/src/site/plugin-docs.ts`). A new official plugin's docs page with `plugin` frontmatter
+gets a page and a home page cell. Panel screenshots are 1280×800 at 2x of the real DevTools
+window, dark, with the console drawer closed.
 
 ## 404 page
 
@@ -421,5 +443,6 @@ Both are generated from one page, `website/og/og.html`, with `pnpm --filter @roz
   `dither.worker.ts`
 - Components: `website/src/components/site/`; the home hero in `website/src/components/home/`
 - Pages: `website/src/pages/index.astro` (home), `404.astro`, `welcome.astro`,
-  `plugin-directory/`
-- Facts the pages use: `website/src/site/content.ts`
+  `plugin-directory/`, `plugins/` (one page per official plugin)
+- Facts the pages use: `website/src/site/content.ts`; for the official plugins, their docs
+  pages (see [Plugin pages](#plugin-pages))

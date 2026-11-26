@@ -1,5 +1,27 @@
 ---
 title: 'React Navigation Plugin'
+plugin:
+  icon: signpost
+  card: Action timeline, navigation state, time travel and deep link testing.
+  headline:
+    - See how you got
+    - to this screen.
+  lede: 'Navigation debugging for React Navigation v7 and expo-router: a live action timeline, state at any point in time and deep link testing.'
+  features:
+    - title: Action timeline
+      body: Every navigation action in order, with jump back and reset to any previous state.
+    - title: Dispatch origin
+      body: Where each action was dispatched from, with a code snippet and the call stack.
+    - title: Deep links
+      body: Test deep links from the panel.
+  setup:
+    - find: <NavigationContainer ref
+      note: With React Navigation, pass the container ref to the hook.
+    - find: useNavigationContainerRef
+      note: With expo-router.
+  agent: Agents can navigate and go back, read navigation state and the action history, and open links.
+  notes:
+    - Dispatch origins resolve in development builds only. Release builds keep the raw stack.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

@@ -1,8 +1,12 @@
 ---
 // The official plugins as link cells, plus two cells that close the grid: the plugin
 // directory and building your own. The last row may not be full at four or two columns.
-import { docs, plugins } from '../../site/content';
+// Each plugin cell comes from its docs page and links to its page at /plugins/<slug>.
+import { docs } from '../../site/content';
+import { getPlugins } from '../../site/plugins';
 import PixelIcon from './PixelIcon.astro';
+
+const plugins = await getPlugins();
 ---
 
 <ul class="cells cells--4 plugin-grid">
@@ -15,7 +19,7 @@ import PixelIcon from './PixelIcon.astro';
           </span>
           <h3 class="h3">{p.name}</h3>
           <code class="pkg">{p.pkg}</code>
-          <p class="body">{p.about}</p>
+          <p class="body">{p.card}</p>
         </a>
       </li>
     ))

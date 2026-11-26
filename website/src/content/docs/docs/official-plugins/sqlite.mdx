@@ -1,5 +1,27 @@
 ---
 title: 'SQLite Plugin'
+plugin:
+  icon: table
+  card: Browse tables and run queries against your app's databases.
+  headline:
+    - Query your app’s
+    - databases.
+  lede: A query-first database inspector, with an `expo-sqlite` adapter built in and a generic adapter for other drivers.
+  features:
+    - title: Browse
+      body: Registered databases, tables and views.
+    - title: Schema
+      body: Columns, defaults, primary keys, indexes and foreign keys.
+    - title: SQL editor
+      body: Run scripts and see metadata for each statement. Execution stops at the first error.
+    - title: Result cells
+      body: Preview structured JSON and blob-like values.
+  setup:
+    - find: useRozeniteSqlitePlugin({ adapters });
+      note: With Expo SQLite.
+    - find: "adapterName: 'Custom SQLite Driver'"
+      note: For any SQLite-like driver, implement `executeStatements()`.
+  agent: The tools register with `useRozeniteSqlitePlugin`, with no further setup.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

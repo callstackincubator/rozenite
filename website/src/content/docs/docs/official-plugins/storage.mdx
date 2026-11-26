@@ -1,8 +1,36 @@
 ---
 title: 'Storage Plugin'
+plugin:
+  icon: database
+  card: MMKV, AsyncStorage, Expo SecureStore and react-native-keychain in one panel.
+  headline:
+    - All your app storage,
+    - in one panel.
+  lede: MMKV, AsyncStorage, Expo SecureStore and react-native-keychain. Register the adapters your app uses and inspect them together.
+  features:
+    - title: Four adapters
+      body: MMKV, AsyncStorage, Expo SecureStore and react-native-keychain.
+    - title: Binary values
+      body: View and edit binary MMKV values in a hex viewer with a Base64 mode.
+    - title: Hidden keys
+      body: A per-storage `blacklist` keeps sensitive keys out of the panel.
+    - title: Large storages
+      body: Entries load in pages with value previews, and search runs on the device.
+    - title: Live updates
+      body: Storages with native subscriptions, such as MMKV, update live. Others have Refresh.
+    - title: Import and export
+      body: Move a storage in and out as a JSON snapshot, validated before anything is written.
+  setup:
+    - find: useRozeniteStoragePlugin({ storages });
+      note: Create an adapter for each storage and pass them to the hook.
+  notes:
+    - SecureStore cannot list its keys, so you provide them with `keys`.
+    - AsyncStorage, SecureStore and keychain adapters do not support binary values.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+![The Storage panel in React Native DevTools](../../../../../public/storage-plugin.png)
 
 The Storage plugin is a single DevTools panel for MMKV, AsyncStorage, Expo SecureStore, and react-native-keychain. Register whichever adapters your app uses and inspect them all from one place.
 

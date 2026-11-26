@@ -1,5 +1,24 @@
 ---
 title: 'Expo Atlas Plugin'
+plugin:
+  icon: stack
+  card: 'Your Metro bundle: module sizes, duplicates and the dependency graph.'
+  headline:
+    - See what is taking
+    - space in your bundle.
+  lede: 'Expo Atlas in React Native DevTools: explore your Metro bundle and trace dependencies.'
+  features:
+    - title: Bundle size
+      body: Total size broken down by module and file type.
+    - title: Modules
+      body: A module’s size, source and dependency chain.
+    - title: Waste
+      body: Spot large dependencies, duplicated code and unused code.
+    - title: Dev and production
+      body: Analyze the development bundle live, or export and analyze a production one.
+  setup:
+    - find: withRozeniteExpoAtlasPlugin(config)
+      note: Enable the plugin in your Metro configuration.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

@@ -1,5 +1,22 @@
 ---
 title: 'TanStack Query Plugin'
+plugin:
+  icon: query
+  card: Queries, mutations and cache entries, with refetch, invalidate and reset.
+  headline:
+    - Your query cache,
+    - inside DevTools.
+  lede: TanStack Query DevTools in React Native DevTools, to inspect and manage queries and cache without leaving the window.
+  features:
+    - title: Live queries
+      body: Queries and mutations as your app runs them.
+    - title: Cache inspection
+      body: The standard TanStack Query DevTools UI over your cache.
+    - title: Cache actions
+      body: Refetch, invalidate, reset or remove entries from the panel.
+  setup:
+    - find: useTanStackQueryDevTools(queryClient);
+      note: Pass your query client to the hook.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

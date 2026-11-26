@@ -1,5 +1,31 @@
 ---
 title: 'Redux DevTools Plugin'
+plugin:
+  icon: cube
+  card: Store state, dispatched actions and a diff for each one.
+  headline:
+    - Redux DevTools,
+    - in React Native DevTools.
+  lede: State inspection, action history and state diffs for your store, with Redux Toolkit, classic Redux or Rematch.
+  features:
+    - title: State and diffs
+      body: Inspect store state, the action history and what each action changed.
+    - title: Multiple stores
+      body: Give each store a name to tell them apart in the panel.
+    - title: Dispatcher
+      body: List your own action creators with `actionCreators` and dispatch them with arguments.
+    - title: Dispatch traces
+      body: 'Set `trace: true` to see where each action was dispatched from, symbolicated through Metro.'
+    - title: Large stores
+      body: Lower `maxAge` and strip bulky slices with `stateSanitizer` and `actionSanitizer`.
+    - title: Noisy actions
+      body: Keep frequent actions out of the panel with `actionsDenylist`, or send only some with `actionsAllowlist`.
+  setup:
+    - find: configureStore
+      note: Add the enhancer to your store. This is the Redux Toolkit form.
+  agent: Mount `useReduxDevToolsAgentTools()` once near your app root. Agents can then list stores and actions, dispatch actions, and jump, roll back or commit history.
+  notes:
+    - State is sent over the device bridge. A large store with a long action history can use a lot of memory, and on Android can crash the app when the panel opens.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

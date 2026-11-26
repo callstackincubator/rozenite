@@ -1,5 +1,22 @@
 ---
 title: 'Controls Plugin'
+plugin:
+  icon: faders
+  card: Your own toggles, inputs and buttons, kept out of your product UI.
+  headline:
+    - Your own debug panel,
+    - without a debug screen.
+  lede: Build a DevTools panel from app-defined controls, in place of temporary debug screens and hidden menus.
+  features:
+    - title: Five control types
+      body: '`text`, `toggle`, `select`, `input` and `button`.'
+    - title: Sections
+      body: Group diagnostics and editable controls, with descriptions for side effects.
+    - title: Validation
+      body: Reject bad input with a message using `validate`, or turn a control off with `disabled`.
+  setup:
+    - find: useRozeniteControlsPlugin({ sections });
+      note: Describe your sections and pass them to the hook.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

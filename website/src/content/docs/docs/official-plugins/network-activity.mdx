@@ -1,5 +1,30 @@
 ---
 title: 'Network Activity Plugin'
+plugin:
+  icon: network
+  card: 'HTTP and WebSocket traffic: requests, headers, payloads and timings.'
+  headline:
+    - Every request your app makes,
+    - in real time.
+  lede: A Chrome-DevTools-style network inspector in React Native DevTools, for HTTP/HTTPS requests, WebSocket connections and Server-Sent Events.
+  features:
+    - title: Request list
+      body: Method, status, timing and a `Built-in` or `Nitro` badge for where each request came from.
+    - title: Full details
+      body: Headers, query parameters, and request and response bodies for any request.
+    - title: Response previews
+      body: Images, JSON and XML trees, sandboxed HTML and text, with a Preview / Raw toggle. Binary responses can be downloaded.
+    - title: Nitro traffic
+      body: Install `react-native-nitro-fetch` alongside the plugin and its traffic shows up in the same panel.
+  setup:
+    - find: useNetworkActivityDevTools();
+      note: Call the hook in your app.
+    - find: withOnBootNetworkActivityRecording();
+      note: To also capture requests made during startup, add this to your entry point.
+    - find: 'inspectors:'
+      note: All traffic types are monitored by default. Turn off the ones you do not need.
+  notes:
+    - Built-in capture covers the JavaScript thread. Apart from `react-native-nitro-fetch`, native networking stacks do not appear automatically.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

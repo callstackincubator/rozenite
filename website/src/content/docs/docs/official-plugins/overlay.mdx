@@ -1,8 +1,30 @@
 ---
 title: 'Overlay Plugin'
+plugin:
+  icon: grid
+  card: Grids and reference images over the running app, with a compare slider.
+  headline:
+    - Check your UI
+    - against the design.
+  lede: Grids and reference images drawn over your running app, to check spacing and alignment.
+  features:
+    - title: Grid
+      body: Set cell size from 4 to 100px, line color and opacity.
+    - title: Image overlay
+      body: A reference image from a URL, with resize mode and opacity.
+    - title: Compare slider
+      body: Drag to reveal the app on one side and the design on the other.
+  setup:
+    - find: <RozeniteOverlay />
+      note: Add the component at the root of your app, after everything else.
+  notes:
+    - Settings last for the development session and reset when the app restarts.
+    - The overlay never renders in production builds.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+![The Overlay panel in React Native DevTools](../../../../../public/overlay-plugin.png)
 
 The Overlay plugin draws grids and reference images over your running app, so you can check spacing, alignment, and how closely your UI matches a design. It was inspired by [RocketSim](https://www.rocketsim.app/).
 

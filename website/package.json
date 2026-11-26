@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.17",
-    "playwright-core": "^1.62.1"
+    "playwright-core": "^1.62.1",
+    "yaml": "^2.9.1"
   }
 }

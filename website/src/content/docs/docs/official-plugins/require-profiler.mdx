@@ -1,5 +1,26 @@
 ---
 title: 'Require Profiler Plugin'
+plugin:
+  icon: flame
+  card: A flame graph of your app's startup require() calls.
+  headline:
+    - Find the modules
+    - slowing startup.
+  lede: Times every `require()` call during app startup and shows the result as a flame graph.
+  features:
+    - title: Flame graph
+      body: Zoom into any frame to see self time, total time, dependency count and path.
+    - title: Top modules
+      body: A table ranked by self time, by module or grouped by package.
+    - title: Require chains
+      body: See what pulled a module in, from the root down.
+    - title: Duplicate installs
+      body: Packages evaluated from more than one install location are flagged.
+  setup:
+    - find: 'enhanceMetroConfig: (config) => withRozeniteRequireProfiler(config)'
+      note: Enable the Metro instrumentation.
+    - find: useRequireProfilerDevTools();
+      note: Then add the hook to your app.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

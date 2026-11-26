@@ -1,0 +1,236 @@
+---
+// One page per official plugin, at /plugins/<slug>, built from the plugin's docs page: the copy
+// from its `plugin` frontmatter, the rest from its Markdown (see site/plugin-docs.ts).
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Site from '../../layouts/Site.astro';
+import Closing from '../../components/site/Closing.astro';
+import CodeBlock from '../../components/site/CodeBlock.astro';
+import CopyCommand from '../../components/site/CopyCommand.astro';
+import Footer from '../../components/site/Footer.astro';
+import Nav from '../../components/site/Nav.astro';
+import PixelIcon from '../../components/site/PixelIcon.astro';
+import Window from '../../components/site/Window.astro';
+import { describe } from '../../routeData';
+import { docs } from '../../site/content';
+import { getPlugins } from '../../site/plugins';
+
+export async function getStaticPaths() {
+  return (await getPlugins()).map((plugin) => ({ params: { slug: plugin.slug }, props: { plugin } }));
+}
+
+type Props = { plugin: Awaited<ReturnType<typeof getPlugins>>[number] };
+const { plugin } = Astro.props;
+
+// The panel screenshots the docs pages show. mmkv-plugin.png is only kept for old READMEs.
+const images = import.meta.glob<ImageMetadata>(['../../../public/*-plugin.png', '!../../../public/mmkv-plugin.png'], {
+  import: 'default',
+  eager: true,
+});
+const screenshot = plugin.screenshot ? images[`../../../public/${plugin.screenshot}`] : undefined;
+if (plugin.screenshot && !screenshot) console.warn(`[plugin pages] ${plugin.slug}: no public/${plugin.screenshot}`);
+
+// Installs the docs ask for besides the plugin's own, grouped under the sentence before them.
+const extraInstalls: { note?: string; commands: string[] }[] = [];
+for (const { note, command } of plugin.extraInstalls) {
+  const last = extraInstalls.at(-1);
+  if (last && last.note === note) last.commands.push(command);
+  else extraInstalls.push({ note, commands: [command] });
+}
+
+const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const md = (s: string) =>
+  escape(s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')).replace(/`([^`]+)`/g, '<code>$1</code>');
+
+// Sections are numbered in the order they appear; some are optional.
+let count = 0;
+const num = () => `[${String(++count).padStart(2, '0')}]`;
+---
+
+<Site title={`${plugin.name} plugin · Rozenite`} description={describe(plugin.body) ?? plugin.lede}>
+  <Nav />
+  <main class="frame">
+    <section class="intro intro--top" aria-labelledby="plugin-title">
+      <a class="label more" href="/#plugins"><span aria-hidden="true">←</span> Official plugins</a>
+      <p class="name">
+        <PixelIcon name={plugin.icon} size={27} class="accent" />
+        <span class="label accent">{plugin.name}</span>
+        <code class="pkg">{plugin.pkg}</code>
+      </p>
+      <h1 class="h1" id="plugin-title">{plugin.headline[0]} <em>{plugin.headline[1]}</em></h1>
+      <p class="lede" set:html={md(plugin.lede)} />
+      {
+        plugin.web && (
+          <p class="chips">
+            <a class="chip chip--line" href={docs.web}>
+              React Native Web
+            </a>
+            <span class="chip">Experimental</span>
+          </p>
+        )
+      }
+      <div class="actions">
+        <CopyCommand command={plugin.install} />
+        <a class="btn" href={plugin.docs}>Read the docs</a>
+      </div>
+    </section>
+
+    {
+      screenshot && (
+        <div class="shot">
+          <Image src={screenshot} alt={`The ${plugin.name} panel in React Native DevTools`} loading="eager" />
+        </div>
+      )
+    }
+
+    <section aria-labelledby="features-title">
+      <p class="section-head label"><b>{num()}</b> <span id="features-title">What you get</span></p>
+      <ul class:list={['cells', plugin.features.length === 4 ? 'cells--4' : 'cells--3']}>
+        {
+          plugin.features.map((f) => (
+            <li class="cell">
+              <h2 class="h3">{f.title}</h2>
+              <p class="body" set:html={md(f.body)} />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section aria-labelledby="setup-title">
+      <p class="section-head label"><b>{num()}</b> <span id="setup-title">Setup</span></p>
+      <p class="body lead-in">
+        Follow <a href={docs.start}>Getting started</a> first, then install the plugin as shown above.
+      </p>
+      {
+        extraInstalls.map((group) => (
+          <div class="step">
+            {group.note && <p class="body" set:html={md(group.note)} />}
+            {group.commands.map((command) => (
+              <CopyCommand command={command} />
+            ))}
+          </div>
+        ))
+      }
+      {
+        plugin.snippets.map((s) => (
+          <div class="step">
+            <p class="body" set:html={md(s.note)} />
+            <Window title={s.title}>
+              <CodeBlock code={s.code} lang={s.lang} />
+            </Window>
+          </div>
+        ))
+      }
+      <p class="foot-link label">
+        <a class="more" href={plugin.docs}>All options in the docs <span aria-hidden="true">→</span></a>
+      </p>
+    </section>
+
+    {
+      plugin.agent && (
+        <section aria-labelledby="agent-title">
+          <p class="section-head label">
+            <b>{num()}</b> <span id="agent-title">Agents</span>
+          </p>
+          <div class="intro">
+            <p class="lede" set:html={md(plugin.agent)} />
+            {plugin.tools.length > 0 && (
+              <p class="chips">
+                {plugin.tools.map((tool) => (
+                  <code class="chip chip--line tool">{tool}</code>
+                ))}
+              </p>
+            )}
+            <a class="label more" href={docs.agents}>
+              Rozenite for Agents <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      plugin.notes && (
+        <section aria-labelledby="notes-title">
+          <p class="section-head label">
+            <b>{num()}</b> <span id="notes-title">Good to know</span>
+          </p>
+          <ul class="notes">
+            {plugin.notes.map((note) => (
+              <li class="body" set:html={md(note)} />
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <Closing />
+  </main>
+  <Footer />
+</Site>
+
+<style>
+  .intro--top {
+    padding-block: var(--rhythm);
+  }
+  .name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin: 0.75rem 0 0;
+  }
+  /* Room for most install commands; longer ones scroll inside the bar. */
+  .intro--top .actions :global(.cmd),
+  .step :global(.cmd) {
+    width: min(100%, 40rem);
+  }
+  .chips a {
+    text-decoration: none;
+  }
+  /* Tool names are identifiers: keep their case. */
+  .tool {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .shot {
+    padding: var(--pad);
+    border-top: 1px solid var(--line);
+  }
+  .shot img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+    border: 1px solid var(--line-strong);
+  }
+  .lead-in {
+    padding: var(--pad) var(--pad) 0;
+  }
+  .lead-in a {
+    color: var(--text);
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    min-width: 0;
+    padding: var(--pad) var(--pad) 0;
+  }
+  .step:last-of-type {
+    padding-bottom: var(--pad);
+  }
+  .foot-link {
+    border-top: 1px solid var(--line);
+  }
+  .notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .notes li {
+    padding: 1rem var(--pad);
+    border-bottom: 1px solid var(--line);
+  }
+</style>

@@ -1,8 +1,31 @@
 ---
 title: 'Feature Flags Plugin'
+plugin:
+  icon: flag
+  card: Inspect and override flags from a custom store, LaunchDarkly or Statsig.
+  headline:
+    - Force a flag,
+    - on a running device.
+  lede: List, inspect and override feature flags from a custom store, LaunchDarkly or Statsig.
+  features:
+    - title: Every flag
+      body: Key, type, effective value and whether it is overridden.
+    - title: Inline overrides
+      body: Flip booleans, edit strings and numbers inline, or open a dialog for `json` flags.
+    - title: Three adapters
+      body: A custom store, LaunchDarkly or Statsig.
+  setup:
+    - find: 'useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });'
+      note: A custom store. The docs cover the LaunchDarkly and Statsig adapters.
+  agent: Agents can read flags and override them to reproduce a bug that only happens with a flag on.
+  notes:
+    - With the custom and LaunchDarkly adapters, overrides live in memory and reset on restart unless you persist them.
+    - 'LaunchDarkly needs one change at the call site: pass the wrapped client to `<LDProvider>`.'
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+![The Feature Flags panel in React Native DevTools](../../../../../public/feature-flags-plugin.png)
 
 The Feature Flags plugin lets you list, inspect, and force-override feature flags on a running device from React Native DevTools. It supports a homegrown custom store, LaunchDarkly, and Statsig through adapters.
 

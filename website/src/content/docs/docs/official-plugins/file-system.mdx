@@ -1,8 +1,33 @@
 ---
 title: 'File System Plugin'
+plugin:
+  icon: folder
+  card: App directories, with text and image previews and hex for binaries.
+  headline:
+    - Browse your app’s files,
+    - from DevTools.
+  lede: A file explorer for your app’s directories, using Expo FileSystem or RNFS.
+  features:
+    - title: Roots and folders
+      body: Jump between document, cache, bundle and other roots your library exposes.
+    - title: Previews
+      body: Text and image files inline, with a hex-style view for files that are not text.
+    - title: File transfer
+      body: Opt in to import and export files, one at a time.
+  setup:
+    - find: createExpoFileSystemAdapter(FileSystem)
+      note: With Expo FileSystem.
+    - find: import RNFS from
+      note: With RNFS.
+  agent: Agents can list and read files. Import and export need their own `fileTransfer.agent` opt-in.
+  notes:
+    - 'You always pass an adapter: the plugin does not detect a filesystem library.'
+    - Previews are size-limited, and very large directories are truncated.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+![The File System panel in React Native DevTools](../../../../../public/file-system-plugin.png)
 
 The File System plugin adds a file explorer to React Native DevTools, so you can browse your app's directories and preview files without leaving the DevTools window.
 

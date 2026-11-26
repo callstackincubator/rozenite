@@ -1,8 +1,38 @@
 ---
 title: 'Zustand Plugin'
+plugin:
+  icon: history
+  card: 'Zustand stores: named actions, diffs, time travel and live editing.'
+  headline:
+    - Every Zustand change,
+    - named and diffed.
+  lede: A timeline of every change to your Zustand stores, with all stores in one place so you can follow an action across them.
+  features:
+    - title: Named actions
+      body: Action names and arguments come from your store functions, with no extra code.
+    - title: Diffs
+      body: A diff for each change, with the call site symbolicated through Metro.
+    - title: Time travel
+      body: Jump to any state the app still holds, and export the history as JSON.
+    - title: Live editing
+      body: Edit state and call store actions with JSON arguments.
+    - title: Persist status
+      body: Storage key, version and hydration status, with rehydrate and clear.
+    - title: Stores you cannot wrap
+      body: Register them with `observeStore()`. Everything works except action names.
+  setup:
+    - find: export const useCartStore
+      note: Wrap the initializer with `rozenite()`, outermost, and give the store a stable name.
+    - find: observeStore(useLegacyStore
+      note: For a store from a library or one you do not want to wrap.
+  agent: With `useZustandAgentTools()`, agents can list stores, read state and history, call actions, set values, time travel and pause recording.
+  notes:
+    - '`rozenite()`, `observeStore()` and the agent hook compile to pass-throughs in production builds.'
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+![The Zustand panel in React Native DevTools](../../../../../public/zustand-plugin.png)
 
 The Zustand plugin records every change to your Zustand stores and shows it in a **Zustand** panel in React Native DevTools:
 

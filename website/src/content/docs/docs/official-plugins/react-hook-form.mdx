@@ -1,5 +1,24 @@
 ---
 title: 'React Hook Form Plugin'
+plugin:
+  icon: form
+  card: Values, errors, dirty and touched state for every mounted form.
+  headline:
+    - Form state,
+    - without the logging.
+  lede: Values, validation errors and dirty and touched state for every mounted form.
+  features:
+    - title: Fields
+      body: Name, input type, value, state and error, with nested objects grouped.
+    - title: Form status
+      body: Validity, submission and validation state, and the submit count.
+    - title: Multiple forms
+      body: Each form gets its own entry, and stays visible as disconnected after it unmounts.
+  setup:
+    - find: useRozeniteRHFPlugin({ control });
+      note: Call the hook where you have the form’s `control`.
+  notes:
+    - Requires `react-hook-form` 7.33.1 or a later 7.x.
 ---
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';

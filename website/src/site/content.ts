@@ -2,8 +2,6 @@
 // from the docs (src/content/docs/docs/**), the repo README, packages/cli/docs or the plugin
 // packages themselves. Do not add numbers, adopters or claims that are not in the repo.
 
-import type { IconName } from '../components/site/icons';
-
 export const site = {
   name: 'Rozenite',
   title: 'Rozenite: DevTools panels for React Native and Lynx',
@@ -50,122 +48,28 @@ export const marquee = [
   'React Native DevTools',
 ];
 
-export type Plugin = {
-  name: string;
-  pkg: string;
-  /** What the panel shows, one line. */
-  about: string;
-  icon: IconName;
-  href: string;
-};
-
-/** The official plugins, ordered by how often a team reaches for them. */
-export const plugins: Plugin[] = [
-  {
-    name: 'Network Activity',
-    pkg: '@rozenite/network-activity-plugin',
-    about: 'HTTP and WebSocket traffic: requests, headers, payloads and timings.',
-    icon: 'network',
-    href: '/docs/official-plugins/network-activity',
-  },
-  {
-    name: 'TanStack Query',
-    pkg: '@rozenite/tanstack-query-plugin',
-    about: 'Queries, mutations and cache entries, with refetch, invalidate and reset.',
-    icon: 'query',
-    href: '/docs/official-plugins/tanstack-query',
-  },
-  {
-    name: 'Redux DevTools',
-    pkg: '@rozenite/redux-devtools-plugin',
-    about: 'Store state, dispatched actions and a diff for each one.',
-    icon: 'cube',
-    href: '/docs/official-plugins/redux-devtools',
-  },
-  {
-    name: 'Zustand',
-    pkg: '@rozenite/zustand-plugin',
-    about: 'Zustand stores: named actions, diffs, time travel and live editing.',
-    icon: 'history',
-    href: '/docs/official-plugins/zustand',
-  },
-  {
-    name: 'React Navigation',
-    pkg: '@rozenite/react-navigation-plugin',
-    about: 'Action timeline, navigation state, time travel and deep link testing.',
-    icon: 'signpost',
-    href: '/docs/official-plugins/react-navigation',
-  },
-  {
-    name: 'Storage',
-    pkg: '@rozenite/storage-plugin',
-    about: 'MMKV, AsyncStorage and Expo SecureStore in one panel.',
-    icon: 'database',
-    href: '/docs/official-plugins/storage',
-  },
-  {
-    name: 'Performance Monitor',
-    pkg: '@rozenite/performance-monitor-plugin',
-    about: 'Startup timing, custom marks, measures and metrics.',
-    icon: 'gauge',
-    href: '/docs/official-plugins/performance-monitor',
-  },
-  {
-    name: 'Controls',
-    pkg: '@rozenite/controls-plugin',
-    about: 'Your own toggles, inputs and buttons, kept out of your product UI.',
-    icon: 'faders',
-    href: '/docs/official-plugins/controls',
-  },
-  {
-    name: 'File System',
-    pkg: '@rozenite/file-system-plugin',
-    about: 'App directories, with text and image previews and hex for binaries.',
-    icon: 'folder',
-    href: '/docs/official-plugins/file-system',
-  },
-  {
-    name: 'Feature Flags',
-    pkg: '@rozenite/feature-flags-plugin',
-    about: 'Inspect and override flags from a custom store, LaunchDarkly or Statsig.',
-    icon: 'flag',
-    href: '/docs/official-plugins/feature-flags',
-  },
-  {
-    name: 'SQLite',
-    pkg: '@rozenite/sqlite-plugin',
-    about: "Browse tables and run queries against your app's databases.",
-    icon: 'table',
-    href: '/docs/official-plugins/sqlite',
-  },
-  {
-    name: 'Expo Atlas',
-    pkg: '@rozenite/expo-atlas-plugin',
-    about: 'Your Metro bundle: module sizes, duplicates and the dependency graph.',
-    icon: 'stack',
-    href: '/docs/official-plugins/expo-atlas',
-  },
-  {
-    name: 'Require Profiler',
-    pkg: '@rozenite/require-profiler-plugin',
-    about: "A flame graph of your app's startup require() calls.",
-    icon: 'flame',
-    href: '/docs/official-plugins/require-profiler',
-  },
-  {
-    name: 'React Hook Form',
-    pkg: '@rozenite/rhf-plugin',
-    about: 'Values, errors, dirty and touched state for every mounted form.',
-    icon: 'form',
-    href: '/docs/official-plugins/react-hook-form',
-  },
-  {
-    name: 'Overlay',
-    pkg: '@rozenite/overlay-plugin',
-    about: 'Grids and reference images over the running app, with a compare slider.',
-    icon: 'grid',
-    href: '/docs/official-plugins/overlay',
-  },
+/**
+ * The official plugins on the home page, by slug (the docs page's file name), ordered by how
+ * often a team reaches for them. Each plugin's name, copy and page come from its docs page in
+ * src/content/docs/docs/official-plugins/ (see site/plugin-docs.ts); a plugin left out of this
+ * list still gets its page and cell, after these ones.
+ */
+export const pluginOrder = [
+  'network-activity',
+  'tanstack-query',
+  'redux-devtools',
+  'zustand',
+  'react-navigation',
+  'storage',
+  'performance-monitor',
+  'controls',
+  'file-system',
+  'feature-flags',
+  'sqlite',
+  'expo-atlas',
+  'require-profiler',
+  'react-hook-form',
+  'overlay',
 ];
 
 /** Rozenite for Agents: the built-in domains and a few of their real tools. */

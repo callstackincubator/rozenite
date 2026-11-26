@@ -2108,6 +2108,9 @@ importers:
       playwright-core:
         specifier: ^1.62.1
         version: 1.62.1
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
 packages:
 
