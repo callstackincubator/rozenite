@@ -5,7 +5,7 @@ import Site from '../../layouts/Site.astro';
 import Footer from '../../components/site/Footer.astro';
 import Nav from '../../components/site/Nav.astro';
 import { getTotalPages, loadPluginDirectoryPage } from '../../plugin-directory/load-page';
-import { docs, site } from '../../site/content';
+import { docs, plugins, site } from '../../site/content';
 
 export async function getStaticPaths() {
   const totalPages = await getTotalPages();
@@ -23,6 +23,8 @@ const page = await loadPluginDirectoryPage(pageNumber);
 const { totalPages } = page;
 const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 const href = (n: number) => `/plugin-directory/${n}`;
+// Official plugins link to their docs page as well.
+const docsHref = new Map(plugins.map((p) => [p.pkg, p.href]));
 ---
 
 <Site
@@ -67,6 +69,11 @@ const href = (n: number) => `/plugin-directory/${n}`;
                     <span class="stars" aria-label={`${p.stars.toLocaleString('en-US')} GitHub stars`}>
                       ★ {p.stars.toLocaleString('en-US')}
                     </span>
+                  )}
+                  {docsHref.has(p.packageName) && (
+                    <a class="more" href={docsHref.get(p.packageName)}>
+                      Docs
+                    </a>
                   )}
                   <a class="more" href={p.githubUrl} rel="noopener">
                     GitHub

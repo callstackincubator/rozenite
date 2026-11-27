@@ -373,6 +373,13 @@ human and a terminal for the agent, both live at once.
 Pages outside the home page (plugin directory, welcome page, 404) use the same shell, nav and
 footer. The welcome page is shown inside DevTools, so every link on it opens a new tab.
 
+## Panel screenshots
+
+Each official plugin's docs page shows its panel from `website/public/<name>-plugin.png`, and the
+package READMEs load the same file from `rozenite.dev/<name>-plugin.png`, so keep the file names stable.
+Screenshots are 1280×800 at 2x of the real React Native DevTools window, dark, with the console
+drawer closed, filled with playground data.
+
 ## 404 page
 
 The hollow crystals scene fills the first screen behind a solid card: a `404` accent chip and

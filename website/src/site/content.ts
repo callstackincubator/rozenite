@@ -99,7 +99,7 @@ export const plugins: Plugin[] = [
   {
     name: 'Storage',
     pkg: '@rozenite/storage-plugin',
-    about: 'MMKV, AsyncStorage and Expo SecureStore in one panel.',
+    about: 'MMKV, AsyncStorage, Expo SecureStore and react-native-keychain in one panel.',
     icon: 'database',
     href: '/docs/official-plugins/storage',
   },
