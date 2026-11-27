@@ -9812,11 +9812,11 @@ packages:
   fast-string-width@3.0.2:
     resolution: {integrity: sha512-gX8LrtNEI5hq8DVUfRQMbr5lpaS4nMIWV+7XEbXk2b8kiQIizgnlr12B4dA3ZEx3308ze0O4Q1R+cHts8kyUJg==}
 
-  fast-uri@2.4.0:
-    resolution: {integrity: sha512-ypuAmmMKInk5q7XcepxlnUWDLWv4GFtaJqAzWKqn62IpQ3pejtr5dTVbt3vwqVaMKmkNR55sTT+CqUKIaT21BA==}
+  fast-uri@2.4.8:
+    resolution: {integrity: sha512-knw8ym69bDOF980l2z0tDKh7XB9zfsUmpMmoQUx9KskazmddvnhNntiTzen4VsiW7qVWiVZkrcd5Pj2bziC3gA==}
 
-  fast-uri@3.0.6:
-    resolution: {integrity: sha512-Atfo14OibSv5wAp4VWNsFYE1AchQRTv9cBGWET4pZWHzYshFSS9NQI6I57rdKn9croWVMbYFbLhJ+yJvmZIIHw==}
+  fast-uri@3.1.9:
+    resolution: {integrity: sha512-hS/0Wt3Ya043oKXs0sIxrMpKQITXhMLIrVAKKXi4gozGC9v7YRWVnXIZzjNPTO02M9BdxLCWqK1yRXgNziVyJQ==}
 
   fast-wrap-ansi@0.2.2:
     resolution: {integrity: sha512-7F2Fl+TjRSenLqlU3UjSH0iyqopqoZIu7eZVpEirP2g1GtWa2G/ecEmBdgz31+Mxr+ELclgg6sokpSFIQiZ02Q==}
@@ -10495,11 +10495,11 @@ packages:
   immer@10.1.1:
     resolution: {integrity: sha512-s2MPrmjovJcoMaHtx6K11Ra7oD05NT97w1IC5zpMkT6Atjr7H8LjaDd81iIxUYpMKSRRNMJE703M1Fhr/TctHw==}
 
-  immutable@4.3.7:
-    resolution: {integrity: sha512-1hqclzwYwjRDFLjcFxOM5AYkkG0rpFPpr1RLPMEuGczoS7YA8gLhy8SWXYRAA/XwfEHpfo3cw5JGioS32fnMRw==}
+  immutable@4.3.9:
+    resolution: {integrity: sha512-ObHy4YN7ycwZOUCLI1/6svfyAFu7vL8RhAvVu/bh/RZW9EPlOyDaQ9jDQWCtdqzaXUjgXZCW1migtHE7YI7UGQ==}
 
-  immutable@5.1.3:
-    resolution: {integrity: sha512-+chQdDfvscSF1SJqv2gn4SRO2ZyS3xL3r7IW/wWEEzrzLisnOlKiQu5ytC/BVNcS15C39WT2Hg/bjKjDMcu+zg==}
+  immutable@5.2.1:
+    resolution: {integrity: sha512-CgXNM1BhKqpMjFHTyqQSk09OWqzHNJ/U4BdeBgXoBdR2DdgBdOSv131cO1/YMgzopqnka3B/i949UaMLEKUxOA==}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -11314,11 +11314,8 @@ packages:
     resolution: {integrity: sha512-gvVijfZvn7R+2qyPX8mAuKcFGDf6Nc61GdvGafQsHL0sBIxfKzA+usWn4GFC/bk+QdwPUD4kWFJLhElipq+0VA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  lodash-es@4.17.21:
-    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
-
-  lodash-es@4.17.23:
-    resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
+  lodash-es@4.18.1:
+    resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
   lodash.camelcase@4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
@@ -18563,7 +18560,7 @@ snapshots:
     dependencies:
       ajv: 8.20.0
       ajv-formats: 2.1.1
-      fast-uri: 2.4.0
+      fast-uri: 2.4.8
 
   '@fastify/error@3.4.1': {}
 
@@ -20342,7 +20339,7 @@ snapshots:
       '@types/react': 19.3.0
       dateformat: 5.0.3
       hex-rgba: 1.0.2
-      immutable: 4.3.7
+      immutable: 4.3.9
       javascript-stringify: 2.1.0
       jsondiffpatch: 0.6.2
       lodash.debounce: 4.0.8
@@ -20381,7 +20378,7 @@ snapshots:
       '@types/react': 19.3.0
       '@types/styled-components': 5.1.34
       hex-rgba: 1.0.2
-      immutable: 5.1.3
+      immutable: 5.2.1
       lodash.debounce: 4.0.8
       react: 19.3.0
       react-base16-styling: 0.10.0
@@ -20392,10 +20389,10 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@redux-devtools/serialize@0.4.2(immutable@4.3.7)':
+  '@redux-devtools/serialize@0.4.2(immutable@4.3.9)':
     dependencies:
       '@babel/runtime': 7.29.7
-      immutable: 4.3.7
+      immutable: 4.3.9
       jsan: 3.1.14
 
   '@redux-devtools/slider-monitor@5.1.1(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1))(react@19.3.0)(redux@5.0.1))(@types/react@19.3.0)(@types/styled-components@5.1.34)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(redux@5.0.1)(styled-components@5.3.11(@babel/core@7.29.7(supports-color@8.1.1))(react-dom@19.3.0(react@19.3.0))(react-is@19.2.4)(react@19.3.0))(supports-color@8.1.1)':
@@ -20440,10 +20437,10 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.26.10
       '@redux-devtools/core': 4.1.1(react-redux@9.2.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1))(react@19.3.0)(redux@5.0.1)
-      '@redux-devtools/serialize': 0.4.2(immutable@4.3.7)
+      '@redux-devtools/serialize': 0.4.2(immutable@4.3.9)
       '@types/get-params': 0.1.2
       get-params: 0.1.2
-      immutable: 4.3.7
+      immutable: 4.3.9
       jsan: 3.1.14
       nanoid: 5.1.5
       redux: 5.0.1
@@ -20467,7 +20464,7 @@ snapshots:
     dependencies:
       '@rjsf/utils': 5.24.12(react@19.3.0)
       lodash: 4.17.21
-      lodash-es: 4.17.21
+      lodash-es: 4.18.1
       markdown-to-jsx: 7.7.12(react@19.3.0)
       nanoid: 3.3.15
       prop-types: 15.8.1
@@ -20478,7 +20475,7 @@ snapshots:
       json-schema-merge-allof: 0.8.1
       jsonpointer: 5.0.1
       lodash: 4.17.21
-      lodash-es: 4.17.21
+      lodash-es: 4.18.1
       react: 19.3.0
       react-is: 18.3.1
 
@@ -20488,7 +20485,7 @@ snapshots:
       ajv: 8.17.1
       ajv-formats: 2.1.1
       lodash: 4.17.21
-      lodash-es: 4.17.21
+      lodash-es: 4.18.1
 
   '@rolldown/binding-android-arm-eabi@1.2.13':
     optional: true
@@ -23071,14 +23068,14 @@ snapshots:
   ajv@8.17.1:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.0.6
+      fast-uri: 3.1.9
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
   ajv@8.20.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.0.6
+      fast-uri: 3.1.9
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -25854,7 +25851,7 @@ snapshots:
       ajv: 8.20.0
       ajv-formats: 3.0.1
       fast-deep-equal: 3.1.3
-      fast-uri: 2.4.0
+      fast-uri: 2.4.8
       json-schema-ref-resolver: 1.0.1
       rfdc: 1.4.1
 
@@ -25872,9 +25869,9 @@ snapshots:
     dependencies:
       fast-string-truncated-width: 3.0.3
 
-  fast-uri@2.4.0: {}
+  fast-uri@2.4.8: {}
 
-  fast-uri@3.0.6: {}
+  fast-uri@3.1.9: {}
 
   fast-wrap-ansi@0.2.2:
     dependencies:
@@ -26708,9 +26705,9 @@ snapshots:
 
   immer@10.1.1: {}
 
-  immutable@4.3.7: {}
+  immutable@4.3.9: {}
 
-  immutable@5.1.3: {}
+  immutable@5.2.1: {}
 
   import-fresh@3.3.1:
     dependencies:
@@ -27502,9 +27499,7 @@ snapshots:
     dependencies:
       p-locate: 6.0.0
 
-  lodash-es@4.17.21: {}
-
-  lodash-es@4.17.23: {}
+  lodash-es@4.18.1: {}
 
   lodash.camelcase@4.3.0: {}
 
@@ -27612,7 +27607,7 @@ snapshots:
 
   map2tree@4.0.0:
     dependencies:
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   markdown-it@15.0.1:
     dependencies:
@@ -29956,7 +29951,7 @@ snapshots:
       '@types/lodash': 4.17.20
       color: 4.2.3
       csstype: 3.2.3
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   react-devtools-core@6.1.5:
     dependencies:
